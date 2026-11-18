@@ -504,6 +504,16 @@ kbd.dupe{border-color:var(--coral);color:#C9776B}
 .ansf{font-weight:800;margin-bottom:3px}
 .answer{margin-top:4px}
 
+/* ---------- Bewaren vanuit de browser ---------- */
+body.capture .app{display:none}
+body.capture .modal{background:var(--bg);backdrop-filter:none;place-items:start center;padding:14px}
+body.capture .dialog{box-shadow:none;border:1px solid var(--line)}
+.capwait{text-align:center;padding:24px 0}.capwait .cat{width:96px;height:96px;margin:0 auto 10px}
+.caplinks{background:var(--pane2);border-radius:10px;padding:8px 10px;margin:0 0 12px;max-height:160px;overflow:auto}
+.caplinks label{display:flex;gap:8px;align-items:flex-start;padding:4px 0;font-size:13px;line-height:1.35;cursor:pointer}
+.caplinks input{margin-top:3px;accent-color:var(--accent)}
+.caplinks small{color:var(--muted)}
+.capsrc{font-size:13.5px;line-height:1.45;background:var(--pane2);border-radius:10px;padding:8px 11px;margin:0 0 12px!important}
 /* ---------- Mobile ---------- */
 @media (max-width:820px){
   .app,.app.hide-lib,.app.focus{display:block;position:relative}
@@ -868,7 +878,7 @@ async function connectSupabase(){
   });
   const { data } = await sb.auth.getSession();
   if (data && data.session) startSupabase(data.session.user);
-  else { cloud = 'login'; syncIdle(); if (!LS.get('loginLater', false)) loginDialog(); }
+  else { cloud = 'login'; syncIdle(); if (!LS.get('loginLater', false) || capturePending) loginDialog(); }
 }
 async function startSupabase(user){
   if (sbUser && sbUser.id === user.id) return;
@@ -886,7 +896,7 @@ async function startSupabase(user){
     }
   };
   await sbPull();
-  srcPull().then(processIncoming); snipPull();
+  Promise.all([srcPull(), snipPull()]).then(() => { processIncoming(); processCapture(); });
   sbChannel = sb.channel('sync-' + user.id)
     .on('postgres_changes', {event:'*', schema:'public', table:'sources'}, p => srcRealtime(p))
     .on('postgres_changes', {event:'*', schema:'public', table:'snippets'}, p => snipRealtime(p))
@@ -2494,13 +2504,19 @@ let snippets = LS.get('snippets', {});
 let boardTag = '', boardQ = '', snipTableMissing = false;
 const persistSnips = () => LS.set('snippets', snippets);
 const MONTHS = ['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
-const MON_RE = MONTHS.join('|') + '|jan|feb|mrt|apr|jun|jul|aug|sep|sept|okt|nov|dec';
-const monthIdx = m => { m = m.toLowerCase(); const i = MONTHS.findIndex(x => x.startsWith(m.slice(0, 3)) || (m === 'mrt' && x === 'maart')); return i; };
+const EN_MONTHS = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+const MON_RE = MONTHS.join('|') + '|' + EN_MONTHS.join('|') + '|jan|feb|mrt|mar|apr|jun|jul|aug|sep|sept|okt|oct|nov|dec';
+const monthIdx = m => { m = m.toLowerCase().replace(/\.$/, ''); if (m === 'mrt' || m === 'mar') return 2; if (m === 'may' || m === 'mei') return 4; if (m === 'okt' || m === 'oct') return 9;
+  let i = MONTHS.findIndex(x => x === m || x.startsWith(m.slice(0, 3))); if (i < 0) i = EN_MONTHS.findIndex(x => x === m || x.startsWith(m.slice(0, 3))); return i; };
+const ERA_RE = '(?:\\s*(?:v\\.\\s?chr\\.?|v\\.\\s?c\\.?|voor christus|b\\.?\\s?c\\.?(?:e\\.?)?|n\\.\\s?chr\\.?|a\\.?\\s?d\\.?|c\\.?e\\.?)(?![\\p{L}]))';
 /* "12 maart 1953", "maart 1953", "1953-03-12", "12-03-1953", "1953" → {key:'1953-03-12', label} */
 function parseDate(str){
   str = String(str || '').trim(); if (!str) return null;
   let m, bc = false;
-  if ((m = str.match(/^(.*?)\s*(v\.\s?chr\.?|v\.\s?c\.?|voor christus|bce?)$/i))){ bc = true; str = m[1].trim(); }
+  if ((m = str.match(/^(.*?)\s*(v\.\s?chr\.?|v\.\s?c\.?|voor christus|b\.?\s?c\.?(?:e\.?)?)$/i))){ bc = true; str = m[1].trim(); }
+  else if ((m = str.match(/^(.*?)\s*(n\.\s?chr\.?|a\.?\s?d\.?|c\.?e\.?)$/i))) str = m[1].trim();
+  str = str.replace(/,/g, '');
+  if ((m = str.match(new RegExp('^(' + MON_RE + ')\\.?\\s+(\\d{1,2})\\s+(\\d{1,4})$', 'i')))) return mk(+m[3], monthIdx(m[1]) + 1, +m[2]);
   if ((m = str.match(/^(\d{4})-(\d{1,2})(?:-(\d{1,2}))?$/))) return mk(+m[1], +m[2], m[3] ? +m[3] : 0);
   if ((m = str.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/))) return mk(+m[3], +m[2], +m[1]);
   if ((m = str.match(new RegExp('^(\\d{1,2})\\s+(' + MON_RE + ')\\.?\\s+(\\d{1,4})$', 'i')))) return mk(+m[3], monthIdx(m[2]) + 1, +m[1]);
@@ -2516,16 +2532,26 @@ function parseDate(str){
   }
 }
 /* Find a date inside a piece of text, for pre-filling */
+/* Find the first date mentioned in a text (Dutch and English, also BC) */
 function detectDate(text){
-  let bcm = text.match(new RegExp('\\b((?:\\d{1,2}\\s+)?(?:(?:' + MON_RE + ')\\.?\\s+)?\\d{1,4})\\s*v\\.\\s?chr\\.?', 'i'));
-  if (bcm && parseDate(bcm[1] + ' v.Chr.')) return parseDate(bcm[1] + ' v.Chr.').label;
-  let m = text.match(new RegExp('\\b(\\d{1,2})\\s+(' + MON_RE + ')\\.?\\s+(\\d{4})\\b', 'i'));
-  if (m) return `${+m[1]} ${MONTHS[monthIdx(m[2])]} ${m[3]}`;
-  m = text.match(new RegExp('\\b(' + MON_RE + ')\\.?\\s+(\\d{4})\\b', 'i'));
-  if (m) return `${MONTHS[monthIdx(m[1])]} ${m[2]}`;
-  m = text.match(/\b(\d{1,2})-(\d{1,2})-(\d{4})\b/); if (m) return `${m[1]}-${m[2]}-${m[3]}`;
-  m = text.match(/\b(1[0-9]{3}|20[0-9]{2})\b/); if (m) return m[1];
-  return '';
+  text = String(text || '');
+  const pats = [
+    '\\b\\d{1,2}\\s+(?:' + MON_RE + ')\\.?\\s+\\d{1,4}' + ERA_RE + '?',
+    '\\b(?:' + MON_RE + ')\\.?\\s+\\d{1,2},?\\s+\\d{1,4}' + ERA_RE + '?',
+    '\\b(?:' + MON_RE + ')\\.?\\s+\\d{3,4}' + ERA_RE + '?',
+    '\\b(?:' + MON_RE + ')\\.?\\s+\\d{1,4}' + ERA_RE,
+    '\\b\\d{1,2}-\\d{1,2}-\\d{4}\\b',
+    '\\b\\d{1,4}' + ERA_RE,
+    '\\b(?:1[0-9]{3}|20[0-9]{2})\\b'
+  ];
+  let best = null;
+  for (const src of pats){
+    for (const m of text.matchAll(new RegExp(src, 'giu'))){
+      const d = parseDate(m[0].trim()); if (!d) continue;
+      if (!best || m.index < best.i || (m.index === best.i && m[0].length > best.len)) best = {i: m.index, len: m[0].length, label: d.label};
+    }
+  }
+  return best ? best.label : '';
 }
 
 /* ----- Supabase ----- */
@@ -3697,6 +3723,122 @@ $('#research').addEventListener('click', e => {
     snippetDialog({text: (a.fact ? a.fact + '\n\n' : '') + a.sentence + '\n\n(Wikipedia: ' + a.title + ')', date: detectDate((a.fact || '') + ' ' + a.sentence), tags: ['uitgezocht']});
     if (t) toast('Tip: vink het punt daarna af met ✓ Klaar'); return; }
 }, true);
+
+/* ================= Bewaren vanuit de browser-extensie ================= */
+/* The extension opens the app as   …/#capture=<json>   with {mode, url, title, site, text}.
+   The hash never reaches a server. mode: 'fragment' | 'timeline' | 'page'. */
+let capturePending = null;
+(function readCapture(){
+  const m = location.hash.match(/^#capture=(.+)$/);
+  if (!m) return;
+  try { capturePending = JSON.parse(decodeURIComponent(m[1])); } catch(e){ capturePending = null; }
+  history.replaceState(null, '', location.pathname);
+  if (capturePending){
+    document.body.classList.add('capture');
+    setTimeout(() => { if (capturePending && !sbUser && !$('#modal').classList.contains('open')) openModal(`<div class="capwait">${cat('curious')}<p class="muted">Even verbinden met je Schrijfkamer…</p></div>`); }, 50);
+  }
+})();
+function captureDone(msg){
+  openModal(`<div class="capwait">${cat('happy')}<h3>${esc(msg)}</h3><p class="muted">Dit venster sluit vanzelf.</p></div>`);
+  setTimeout(() => { location.hash = 'saved'; try { window.close(); } catch(e){} }, 900);
+}
+KIND.ai = 'AI-gesprek';
+const AI_SITES = {'claude.ai':'Claude','chatgpt.com':'ChatGPT','chat.openai.com':'ChatGPT','perplexity.ai':'Perplexity','gemini.google.com':'Gemini','copilot.microsoft.com':'Copilot'};
+/* Chats can't be fetched (login), so they become an "AI-gesprek" source without fetching */
+async function ensureSource(c, grp){
+  const existing = c.url ? Object.values(sources).find(s => s.url && normUrl(s.url) === normUrl(c.url)) : null;
+  if (existing) return {id: existing.id, done: Promise.resolve(existing.id)};
+  const ai = AI_SITES[host(c.url)];
+  if (ai){
+    const id = uid(), now = Date.now();
+    const title = String(c.title || 'Gesprek').replace(new RegExp('\\s*[-–|]\\s*' + ai + '\\s*$', 'i'), '').trim() || 'Gesprek met ' + ai;
+    const s = {id, grp, kind:'ai', url: c.url, title, site: ai, byline:'', published:'', excerpt:'', tags:['ai'], note:'', fav:false, created: now, updated: now};
+    sources[id] = s; persistSources();
+    return {id, done: srcUpsert({...s, content: ''}).then(() => id).catch(() => null)};
+  }
+  let id = null;
+  const done = saveFromUrl(c.url, {title: c.title, site: c.site, grp}, {stay: true, onCreated: x => { id = x; }});
+  return {id, done};
+}
+function linksBox(c){
+  const ai = AI_SITES[host(c.url)];
+  const seen = new Set(), list = (c.links || []).filter(l => { const h = host(l.url); if (!h || AI_SITES[h] || h === host(c.url) || seen.has(normUrl(l.url))) return false; seen.add(normUrl(l.url)); return true; }).slice(0, 8);
+  if (!list.length) return {html: '', list};
+  return {list, html: `<div class="caplinks"><div class="muted" style="font-weight:800;font-size:12px;margin-bottom:4px">Links in je selectie — ook als bron bewaren?</div>${list.map((l, i) => `<label><input type="checkbox" data-cl="${i}" ${ai ? 'checked' : ''}><span><b>${esc(l.text || host(l.url))}</b> <small>${esc(host(l.url))}</small></span></label>`).join('')}</div>`};
+}
+async function saveCheckedLinks(list, grp){
+  const picked = [...document.querySelectorAll('[data-cl]')].filter(x => x.checked).map(x => list[+x.dataset.cl]);
+  return Promise.all(picked.map(l => saveFromUrl(l.url, {title: l.text || undefined, grp}, {stay: true}).catch(() => null)));
+}
+function processCapture(){
+  const c = capturePending; if (!c || !sbUser) return;
+  capturePending = null;
+  const aiName = AI_SITES[host(c.url)];
+  const site = aiName ? aiName + ' (AI-gesprek)' : (c.site || host(c.url));
+  const existing = c.url ? Object.values(sources).find(s => s.url && normUrl(s.url) === normUrl(c.url)) : null;
+  const LB = linksBox(c);
+  if (c.mode === 'page'){
+    openModal(`<h3>Bewaar pagina als bron</h3>
+      <p class="capsrc"><b>${esc(c.title || c.url)}</b><br>${esc(site)}</p>
+      ${existing ? '<p class="tip">Deze pagina staat al in je bronnen — je notitie wordt toegevoegd.</p>' : ''}
+      <textarea id="cNote" placeholder="Waarom bewaar je dit? (optioneel)" style="min-height:80px"></textarea>
+      ${LB.html}
+      ${groups.length ? `<div class="row" style="margin:0 0 12px"><span class="muted" style="font-weight:800">Project</span>${projSelect('cGrp', existing ? existing.grp : defaultProject())}</div>` : ''}
+      <div class="btns"><button class="btn ghost" id="cCancel">Annuleren</button><button class="btn" id="cOk">Bewaren</button></div>`);
+    $('#cCancel').onclick = () => { location.hash = 'saved'; try { window.close(); } catch(e){} };
+    setTimeout(() => $('#cNote').focus(), 30);
+    $('#cOk').onclick = async () => {
+      const note = $('#cNote').value.trim(), grp = $('#cGrp') ? $('#cGrp').value : defaultProject();
+      $('#cOk').disabled = true; $('#cOk').textContent = 'Artikel ophalen…';
+      const es = await ensureSource(c, grp); const id = await Promise.race([es.done, new Promise(r => setTimeout(() => r(es.id), 9000))]);
+      await Promise.race([saveCheckedLinks(LB.list, grp), new Promise(r => setTimeout(r, 8000))]);
+      if (id && (note || grp !== (sources[id] || {}).grp)){ srcPatch(id, {note: [sources[id].note, note].filter(Boolean).join('\n'), grp}); await new Promise(r => setTimeout(r, 900)); }
+      id ? captureDone('Bewaard in je bronnen') : ($('#cOk').disabled = false, $('#cOk').textContent = 'Opnieuw proberen');
+    };
+    return;
+  }
+  const tl = c.mode === 'timeline';
+  const date = detectDate(c.text || '');
+  const allTags = [...new Set(Object.values(snippets).flatMap(x => x.tags || []))];
+  openModal(`<h3>${tl ? 'Op de tijdlijn zetten' : 'Bewaar als fragment'}</h3>
+    <p class="capsrc">Uit: <b>${esc(c.title || c.url)}</b> · ${esc(site)}</p>
+    <textarea id="cText" style="min-height:130px">${esc(c.text || '')}</textarea>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div><div class="muted" style="font-weight:800;font-size:12px;margin-bottom:4px">Datum${tl ? '' : ' (voor de tijdlijn)'}</div><input type="text" id="cDate" placeholder="bv. 1953 of 15 maart 44 v.Chr." value="${esc(date)}"></div>
+      <div><div class="muted" style="font-weight:800;font-size:12px;margin-bottom:4px">Tags</div><input type="text" id="cTags" placeholder="bv. rome, munt" list="cTagList" value="${aiName ? 'ai' : ''}"><datalist id="cTagList">${allTags.map(t => `<option value="${esc(t)}">`).join('')}</datalist></div>
+    </div>
+    <p class="muted" id="cHint" style="margin:-6px 0 10px;min-height:1.2em"></p>
+    <input type="text" id="cNote" placeholder="${aiName ? 'Eigen notitie — tip: controleer AI-feiten bij een bron' : 'Eigen notitie (optioneel)'}">
+    ${LB.html}
+    ${groups.length ? `<div class="row" style="margin:0 0 12px"><span class="muted" style="font-weight:800">Project</span>${projSelect('cGrp', existing ? existing.grp : defaultProject())}</div>` : ''}
+    <div class="btns"><button class="btn ghost" id="cCancel">Annuleren</button><button class="btn" id="cOk">${tl ? 'Op tijdlijn' : 'Bewaren'}</button></div>`);
+  const hint = () => { const v = $('#cDate').value.trim(), d = parseDate(v);
+    $('#cHint').textContent = !v ? (tl ? 'Vul een datum in — bv. 1953, maart 1953 of 15 maart 44 v.Chr.' : 'Zonder datum komt het alleen op je braindump.') : d ? '📅 Op de tijdlijn bij: ' + d.label : 'Die datum herken ik niet — probeer bv. 1953 of 12 maart 1953.';
+    $('#cHint').style.color = tl && !d ? '#C9776B' : ''; };
+  hint(); $('#cDate').addEventListener('input', hint);
+  setTimeout(() => (tl && !date ? $('#cDate') : $('#cText')).focus(), 30);
+  $('#cCancel').onclick = () => { location.hash = 'saved'; try { window.close(); } catch(e){} };
+  const go = async () => {
+    const text = $('#cText').value.trim(); if (!text) return $('#cText').focus();
+    const dv = $('#cDate').value.trim();
+    if (dv && !parseDate(dv)) return $('#cDate').focus();
+    if (tl && !dv){ $('#cDate').focus(); return; }
+    const grp = $('#cGrp') ? $('#cGrp').value : defaultProject();
+    const tags = $('#cTags').value.split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean);
+    $('#cOk').disabled = true; $('#cOk').textContent = 'Bewaren…';
+    // 1) make sure the page is a source  2) save the fragment linked to it
+    const es = c.url ? await ensureSource(c, grp) : {id: '', done: Promise.resolve('')};
+    const srcId = es.id || (existing && existing.id) || '', srcDone = es.done;
+    const snip = {id: uid(), source_id: srcId || '', grp, text, note: $('#cNote').value.trim(), tags, date: dv, color:'', created: Date.now(), updated: Date.now()};
+    const ok = await saveSnippet(snip, true);
+    if (!ok){ $('#cOk').disabled = false; $('#cOk').textContent = 'Opnieuw proberen'; return; }
+    $('#cOk').textContent = 'Artikel ophalen…';
+    await Promise.race([Promise.all([srcDone, saveCheckedLinks(LB.list, grp)]), new Promise(r => setTimeout(r, 9000))]);
+    captureDone(dv ? 'Op je tijdlijn gezet' : 'Op je braindump gezet');
+  };
+  $('#cOk').onclick = go;
+  $('#dialog').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) go(); });
+}
 
 /* ---------------- Boot ---------------- */
 applySettings();

@@ -1,0 +1,51 @@
+{
+  "manifest_version": 3,
+  "name": "Bewaar in Schrijfkamer",
+  "short_name": "Schrijfkamer",
+  "version": "1.0.0",
+  "description": "Bewaar tekst, tijdlijnmomenten en pagina's uit je browser in je Schrijfkamer.",
+  "permissions": [
+    "contextMenus",
+    "activeTab",
+    "scripting"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Bewaar in Schrijfkamer (selectie → fragment, anders pagina)",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "commands": {
+    "save-fragment": {
+      "suggested_key": {
+        "default": "Alt+Shift+S"
+      },
+      "description": "Selectie bewaren als fragment"
+    },
+    "save-timeline": {
+      "suggested_key": {
+        "default": "Alt+Shift+D"
+      },
+      "description": "Selectie op de tijdlijn zetten"
+    },
+    "save-page": {
+      "suggested_key": {
+        "default": "Alt+Shift+L"
+      },
+      "description": "Pagina bewaren als bron"
+    }
+  },
+  "host_permissions": [
+    "https://tomkoehorst.github.io/*"
+  ]
+}

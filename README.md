@@ -32,6 +32,17 @@ Een rustige schrijfapp in de browser, met een indeling zoals in Ulysses: bibliot
 
 Hiervoor is de Edge Function `supabase/functions/bronnen` nodig (en voor webzoeken een `BRAVE_API_KEY`).
 
+## Browser-extensie: bewaren vanuit elke website
+
+Map `extension/` (of download [schrijfkamer-extensie.zip](https://github.com/tomkoehorst/schrijven/raw/main/schrijfkamer-extensie.zip)) — voor Chrome en Edge.
+Selecteer tekst op een website (ook in Claude, ChatGPT of Perplexity) en kies met de rechtermuisknop:
+- **Bewaar als fragment** (Alt+Shift+S) — op je braindump, met de pagina als bron
+- **Zet op tijdlijn** (Alt+Shift+D) — met herkende datum (ook BC/v.Chr. en Engelse maanden)
+- **Bewaar pagina als bron** (Alt+Shift+L) of **Bewaar link als bron**
+
+AI-gesprekken worden bewaard als bron "AI-gesprek" met tag *#ai*; links in je selectie kun je met één vinkje ook als bron bewaren.
+Installeren: `chrome://extensions` (of `edge://extensions`) → Ontwikkelaarsmodus aan → *Uitgepakte extensie laden* → kies de map `extension`. Sneltoetsen aanpassen: `chrome://extensions/shortcuts`.
+
 ## Ontdek
 
 Druk op de onderzoeksknop (of Ctrl+Alt+O) en de app onderzoekt je alinea of selectie:
