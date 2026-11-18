@@ -40,6 +40,13 @@ Naast je tekst (Ctrl+Alt+R):
 - Bronnen lezen in het paneel, tekst selecteren → citeren of als fragment bewaren
 - Fragmenten met één klik invoegen op de plek van je cursor
 
+## Uitzoeken, opzoeken en links
+
+- **Nog uitzoeken:** typ `??` of `[check: je vraag]` in je tekst; alles komt als lijst in het onderzoekspaneel, met zoekknoppen en afvinken
+- **Opzoeken:** selecteer een woord → betekenis en synoniemen (WikiWoordenboek), Wikipedia en je eigen verzameling (Ctrl+Alt+L)
+- **`[[Links]]`:** typ `[[` voor suggesties uit je teksten, bronnen en fragmenten; Ctrl/⌘+klik of de knop opent de link; terugverwijzingen en "gebruikt in"
+- Markeringen en links verdwijnen netjes bij export en in het voorbeeld
+
 ## Snel bewaren & projecten
 
 - Plak een link in Bronnen of op de Braindump → wordt een bron; plak tekst → wordt een fragment
@@ -65,6 +72,7 @@ Naast je tekst (Ctrl+Alt+R):
 | `supabase/schema.sql` | Tabellen en beveiligingsregels voor Supabase |
 | `supabase/functions/bronnen/index.ts` | Edge Function: artikelen ophalen en zoeken op internet |
 | `manifest.json`, `icon*` | Beginscherm-icoon |
+| `ROADMAP.md` | Ideeën voor later |
 
 ## Hoe opslag werkt
 

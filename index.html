@@ -432,6 +432,32 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .rpbody ::selection{background:var(--hl)}
 @media (max-width:820px){ .research{top:0;width:100%;z-index:26;padding-top:var(--sat);border-left:0} }
 
+/* ---------- Uitzoeken, opzoeken, links ---------- */
+.todo{background:rgba(244,230,176,.85);border-radius:3px;box-shadow:0 0 0 1px rgba(217,180,74,.35)}
+[data-theme="dark"] .todo{background:rgba(201,189,143,.3)}
+.wl{text-decoration:underline;text-decoration-color:rgba(91,141,184,.4);text-underline-offset:4px}
+.rphead .seg button{padding:6px 9px;font-size:12.5px}
+.rpa .ok{background:rgba(143,196,168,.25);color:#4E8C6E}
+.rpa .ghost{background:var(--pane2);color:var(--muted)}
+.rpa{flex-wrap:wrap}
+.linkbox{background:var(--card);border:1px dashed var(--line);border-radius:12px;padding:10px 12px;margin-bottom:12px}
+.lchips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.lchips button{font-size:12.5px;font-weight:800;padding:4px 10px;border-radius:999px;background:rgba(91,141,184,.12);color:var(--link)}
+.lchips button.miss{background:var(--pane2);color:var(--faint);text-decoration:line-through}
+.defs{margin:6px 0 0;padding-left:20px;font-size:14px;line-height:1.5}
+.defs li{margin-bottom:4px}
+.syns{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.syns button{font-size:13px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.acbox{position:fixed;z-index:45;width:320px;max-height:260px;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.16);padding:5px;display:none}
+.acbox.show{display:block}
+.acbox button{display:flex;width:100%;justify-content:space-between;gap:10px;align-items:baseline;text-align:left;padding:7px 10px;border-radius:8px;font-size:14px}
+.acbox button b{font-weight:700;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.acbox button span{font-size:11.5px;color:var(--muted);font-weight:800;flex:none}
+.acbox button.on,.acbox button:hover{background:var(--accent-soft)}
+.edpill{position:fixed;z-index:44;background:var(--text);color:var(--bg);border-radius:10px;padding:7px 12px;font-size:13px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.2);display:none;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.edpill.show{display:block}
+.edpill b{font-weight:800}
+
 /* ---------- Mobile ---------- */
 @media (max-width:820px){
   .app,.app.hide-lib,.app.focus{display:block;position:relative}
@@ -542,6 +568,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 </div>
 
 <div class="sprint-line" id="sprintLine"></div>
+<div class="acbox" id="acbox"></div>
+<button class="edpill" id="edpill"></button>
 <div class="citebar" id="citebar"><button id="cbCite">❝ Citeer in tekst</button><button id="cbFrag">✚ Fragment</button></div>
 <div class="modal" id="modal"><div class="dialog" id="dialog"></div></div>
 <div class="toast" id="toast"></div>
@@ -1085,7 +1113,9 @@ function inline(t){
     .replace(/(^|[^*\w])(\*|_)(?=[^\s*_])([^*_\n]+?)(?<=\S)\2(?![*\w])/g, '$1<span class="i"><span class="mk">$2</span>$3<span class="mk">$2</span></span>')
     .replace(/(==)(?=\S)(.+?)(?<=\S)(==)/g, '<span class="hl"><span class="mk">$1</span>$2<span class="mk">$3</span></span>')
     .replace(/(~~)(.+?)(~~)/g, '<span class="mk">$1</span><s>$2</s><span class="mk">$3</span>')
-    .replace(/(\[)([^\]\n]+)(\]\()([^)\s]+)(\))/g, '<span class="mk">$1</span><span class="ln">$2</span><span class="mk">$3$4$5</span>');
+    .replace(/(\[\[)([^\]\n]+?)(\]\])/g, '<span class="mk">$1</span><span class="ln wl">$2</span><span class="mk">$3</span>')
+    .replace(/(\[)([^\]\n]+)(\]\()([^)\s]+)(\))/g, '<span class="mk">$1</span><span class="ln">$2</span><span class="mk">$3$4$5</span>')
+    .replace(/\?\?|\[check(?::[^\]\n]*)?\]/gi, m => '<span class="todo">' + m + '</span>');
 }
 function highlight(text, caret){
   const lines = text.split('\n');
@@ -1296,6 +1326,7 @@ function mdToHtml(md){
   const lines = md.split('\n'); let html = '', list = null, para = [], code = null;
   const inl = t => esc(t)
     .replace(/\+\+(.+?)\+\+/g, '')
+    .replace(/\[\[([^\]|\n]+)(?:\|[^\]\n]*)?\]\]/g, '$1').replace(/\s?\?\?/g, '').replace(/\s?\[check(?::[^\]\n]*)?\]/gi, '')
     .replace(/`([^`]+)`/g, '<code>$1</code>')
     .replace(/(\*\*|__)(?=\S)(.+?)(?<=\S)\1/g, '<strong>$2</strong>')
     .replace(/(^|[^*\w])(\*|_)(?=[^\s*_])([^*_\n]+?)(?<=\S)\2(?![*\w])/g, '$1<em>$3</em>')
@@ -1323,8 +1354,9 @@ function mdToHtml(md){
   flushP(); closeL();
   return html.replace(/<blockquote>([\s\S]*?)<\/blockquote>\n<blockquote>/g, '<blockquote>$1');
 }
+function exportMd(v){ return v.replace(/\+\+(.+?)\+\+/g, '').replace(/\[\[([^\]|\n]+)(?:\|[^\]\n]*)?\]\]/g, '$1').replace(/\s?\?\?/g, '').replace(/\s?\[check(?::[^\]\n]*)?\]/gi, ''); }
 function plainText(md){
-  return md.replace(/\+\+(.+?)\+\+/g, '').replace(/^#{1,6}\s+/gm, '').replace(/^>\s?/gm, '')
+  return md.replace(/\+\+(.+?)\+\+/g, '').replace(/\[\[([^\]|\n]+)(?:\|[^\]\n]*)?\]\]/g, '$1').replace(/\s?\?\?/g, '').replace(/\s?\[check(?::[^\]\n]*)?\]/gi, '').replace(/^#{1,6}\s+/gm, '').replace(/^>\s?/gm, '')
     .replace(/(\*\*|__)(.+?)\1/g, '$2').replace(/(^|[^*\w])[*_]([^*_\n]+?)[*_](?![*\w])/g, '$1$2')
     .replace(/==(.+?)==/g, '$1').replace(/~~(.+?)~~/g, '$1').replace(/`([^`]+)`/g, '$1')
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1 ($2)');
@@ -1415,9 +1447,9 @@ $('#panel').addEventListener('click', async e => {
   const a = e.target.closest('[data-a]'); if (!a) return;
   const name = (titleOf(s).replace(/[\\/:*?"<>|]+/g, '').slice(0, 60) || 'tekst');
   switch (a.dataset.a){
-    case 'copymd': copy(ta.value.replace(/\+\+(.+?)\+\+/g, ''), 'Markdown gekopieerd'); break;
+    case 'copymd': copy(exportMd(ta.value), 'Markdown gekopieerd'); break;
     case 'copytxt': copy(plainText(ta.value), 'Tekst gekopieerd'); break;
-    case 'dlmd': download(name + '.md', ta.value.replace(/\+\+(.+?)\+\+/g, ''), 'text/markdown'); break;
+    case 'dlmd': download(name + '.md', exportMd(ta.value), 'text/markdown'); break;
     case 'dlhtml': download(name + '.html', `<!DOCTYPE html><html lang="nl"><head><meta charset="utf-8"><title>${esc(titleOf(s))}</title><style>body{font-family:Georgia,serif;max-width:680px;margin:60px auto;padding:0 20px;line-height:1.7;color:#3D3A44}blockquote{border-left:3px solid #CFC6EA;margin:1em 0;padding:.2em 1em;color:#8A8594}mark{background:#F8EBB8}</style></head><body>${mdToHtml(ta.value)}</body></html>`, 'text/html'); break;
     case 'dup': { const id = uid(); sheets[id] = {...cleanSheet(s), created:Date.now(), updated:Date.now(), trashed:false}; saveSheet(id, true); openSheet(id); renderLib(); toast('Gedupliceerd'); break; }
     case 'trash': s.trashed = true; touch(s, false); closePanel(); openSheet(null); renderLib(); toast('Naar de prullenbak verplaatst'); break;
@@ -1575,6 +1607,9 @@ function helpDialog(){
     <code>[tekst](url)</code><span>Link · Ctrl/⌘ K</span>
     <code>++notitie++</code><span>Notitie voor jezelf, niet in export</span>
     <code>---</code><span>Scheidingslijn</span>
+    <code>??</code><span>Nog uitzoeken (zie onderzoekspaneel)</span>
+    <code>[check: vraag]</code><span>Nog uitzoeken, met je vraag erbij</span>
+    <code>[[Titel]]</code><span>Link naar tekst, bron of fragment</span>
   </div>
   <h4 class="sec" style="padding:0 0 8px">Sneltoetsen</h4>
   <div class="help">
@@ -1585,6 +1620,7 @@ function helpDialog(){
     <code>Ctrl Alt C</code><span>Schrijfcoach</span>
     <code>Ctrl Alt R</code><span>Onderzoekspaneel</span>
     <code>Ctrl Alt S</code><span>Snel bewaren</span>
+    <code>Ctrl Alt L</code><span>Woord opzoeken</span>
   </div>
   <div class="btns"><button class="btn" data-close>Begrepen</button></div>`);
 }
@@ -2255,6 +2291,7 @@ function renderReader(){
     <div class="tagrow" id="tagrow">${(s.tags || []).map((t, i) => `<span class="tag">#${esc(t)}<button data-untag="${i}" aria-label="Tag verwijderen">×</button></span>`).join('')}<input id="tagIn" placeholder="+ tag" maxlength="30" list="tagList"><datalist id="tagList">${[...new Set(Object.values(sources).flatMap(x => x.tags || []))].map(t => `<option value="${esc(t)}">`).join('')}</datalist></div>
     ${groups.length ? `<div class="row" style="margin:-6px 0 14px"><span class="muted" style="font-weight:800">Project</span>${projSelect('srcGrp', s.grp)}</div>` : ''}
     <div class="notebox"><div class="lbl">Jouw notitie</div><textarea id="srcNote" rows="2" placeholder="Waarom bewaarde je dit? Wat wil je ermee?">${esc(s.note || '')}</textarea></div>
+    ${usedInHtml(s)}
     ${sourceSnippetsHtml(s.id)}
     ${s.excerpt && s.kind !== 'note' ? `<p class="ex">${esc(s.excerpt)}</p>` : ''}
     <div class="body" id="srcText">${content === undefined ? '<p class="muted">Laden…</p>' : content ? mdToHtml(content) : s._pending ? '<p class="muted">Artikel wordt opgehaald…</p>' : `<p class="muted">Geen leesbare tekst bewaard${s.url ? ' — open het origineel via de link hierboven' : ''}.</p>`}</div>`;
@@ -2654,7 +2691,7 @@ function sourceSnippetsHtml(id){
   if (!list.length) return '';
   return `<div class="notebox"><div class="lbl">Fragmenten uit deze bron · ${list.length}</div>${list.map(s => `<div class="sfrag" data-edit="${s.id}"><span>${esc(s.text.length > 220 ? s.text.slice(0, 220) + '…' : s.text)}</span>${s.date && parseDate(s.date) ? `<b>${esc(parseDate(s.date).label)}</b>` : ''}</div>`).join('')}</div>`;
 }
-$('#reader').addEventListener('click', e => { const ed = e.target.closest('.sfrag[data-edit]'); if (ed) snippetDialog({id: ed.dataset.edit}); });
+$('#reader').addEventListener('click', e => { const os = e.target.closest('[data-opensheet]'); if (os){ setView('all'); openSheet(os.dataset.opensheet); setMobile('editor'); return; } const ed = e.target.closest('.sfrag[data-edit]'); if (ed) snippetDialog({id: ed.dataset.edit}); });
 
 /* ================= Projecten, plakken & snel bewaren, onderzoekspaneel ================= */
 let projFilter = LS.get('projFilter', '');           // '' = alle, '__none' = zonder project, anders groep-id
@@ -2767,7 +2804,7 @@ function rpItem(it){
 function renderResearch(){
   const el = $('#research'); if (!el || !rpOpen) return;
   const keepQ = document.activeElement && document.activeElement.id === 'rpQ';
-  const head = `<div class="rphead"><div class="seg"><button data-rptab="related" class="${rpTab === 'related' && !rpSrc ? 'on' : ''}">Gerelateerd</button><button data-rptab="search" class="${rpTab === 'search' && !rpSrc ? 'on' : ''}">Zoeken</button></div><div class="grow"></div><button class="ib" data-rpa="quick" title="Snel bewaren">${icon('plus','')}</button><button class="ib" data-rpa="close" title="Sluiten (Ctrl+Alt+R)">✕</button></div>`;
+  const head = `<div class="rphead"><div class="seg"><button data-rptab="related" class="${rpTab === 'related' && !rpSrc && !rpLookup ? 'on' : ''}">Gerelateerd</button><button data-rptab="search" class="${rpTab === 'search' && !rpSrc && !rpLookup ? 'on' : ''}">Zoeken</button><button data-rptab="todo" class="${rpTab === 'todo' && !rpSrc && !rpLookup ? 'on' : ''}">Uitzoeken${todoCount() ? ' · ' + todoCount() : ''}</button></div><div class="grow"></div><button class="ib" data-rpa="quick" title="Snel bewaren">${icon('plus','')}</button><button class="ib" data-rpa="close" title="Sluiten (Ctrl+Alt+R)">✕</button></div>`;
   let body = '';
   if (!sbUser) body = `<div class="empty">${cat('sleepy')}Log in om je bronnen en fragmenten hier te zien.</div>`;
   else if (rpSrc && sources[rpSrc]){
@@ -2778,12 +2815,17 @@ function renderResearch(){
       <h3 style="margin:4px 0 6px;font-size:18px;line-height:1.3">${esc(s.title)}</h3>
       ${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener" class="rpk" style="text-decoration:none">${esc(host(s.url))} ↗</a>` : ''}
       <p class="muted" style="margin:10px 0">Selecteer tekst om te citeren of als fragment te bewaren.</p>
+      ${usedInHtml(s)}
       ${sourceSnippetsHtml(s.id)}
       <div class="body rpbody" id="rpText">${c === undefined ? '<p class="muted">Laden…</p>' : c ? mdToHtml(c) : s._pending ? '<p class="muted">Artikel wordt opgehaald…</p>' : `<p class="muted">Geen leesbare tekst bewaard.</p>${s.excerpt ? `<p>${esc(s.excerpt)}</p>` : ''}`}</div>`;
+  } else if (rpLookup){
+    body = lookupHtml();
+  } else if (rpTab === 'todo'){
+    todoList = allTodos(); body = todoHtml();
   } else if (rpTab === 'related'){
     const {items} = related();
     const proj = sheets[currentId] && grpName(sheets[currentId].group);
-    body = `<p class="muted" style="margin:2px 0 12px">Bij de alinea waar je nu schrijft${proj ? ` · project <b>${esc(proj)}</b>` : ''}.</p>` +
+    body = linksHtml() + `<p class="muted" style="margin:2px 0 12px">Bij de alinea waar je nu schrijft${proj ? ` · project <b>${esc(proj)}</b>` : ''}.</p>` +
       (items.length ? items.map(rpItem).join('') : `<div class="empty" style="padding:20px 6px">${cat('curious')}Nog niets in je verzameling dat bij deze alinea past.<br>Probeer <a href="#" data-rptab="search" style="color:var(--accent);font-weight:800">Zoeken</a> — ook in Wikipedia of op internet.</div>`);
   } else {
     body = `<div class="srow" style="margin-bottom:8px"><input type="text" id="rpQ" placeholder="${rpMode === 'mine' ? 'Zoek in je bronnen en fragmenten…' : rpMode === 'wiki' ? 'Zoek in Wikipedia…' : 'Zoek op internet…'}" value="${esc(rpQ)}" autocomplete="off"></div>
@@ -2845,10 +2887,10 @@ ta.addEventListener('input', rpRefresh); ta.addEventListener('click', rpRefresh)
 $('#btnResearch').onclick = () => toggleResearch();
 $('#research').addEventListener('click', async e => {
   const t = e.target;
-  const tab = t.closest('[data-rptab]'); if (tab){ e.preventDefault(); rpTab = tab.dataset.rptab; rpSrc = null; renderResearch(); if (rpTab === 'search') setTimeout(() => $('#rpQ') && $('#rpQ').focus(), 0); return; }
+  const tab = t.closest('[data-rptab]'); if (tab){ e.preventDefault(); rpTab = tab.dataset.rptab; rpSrc = null; rpLookup = null; renderResearch(); if (rpTab === 'search') setTimeout(() => $('#rpQ') && $('#rpQ').focus(), 0); return; }
   const md = t.closest('[data-rpmode]'); if (md){ rpMode = md.dataset.rpmode; rpResults = []; renderResearch(); if (rpQ.trim()) rpSearch(); return; }
   const a = t.closest('[data-rpa]');
-  if (a){ if (a.dataset.rpa === 'close') toggleResearch(false); if (a.dataset.rpa === 'back'){ rpSrc = null; renderResearch(); } if (a.dataset.rpa === 'quick') quickDialog(); return; }
+  if (a){ if (a.dataset.rpa === 'close') toggleResearch(false); if (a.dataset.rpa === 'back'){ if (rpSrc) rpSrc = null; else rpLookup = null; renderResearch(); } if (a.dataset.rpa === 'quick') quickDialog(); return; }
   const ins = t.closest('[data-rpins]');
   if (ins){ const n = snippets[ins.dataset.rpins]; const src = sources[n.source_id]; insertIntoSheet(src ? quoteBlock(n.text, src) : n.text, 'Ingevoegd in'); if (!isMobile()) ta.focus(); return; }
   const rd = t.closest('[data-rpread]'); if (rd){ rpSrc = rd.dataset.rpread; renderResearch(); $('#rpScroll').scrollTop = 0; return; }
@@ -2863,6 +2905,280 @@ $('#research').addEventListener('click', async e => {
 });
 $('#research').addEventListener('input', e => { if (e.target.id === 'rpQ'){ rpQ = e.target.value; if (rpMode === 'mine') rpSearch(); else { rpResults = []; $('#rpRes').innerHTML = rpSearchHtml(); } } });
 $('#research').addEventListener('keydown', e => { if (e.target.id === 'rpQ' && e.key === 'Enter'){ e.preventDefault(); rpSearch(); } });
+
+/* ================= Nog uitzoeken (??, [check]), opzoeken en [[links]] ================= */
+
+/* ----- 1. Nog uitzoeken ----- */
+const TODO_RE = /\?\?|\[check(?::\s*([^\]\n]*))?\]/gi;
+let todoScope = LS.get('todoScope', 'sheet');      // 'sheet' | 'project'
+function todosIn(id){
+  const v = (sheets[id] && sheets[id].body) || '', out = [];
+  for (const m of v.matchAll(TODO_RE)){
+    const i = m.index;
+    let start = Math.max(v.lastIndexOf('\n', i - 1), v.lastIndexOf('. ', i - 1) + 1, v.lastIndexOf('! ', i - 1) + 1, v.lastIndexOf('? ', i - 1) + 1);
+    if (start < 0) start = 0;
+    const sentence = v.slice(start, i).replace(/^[\s.!?#>*-]+/, '').replace(/\+\+/g, '').trim();
+    const q = (m[1] || '').trim();
+    out.push({sheet: id, index: i, len: m[0].length, marker: m[0], question: q, text: q || sentence || '(leeg)', context: sentence});
+  }
+  return out;
+}
+function allTodos(){
+  const cur = sheets[currentId]; if (!cur) return [];
+  if (todoScope === 'sheet') return todosIn(currentId);
+  const g = cur.group || 'inbox';
+  return Object.entries(sheets).filter(([, s]) => !s.trashed && (s.group || 'inbox') === g).flatMap(([id]) => todosIn(id));
+}
+function todoKeywords(t){
+  const words = [...String(t.question || t.context).matchAll(/[\p{L}\p{N}][\p{L}\p{N}’'-]*/gu)].map(m => m[0]).filter(w => w.length > 2 && !STOP.has(w.toLowerCase()));
+  const names = words.filter(w => /^\p{Lu}/u.test(w));
+  return [...new Set([...names, ...words])].slice(0, 5).join(' ');
+}
+function todoHtml(){
+  const list = allTodos();
+  const multi = todoScope === 'project';
+  const scope = `<div class="seg" style="display:inline-flex;margin-bottom:12px"><button data-tscope="sheet" class="${!multi ? 'on' : ''}">Deze tekst</button><button data-tscope="project" class="${multi ? 'on' : ''}">${esc(grpName((sheets[currentId] || {}).group) || 'Inbox')}</button></div>`;
+  if (!list.length) return scope + `<div class="empty" style="padding:16px 6px">${cat('happy')}Niets meer uit te zoeken.<br><span class="muted">Typ <b>??</b> achter iets wat je nog moet nakijken, of <b>[check: je vraag]</b>.</span></div>`;
+  return scope + list.map((t, i) => `<div class="rpi todo-i"><div class="rpk">Nog uitzoeken${multi && t.sheet !== currentId ? ' · ' + esc(titleOf(sheets[t.sheet])) : ''}</div>
+    <div class="rpt">${esc(t.text)}</div>
+    <div class="rpa"><button data-todo="find" data-ti="${i}">Zoek</button><button data-todo="wiki" data-ti="${i}">Wikipedia</button><button data-todo="web" data-ti="${i}">Web</button><button data-todo="go" data-ti="${i}" class="ghost">Ga naar</button><button data-todo="done" data-ti="${i}" class="ok">✓ Klaar</button></div></div>`).join('');
+}
+let todoList = [];
+function todoAction(kind, i){
+  const t = todoList[i]; if (!t) return;
+  if (kind === 'go' || kind === 'done'){
+    if (t.sheet !== currentId){ openSheet(t.sheet); }
+    if (kind === 'go'){ ta.focus(); ta.setSelectionRange(t.index, t.index + t.len); typewriter(); return; }
+    // remove the marker (and the space before it)
+    const s = sheets[t.sheet]; const v = s.body;
+    if (v.slice(t.index, t.index + t.len) !== t.marker) return renderResearch();
+    const a = v[t.index - 1] === ' ' ? t.index - 1 : t.index;
+    if (t.sheet === currentId){ ta.focus(); ta.setSelectionRange(a, t.index + t.len); insert(''); }
+    else { s.body = v.slice(0, a) + v.slice(t.index + t.len); s.updated = Date.now(); saveSheet(t.sheet, true); }
+    toast('Afgevinkt'); renderResearch(); return;
+  }
+  rpTab = 'search'; rpSrc = null; rpLookup = null; rpQ = todoKeywords(t); rpMode = kind === 'find' ? 'mine' : kind; rpResults = [];
+  renderResearch(); rpSearch();
+}
+function todoCount(){ try { return allTodos().length; } catch(e){ return 0; } }
+
+/* ----- 2. Opzoeken ----- */
+let rpLookup = null;          // {term, wiki, dict, mine}
+function wikitextToText(s){
+  return s.replace(/\{\{[^{}]*\}\}/g, '').replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, '$1').replace(/'''?/g, '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+}
+async function dictLookup(term){
+  const tries = [term, term.toLowerCase()].filter((v, i, a) => a.indexOf(v) === i);
+  for (const t of tries){
+    try {
+      const j = await (await fetch(`https://nl.wiktionary.org/w/api.php?action=parse&format=json&origin=*&prop=wikitext&redirects=1&page=${encodeURIComponent(t)}`)).json();
+      const wt = j && j.parse && j.parse.wikitext && j.parse.wikitext['*']; if (!wt) continue;
+      const nl = (wt.split(/\{\{=nld=\}\}/)[1] || wt).split(/\{\{=[a-z]{2,3}=\}\}/)[0];
+      const defs = nl.split('\n').filter(l => /^#[^:*#]/.test(l)).map(l => wikitextToText(l.replace(/^#+/, ''))).filter(Boolean).slice(0, 5);
+      const synBlock = (nl.split('{{-syn-}}')[1] || '').split(/\n\{\{-/)[0];
+      const syns = [...synBlock.matchAll(/\[\[([^\]|#]+)/g)].map(m => m[1]).filter((v, i, a) => a.indexOf(v) === i).slice(0, 14);
+      if (defs.length || syns.length) return {word: t, defs, syns};
+    } catch(e){}
+  }
+  return null;
+}
+async function wikiSummary(term){
+  const lang = LS.get('wikiLang', 'nl');
+  const get = async t => { const r = await fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(t.replace(/ /g, '_'))}`); return r.ok ? r.json() : null; };
+  try {
+    let s = await get(term);
+    if (!s || s.type === 'disambiguation' || !s.extract){
+      const j = await (await fetch(`https://${lang}.wikipedia.org/w/api.php?origin=*&format=json&action=query&list=search&srlimit=1&srsearch=${encodeURIComponent(term)}`)).json();
+      const hit = j.query.search[0]; if (hit) s = await get(hit.title);
+    }
+    return s && s.extract ? {lang, title: s.title, extract: s.extract, url: s.content_urls && s.content_urls.desktop.page} : null;
+  } catch(e){ return null; }
+}
+async function lookup(term){
+  term = String(term || '').trim().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ''); if (!term) return;
+  if (!rpOpen) toggleResearch(true);
+  rpSrc = null; rpLookup = {term, loading: true};
+  const low = term.toLowerCase();
+  rpLookup.mine = [
+    ...Object.values(snippets).filter(n => (n.text + ' ' + n.note).toLowerCase().includes(low)).map(x => ({type:'snip', x})),
+    ...Object.values(sources).filter(s => (s.title + ' ' + s.excerpt + ' ' + s.note).toLowerCase().includes(low)).map(x => ({type:'src', x}))
+  ].slice(0, 8);
+  renderResearch();
+  const [dict, wiki] = await Promise.all([dictLookup(term), wikiSummary(term)]);
+  if (!rpLookup || rpLookup.term !== term) return;
+  Object.assign(rpLookup, {dict, wiki, loading: false}); renderResearch();
+}
+function lookupHtml(){
+  const L = rpLookup;
+  let h = `<button class="rpback" data-rpa="back">‹ Terug</button><h3 style="margin:6px 0 10px;font-size:19px">${esc(L.term)}</h3>`;
+  if (L.loading) h += '<p class="muted">Opzoeken…</p>';
+  if (L.dict){
+    h += `<div class="rpi"><div class="rpk">Betekenis · WikiWoordenboek</div>${L.dict.defs.length ? `<ol class="defs">${L.dict.defs.map(d => `<li>${esc(d)}</li>`).join('')}</ol>` : ''}
+      ${L.dict.syns.length ? `<div class="rpk" style="margin-top:8px">Synoniemen</div><div class="syns">${L.dict.syns.map(s => `<button data-syn="${esc(s)}" title="Vervang je selectie door dit woord">${esc(s)}</button>`).join('')}</div>` : ''}</div>`;
+  } else if (!L.loading) h += `<p class="muted">Geen woordenboekbetekenis gevonden.</p>`;
+  if (L.wiki){
+    h += `<div class="rpi"><div class="rpk">Wikipedia · ${esc(L.wiki.title)}</div><div class="rpt" style="-webkit-line-clamp:12">${esc(L.wiki.extract)}</div>
+      <div class="rpa"><button data-lkwiki="1">Bewaar & lees</button>${L.wiki.url ? `<a href="${esc(L.wiki.url)}" target="_blank" rel="noopener">Openen ↗</a>` : ''}</div></div>`;
+  } else if (!L.loading) h += `<p class="muted">Geen Wikipedia-artikel gevonden.</p>`;
+  h += `<div class="rpk" style="margin:14px 0 8px">In je verzameling</div>` + (L.mine.length ? L.mine.map(rpItem).join('') : '<p class="muted">Nog niets bewaard over dit onderwerp.</p>');
+  return h;
+}
+
+/* ----- 4. [[Links]] ----- */
+const LINK_RE = /\[\[([^\]\n|]+)(?:\|[^\]\n]*)?\]\]/g;
+function linkTargets(){
+  const out = [];
+  for (const [id, s] of Object.entries(sheets)) if (!s.trashed && (s.body || '').trim()) out.push({kind:'sheet', id, title: titleOf(s), sub: 'Tekst'});
+  for (const s of Object.values(sources)) out.push({kind:'src', id: s.id, title: s.title, sub: KIND[s.kind] || 'Bron'});
+  for (const n of Object.values(snippets)) out.push({kind:'snip', id: n.id, title: n.text.split('\n')[0].slice(0, 70), sub: 'Fragment'});
+  return out;
+}
+function resolveLink(title){
+  const t = title.trim().toLowerCase();
+  const all = linkTargets();
+  return all.find(x => x.title.toLowerCase() === t) || all.find(x => x.title.toLowerCase().startsWith(t)) || null;
+}
+function openTarget(x){
+  if (!x){ toast('Niets gevonden met die naam'); return; }
+  if (x.kind === 'sheet'){ if (view === 'sources' || isBoard()) setView('all'); openSheet(x.id); ta.focus(); return; }
+  if (!rpOpen) toggleResearch(true);
+  rpLookup = null;
+  if (x.kind === 'src'){ rpSrc = x.id; renderResearch(); return; }
+  const n = snippets[x.id];
+  if (n && n.source_id && sources[n.source_id]){ rpSrc = n.source_id; renderResearch(); }
+  else snippetDialog({id: x.id});
+}
+/* Links in this sheet and texts that link here (backlinks) */
+function linksHtml(){
+  const sh = sheets[currentId]; if (!sh) return '';
+  const out = [...new Set([...(sh.body || '').matchAll(LINK_RE)].map(m => m[1].trim()))];
+  const me = titleOf(sh).toLowerCase();
+  const back = Object.entries(sheets).filter(([id, s]) => id !== currentId && !s.trashed && [...(s.body || '').matchAll(LINK_RE)].some(m => m[1].trim().toLowerCase() === me));
+  if (!out.length && !back.length) return '';
+  return `<div class="linkbox">${out.length ? `<div class="rpk">Links in deze tekst</div><div class="lchips">${out.map(t => { const r = resolveLink(t); return `<button data-link="${esc(t)}" class="${r ? '' : 'miss'}" title="${r ? esc(r.sub) : 'Nog niets met deze naam'}">${esc(t)}</button>`; }).join('')}</div>` : ''}
+    ${back.length ? `<div class="rpk" style="margin-top:8px">Verwijzen hierheen</div><div class="lchips">${back.map(([id, s]) => `<button data-opensheet="${id}">${esc(titleOf(s))}</button>`).join('')}</div>` : ''}</div>`;
+}
+/* Where is a source used? (cited by URL or linked by title) */
+function usedIn(src){
+  const t = src.title.toLowerCase();
+  return Object.entries(sheets).filter(([, s]) => !s.trashed && ((src.url && (s.body || '').includes(src.url)) || [...(s.body || '').matchAll(LINK_RE)].some(m => m[1].trim().toLowerCase() === t)));
+}
+function usedInHtml(src){
+  const u = usedIn(src); if (!u.length) return '';
+  return `<div class="linkbox"><div class="rpk">Gebruikt in</div><div class="lchips">${u.map(([id, s]) => `<button data-opensheet="${id}">${esc(titleOf(s))}</button>`).join('')}</div></div>`;
+}
+
+/* ----- Autocomplete for [[ ----- */
+let ac = null;   // {start, items, sel}
+function acCheck(){
+  const p = ta.selectionStart, before = ta.value.slice(Math.max(0, p - 60), p);
+  const m = before.match(/\[\[([^\]\n[]{0,50})$/);
+  if (!m || ta.selectionStart !== ta.selectionEnd){ acClose(); return; }
+  const q = m[1].toLowerCase();
+  const items = linkTargets().filter(x => x.title && x.id !== currentId && (!q || x.title.toLowerCase().includes(q))).sort((a, b) => (a.title.toLowerCase().startsWith(q) ? 0 : 1) - (b.title.toLowerCase().startsWith(q) ? 0 : 1)).slice(0, 8);
+  ac = {start: p - m[1].length - 2, q: m[1], items, sel: 0};
+  const box = $('#acbox');
+  box.innerHTML = items.length ? items.map((x, i) => `<button data-ac="${i}" class="${i === 0 ? 'on' : ''}"><b>${esc(x.title)}</b><span>${esc(x.sub)}</span></button>`).join('')
+    : `<div class="muted" style="padding:8px 10px">Geen treffers — typ verder en sluit af met <b>]]</b></div>`;
+  const r = caretRect(p);
+  box.style.left = Math.min(innerWidth - 330, Math.max(8, r.left)) + 'px';
+  box.style.top = Math.min(innerHeight - 260, r.bottom + 6) + 'px';
+  box.classList.add('show');
+}
+function acClose(){ ac = null; $('#acbox').classList.remove('show'); }
+function acPick(i){
+  const x = ac && ac.items[i]; if (!x) return;
+  const title = x.title.replace(/[\[\]|]/g, '');
+  ta.setSelectionRange(ac.start, ta.selectionStart);
+  const after = ta.value.slice(ta.selectionEnd, ta.selectionEnd + 2) === ']]';
+  insert('[[' + title + (after ? '' : ']]'));
+  if (after){ const p = ta.selectionStart + 2; ta.setSelectionRange(p, p); }
+  acClose();
+}
+$('#acbox').addEventListener('mousedown', e => e.preventDefault());
+$('#acbox').addEventListener('click', e => { const b = e.target.closest('[data-ac]'); if (b) acPick(+b.dataset.ac); });
+ta.addEventListener('keydown', e => {
+  if (!ac || !ac.items.length) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+    e.preventDefault(); e.stopImmediatePropagation();
+    ac.sel = (ac.sel + (e.key === 'ArrowDown' ? 1 : -1) + ac.items.length) % ac.items.length;
+    $('#acbox').querySelectorAll('[data-ac]').forEach((b, i) => b.classList.toggle('on', i === ac.sel));
+  } else if (e.key === 'Enter' || e.key === 'Tab'){ e.preventDefault(); e.stopImmediatePropagation(); acPick(ac.sel); }
+  else if (e.key === 'Escape'){ e.preventDefault(); e.stopImmediatePropagation(); acClose(); }
+}, true);
+
+/* ----- Floating pill in the editor: "Opzoeken" for a selection, "Open" inside a [[link]] ----- */
+function caretRect(pos){
+  measure.textContent = ta.value.slice(0, pos);
+  const span = document.createElement('span'); span.textContent = '​'; measure.appendChild(span);
+  return span.getBoundingClientRect();
+}
+let pillT;
+function updatePill(){
+  clearTimeout(pillT);
+  pillT = setTimeout(() => {
+    const pill = $('#edpill');
+    if (document.activeElement !== ta || !currentId || previewOn){ pill.classList.remove('show'); return; }
+    const a = ta.selectionStart, b = ta.selectionEnd, v = ta.value;
+    let html = '', act = null;
+    if (b > a){
+      const sel = v.slice(a, b).trim();
+      if (sel && sel.length <= 60 && !sel.includes('\n') && sel.split(/\s+/).length <= 5){ html = `🔍 Opzoeken: <b>${esc(sel.length > 24 ? sel.slice(0, 24) + '…' : sel)}</b>`; act = {type:'lookup', term: sel}; }
+    } else {
+      const ls = v.lastIndexOf('[[', a), le = v.indexOf(']]', ls);
+      if (ls >= 0 && le >= a - 1 && !v.slice(ls, a).includes('\n') && !v.slice(ls + 2, a).includes(']]')){
+        const m = v.slice(ls).match(/^\[\[([^\]\n|]+)/);
+        if (m && le >= 0){ const r = resolveLink(m[1]); html = r ? `↗ Open: <b>${esc(m[1].slice(0, 28))}</b>` : `＋ Nog niets met de naam <b>${esc(m[1].slice(0, 20))}</b>`; act = {type: r ? 'open' : 'none', target: r}; }
+      }
+    }
+    if (!act || act.type === 'none' && !html){ pill.classList.remove('show'); return; }
+    pill.innerHTML = html; pill._act = act;
+    const r = caretRect(b);
+    pill.style.left = Math.min(innerWidth - 240, Math.max(8, r.left - 20)) + 'px';
+    pill.style.top = (r.bottom + 10 > innerHeight - 50 ? r.top - 40 : r.bottom + 10) + 'px';
+    pill.classList.add('show');
+  }, 160);
+}
+$('#edpill').addEventListener('mousedown', e => e.preventDefault());
+$('#edpill').onclick = () => {
+  const act = $('#edpill')._act; $('#edpill').classList.remove('show');
+  if (!act) return;
+  if (act.type === 'lookup') lookup(act.term);
+  if (act.type === 'open') openTarget(act.target);
+};
+['select', 'keyup', 'mouseup', 'click', 'focus'].forEach(ev => ta.addEventListener(ev, updatePill));
+ta.addEventListener('input', () => { $('#edpill').classList.remove('show'); acCheck(); });
+ta.addEventListener('blur', () => setTimeout(() => { $('#edpill').classList.remove('show'); acClose(); }, 150));
+scroller.addEventListener('scroll', () => { $('#edpill').classList.remove('show'); acClose(); });
+/* Ctrl/Cmd+click on a [[link]] opens it */
+ta.addEventListener('click', e => {
+  if (!(e.metaKey || e.ctrlKey)) return;
+  const a = ta.selectionStart, v = ta.value, ls = v.lastIndexOf('[[', a), le = v.indexOf(']]', ls);
+  if (ls >= 0 && le >= a - 1 && !v.slice(ls, a).includes('\n')){ const m = v.slice(ls).match(/^\[\[([^\]\n|]+)/); if (m) openTarget(resolveLink(m[1])); }
+});
+
+/* ----- Panel wiring for the new parts ----- */
+$('#research').addEventListener('click', e => {
+  const t = e.target;
+  const sc = t.closest('[data-tscope]'); if (sc){ todoScope = sc.dataset.tscope; LS.set('todoScope', todoScope); renderResearch(); return; }
+  const td = t.closest('[data-todo]'); if (td){ todoAction(td.dataset.todo, +td.dataset.ti); return; }
+  const lk = t.closest('[data-link]'); if (lk){ openTarget(resolveLink(lk.dataset.link)); return; }
+  const os = t.closest('[data-opensheet]'); if (os){ openTarget({kind:'sheet', id: os.dataset.opensheet}); return; }
+  const sy = t.closest('[data-syn]');
+  if (sy){ const a = ta.selectionStart, b = ta.selectionEnd; if (b > a && rpLookup && ta.value.slice(a, b).trim() === rpLookup.term){ ta.focus(); ta.setSelectionRange(a, b); insert(sy.dataset.syn); toast('Vervangen door “' + sy.dataset.syn + '”'); } else copy(sy.dataset.syn, '“' + sy.dataset.syn + '” gekopieerd'); return; }
+  const lw = t.closest('[data-lkwiki]');
+  if (lw && rpLookup && rpLookup.wiki){ lw.disabled = true; lw.textContent = 'Bewaren…'; saveWiki(rpLookup.wiki.lang, rpLookup.wiki.title, {stay: true}).then(id => { if (id){ rpLookup = null; rpSrc = id; renderResearch(); } }); return; }
+}, true);
+let todoT;
+ta.addEventListener('input', () => { if (!rpOpen) return; clearTimeout(todoT); todoT = setTimeout(() => { const n = todoCount(); const b = document.querySelector('[data-rptab="todo"]'); if (b) b.textContent = 'Uitzoeken' + (n ? ' · ' + n : ''); if (rpTab === 'todo' && !rpSrc && !rpLookup) renderResearch(); }, 800); });
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.altKey && e.code === 'KeyL'){
+    e.preventDefault();
+    let term = ta.value.slice(ta.selectionStart, ta.selectionEnd).trim();
+    if (!term){ const v = ta.value, p = ta.selectionStart; const l = v.slice(0, p).match(/[\p{L}\p{N}’'-]*$/u)[0], r = v.slice(p).match(/^[\p{L}\p{N}’'-]*/u)[0]; term = l + r; }
+    if (term) lookup(term);
+  }
+});
 
 /* ---------------- Boot ---------------- */
 applySettings();
