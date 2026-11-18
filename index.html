@@ -4,6 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Schrijfkamer</title>
+<meta name="theme-color" content="#FBF8F4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#24222A" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Schrijfkamer">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Lora:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -58,6 +69,7 @@ svg{display:block}
 .dot{width:10px;height:10px;border-radius:50%;flex:none;margin:0 4px}
 .lib-foot{padding:10px 14px calc(12px + var(--sab));border-top:1px solid var(--line);display:flex;align-items:center;gap:6px}
 .sync{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sync{cursor:pointer}
 .sync i{width:8px;height:8px;border-radius:50%;background:var(--faint);flex:none}
 .sync.ok i{background:#8FC4A8}.sync.busy i{background:var(--butter)}.sync.err i{background:var(--coral)}
 
@@ -181,8 +193,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .dialog{background:var(--card);border-radius:18px;padding:22px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
 .dialog h3{margin:0 0 6px;font-size:18px}
 .dialog p{margin:0 0 14px;color:var(--muted);font-size:14px;line-height:1.5}
-.dialog input[type=text]{width:100%;border:1px solid var(--line);background:var(--pane2);border-radius:11px;padding:11px 13px;font-size:15px;outline:none;margin-bottom:12px}
-.dialog input[type=text]:focus{border-color:var(--lav)}
+.dialog input[type=text],.dialog input[type=email]{width:100%;border:1px solid var(--line);background:var(--pane2);border-radius:11px;padding:11px 13px;font-size:15px;outline:none;margin-bottom:12px}
+.dialog input[type=text]:focus,.dialog input[type=email]:focus{border-color:var(--lav)}
 .swatches{display:flex;gap:8px;margin-bottom:18px}
 .swatches button{width:30px;height:30px;border-radius:50%;border:3px solid transparent}
 .swatches button.on{border-color:var(--text)}
@@ -347,7 +359,7 @@ let groups = LS.get('groups', []);     // [{id,name,color}]
 let view = LS.get('view', 'inbox');    // inbox | all | recent | fav | trash | g:<id>
 let currentId = LS.get('current', null);
 let query = '';
-let db = null, sheetsCol = null, profileRef = null, cloud = 'pending';
+let cloud = 'pending';
 const timers = {}, inflight = {}, again = {}, lastLocalEdit = {};
 
 const titleOf = s => {
@@ -372,6 +384,12 @@ const fmtDate = ts => {
 function persistLocal(){ LS.set('sheets', sheets); LS.set('groups', groups); }
 
 /* ---------------- Sync ---------------- */
+// Backends: Supabase (when config.js is filled in), the claude.ai artifact store, or this device only.
+const CFG = window.SCHRIJF_CONFIG || {};
+const useSupabase = !!(CFG.supabaseUrl && CFG.supabaseKey);
+let backend = null;          // {write(id, sheet), remove(id), saveGroups(groups)}
+let sb = null, sbUser = null, sbChannel = null;
+
 function setSync(state, text){
   const el = $('#sync'); el.className = 'sync ' + state; el.querySelector('span').textContent = text;
   el.title = text;
@@ -379,6 +397,7 @@ function setSync(state, text){
 function syncIdle(){
   if (cloud === 'on') setSync('ok', 'Gesynchroniseerd');
   else if (cloud === 'pending') setSync('busy', 'Verbinden…');
+  else if (cloud === 'login') setSync('err', 'Inloggen');
   else setSync('', 'Alleen op dit apparaat');
 }
 function cleanSheet(s){ return {body:s.body||'', group:s.group||'inbox', fav:!!s.fav, trashed:!!s.trashed, goal:s.goal||0, created:s.created||Date.now(), updated:s.updated||Date.now()}; }
@@ -396,81 +415,225 @@ function persistLocalSoon(){ clearTimeout(lsTimer); lsTimer = setTimeout(persist
 
 async function flush(id){
   delete timers[id];
+  if (!backend) return;
   if (inflight[id]){ again[id] = true; return; }
   inflight[id] = true;
   do {
     again[id] = false;
     const s = sheets[id];
     try {
-      if (s) await sheetsCol.doc(id).set(cleanSheet(s));
-      else await sheetsCol.doc(id).delete();
+      if (s){ await backend.write(id, cleanSheet(s)); if (sheets[id]){ sheets[id].synced = true; persistLocalSoon(); } }
+      else await backend.remove(id);
     } catch (e) { handleDbError(e); }
   } while (again[id]);
   inflight[id] = false;
   if (!Object.keys(timers).length && !Object.values(inflight).some(Boolean)) syncIdle();
 }
 function handleDbError(e){
-  const code = e && e.code;
+  console.warn('sync', e);
+  const code = e && e.code, msg = String((e && e.message) || '');
   if (code === 'quota_exceeded') toast('Opslag in de cloud is vol — verwijder oude teksten uit de prullenbak.');
-  else if (code === 'revoked' || code === 'not_granted' || code === 'invalid_argument'){ cloud = 'off'; }
+  else if (code === 'revoked' || code === 'not_granted') { cloud = 'off'; }
+  else if (/jwt|auth|401/i.test(msg) || code === 'PGRST301'){ cloud = 'login'; syncIdle(); return; }
   setSync('err', 'Opslaan mislukt — lokaal bewaard');
 }
 let profileBusy = false, profileAgain = false;
 async function saveProfile(){
   persistLocalSoon();
-  if (cloud !== 'on') return;
+  if (cloud !== 'on' || !backend) return;
   if (profileBusy){ profileAgain = true; return; }
   profileBusy = true;
-  do { profileAgain = false; try { await profileRef.set({groups}); } catch(e){ handleDbError(e); } } while (profileAgain);
+  do { profileAgain = false; try { await backend.saveGroups(groups); } catch(e){ handleDbError(e); } } while (profileAgain);
   profileBusy = false;
 }
 
+/* Apply a sheet that came from the server. Returns true when something changed. */
+function applyRemote(sid, d){
+  const busy = timers[sid] || inflight[sid] || (Date.now() - (lastLocalEdit[sid]||0) < 2500);
+  if (busy) return false;
+  const local = sheets[sid];
+  if (local && (local.updated||0) > (d.updated||0)){ if (cloud === 'on') saveSheet(sid, true); return false; }
+  if (local && local.updated === d.updated && local.body === d.body){ local.synced = true; return false; }
+  sheets[sid] = {...cleanSheet(d), body: String(d.body||''), synced:true};
+  if (sid === currentId && ta.value !== sheets[sid].body){
+    const pos = ta.selectionStart; ta.value = sheets[sid].body;
+    if (document.activeElement === ta) ta.setSelectionRange(Math.min(pos, ta.value.length), Math.min(pos, ta.value.length));
+    renderMirror(); updateCounts();
+  }
+  return true;
+}
+function applyRemoteDelete(sid){
+  if (!sheets[sid] || timers[sid] || inflight[sid]) return false;
+  delete sheets[sid]; return true;
+}
+function afterRemoteChange(){
+  persistLocalSoon(); renderLib(); renderList();
+  if (currentId && !sheets[currentId]) openSheet(null); else if (panelOpen) renderPanel();
+}
+/* Local sheets missing on the server: new ones are uploaded, ones that were synced before were deleted elsewhere. */
+function reconcile(remoteIds){
+  let changed = false;
+  for (const sid of Object.keys(sheets)){
+    if (remoteIds.has(sid)) continue;
+    if (sheets[sid].synced && !timers[sid] && !inflight[sid]){ delete sheets[sid]; changed = true; }
+    else saveSheet(sid, true);
+  }
+  return changed;
+}
+function mergeGroups(remote){
+  const byId = new Map(remote.map(g => [g.id, {...g}]));
+  let extra = false;
+  for (const g of groups) if (!byId.has(g.id)){ byId.set(g.id, g); extra = true; }
+  groups = [...byId.values()];
+  return extra;
+}
+
 async function connect(){
+  if (useSupabase) return connectSupabase();
   if (!window.claude || !window.claude.use){ cloud = 'off'; syncIdle(); return; }
-  let user;
+  let user, db;
   try { [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]); } catch(e){ db = null; }
   const id = user ? await user.id() : null;
   if (!db || !id){ cloud = 'off'; syncIdle(); return; }
-  profileRef = db.doc('data/users/' + id + '/profile');
-  sheetsCol = profileRef.collection('sheets');
+  const profileRef = db.doc('data/users/' + id + '/profile');
+  const sheetsCol = profileRef.collection('sheets');
+  backend = {
+    write: (sid, s) => sheetsCol.doc(sid).set(s),
+    remove: sid => sheetsCol.doc(sid).delete(),
+    saveGroups: g => profileRef.set({groups: g})
+  };
   let firstServer = false;
-  const timeout = setTimeout(() => { if (!firstServer){ setSync('err', 'Cloud niet bereikbaar — lokaal'); } }, 10000);
-
+  const timeout = setTimeout(() => { if (!firstServer) setSync('err', 'Cloud niet bereikbaar — lokaal'); }, 10000);
   profileRef.onSnapshot(snap => {
     if (snap.metadata.hasPendingWrites || profileBusy) return;
-    if (snap.exists){ const d = snap.data(); if (Array.isArray(d.groups)){ groups = d.groups.map(g => ({...g})); persistLocalSoon(); renderLib(); renderList(); } }
+    if (snap.exists){ const d = snap.data(); if (Array.isArray(d.groups)){ groups = d.groups.map(g => ({...g})); afterRemoteChange(); } }
   }, e => handleDbError(e));
-
   sheetsCol.onSnapshot(snap => {
     let changed = false;
     if (!snap.metadata.fromCache && !firstServer){
       firstServer = true; clearTimeout(timeout); cloud = 'on'; syncIdle();
-      // Upload sheets that only exist locally (written offline or before syncing)
-      const remote = new Set(snap.docs.map(d => d.id));
-      for (const sid of Object.keys(sheets)) if (!remote.has(sid)) saveSheet(sid, true);
+      changed = reconcile(new Set(snap.docs.map(d => d.id))) || changed;
       if (!snap.docs.length && groups.length) saveProfile();
     }
     for (const ch of snap.docChanges()){
-      const sid = ch.doc.id;
-      const busy = timers[sid] || inflight[sid] || (Date.now() - (lastLocalEdit[sid]||0) < 2500);
-      if (busy) continue;
-      if (ch.type === 'removed'){
-        if (snap.metadata.fromCache) continue;
-        delete sheets[sid]; changed = true; continue;
-      }
-      const d = ch.doc.data();
-      const local = sheets[sid];
-      if (local && (local.updated||0) > (d.updated||0)) continue;
-      sheets[sid] = {...d, body: String(d.body||'')}; changed = true;
-      if (sid === currentId && ta.value !== sheets[sid].body){
-        const pos = ta.selectionStart; ta.value = sheets[sid].body;
-        if (document.activeElement === ta) ta.setSelectionRange(Math.min(pos, ta.value.length), Math.min(pos, ta.value.length));
-        renderMirror(); updateCounts();
-      }
+      if (ch.type === 'removed'){ if (!snap.metadata.fromCache) changed = applyRemoteDelete(ch.doc.id) || changed; }
+      else changed = applyRemote(ch.doc.id, ch.doc.data()) || changed;
     }
-    if (changed){ persistLocalSoon(); renderLib(); renderList(); if (!sheets[currentId]) openSheet(null); else if (panelOpen) renderPanel(); }
-  }, e => { handleDbError(e); });
+    if (changed) afterRemoteChange();
+  }, e => handleDbError(e));
 }
+
+/* ----- Supabase ----- */
+const rowToSheet = r => ({body:r.body, group:r.grp, fav:r.fav, trashed:r.trashed, goal:r.goal, created:Number(r.created), updated:Number(r.updated)});
+async function connectSupabase(){
+  if (!window.supabase){ cloud = 'off'; setSync('err', 'Kan Supabase niet laden — lokaal'); return; }
+  sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey, {auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:true}});
+  sb.auth.onAuthStateChange((event, session) => {
+    if (session && session.user && (!sbUser || sbUser.id !== session.user.id)) setTimeout(() => startSupabase(session.user), 0);
+    if (event === 'SIGNED_OUT') stopSupabase();
+  });
+  const { data } = await sb.auth.getSession();
+  if (data && data.session) startSupabase(data.session.user);
+  else { cloud = 'login'; syncIdle(); if (!LS.get('loginLater', false)) loginDialog(); }
+}
+async function startSupabase(user){
+  if (sbUser && sbUser.id === user.id) return;
+  sbUser = user; cloud = 'pending'; syncIdle();
+  backend = {
+    async write(id, s){
+      const { error } = await sb.from('sheets').upsert({id, user_id:user.id, body:s.body, grp:s.group, fav:s.fav, trashed:s.trashed, goal:s.goal, created:s.created, updated:s.updated});
+      if (error) throw error;
+    },
+    async remove(id){ const { error } = await sb.from('sheets').delete().eq('id', id); if (error) throw error; },
+    async saveGroups(g){ const { error } = await sb.from('profiles').upsert({user_id:user.id, groups:g}); if (error) throw error; }
+  };
+  await sbPull();
+  sbChannel = sb.channel('sync-' + user.id)
+    .on('postgres_changes', {event:'*', schema:'public', table:'sheets'}, p => {
+      let changed;
+      if (p.eventType === 'DELETE') changed = p.old && applyRemoteDelete(p.old.id);
+      else if (p.new && p.new.user_id === user.id) changed = applyRemote(p.new.id, rowToSheet(p.new));
+      if (changed) afterRemoteChange();
+    })
+    .on('postgres_changes', {event:'*', schema:'public', table:'profiles'}, p => {
+      if (profileBusy || !p.new || p.new.user_id !== user.id || !Array.isArray(p.new.groups)) return;
+      groups = p.new.groups; afterRemoteChange();
+    })
+    .subscribe();
+}
+let pulling = false;
+async function sbPull(){
+  if (!sbUser || pulling) return;
+  pulling = true;
+  try {
+    const [res, prof] = await Promise.all([
+      sb.from('sheets').select('*'),
+      sb.from('profiles').select('groups').eq('user_id', sbUser.id).maybeSingle()
+    ]);
+    if (res.error) throw res.error;
+    cloud = 'on';
+    let changed = false;
+    for (const r of res.data) changed = applyRemote(r.id, rowToSheet(r)) || changed;
+    changed = reconcile(new Set(res.data.map(r => r.id))) || changed;
+    const remoteGroups = prof && prof.data && Array.isArray(prof.data.groups) ? prof.data.groups : [];
+    const before = JSON.stringify(groups);
+    const extra = mergeGroups(remoteGroups);
+    if (extra || !prof.data) saveProfile();
+    if (changed || before !== JSON.stringify(groups)) afterRemoteChange();
+    if (!Object.keys(timers).length) syncIdle();
+  } catch(e){ handleDbError(e); }
+  pulling = false;
+}
+function stopSupabase(){
+  if (sbChannel){ sb.removeChannel(sbChannel); sbChannel = null; }
+  sbUser = null; backend = null; cloud = 'login';
+  for (const s of Object.values(sheets)) delete s.synced;
+  persistLocal(); syncIdle();
+}
+
+function loginDialog(){
+  openModal(`<h3>Inloggen</h3><p>Log in om je teksten te synchroniseren tussen je telefoon en computer. Je krijgt een code per e-mail — geen wachtwoord nodig.</p>
+    <div id="lstep1"><input type="email" id="lemail" placeholder="jij@voorbeeld.nl" autocomplete="email" value="${esc(LS.get('email',''))}">
+      <div class="btns"><button class="btn ghost" id="llater">Later</button><button class="btn" id="lsend">Stuur code</button></div></div>
+    <div id="lstep2" hidden><p style="margin-top:-4px">Check je mail en vul de code in.</p>
+      <input type="text" id="lcode" inputmode="numeric" autocomplete="one-time-code" placeholder="123456" maxlength="10" style="letter-spacing:.3em;font-size:20px;text-align:center">
+      <div class="btns"><button class="btn ghost" id="lback">Ander adres</button><button class="btn" id="lok">Inloggen</button></div></div>
+    <p class="muted" id="lmsg" style="margin:12px 0 0"></p>`);
+  const msg = t => $('#lmsg').textContent = t;
+  setTimeout(() => $('#lemail').focus(), 30);
+  const send = async () => {
+    const email = $('#lemail').value.trim(); if (!/.+@.+\..+/.test(email)) return msg('Vul een geldig e-mailadres in.');
+    LS.set('email', email); $('#lsend').disabled = true; msg('Versturen…');
+    const { error } = await sb.auth.signInWithOtp({email, options:{shouldCreateUser:true, emailRedirectTo: location.href.split('#')[0]}});
+    $('#lsend').disabled = false;
+    if (error) return msg('Dat lukte niet: ' + error.message);
+    msg(''); $('#lstep1').hidden = true; $('#lstep2').hidden = false; setTimeout(() => $('#lcode').focus(), 30);
+  };
+  const verify = async () => {
+    const token = $('#lcode').value.replace(/\s/g, ''); if (!token) return;
+    $('#lok').disabled = true; msg('Controleren…');
+    const { data, error } = await sb.auth.verifyOtp({email: LS.get('email',''), token, type:'email'});
+    $('#lok').disabled = false;
+    if (error) return msg('Die code klopt niet of is verlopen. Probeer het opnieuw.');
+    LS.set('loginLater', false); closeModal(); toast('Ingelogd — je teksten worden gesynchroniseerd');
+    if (data && data.user) startSupabase(data.user);
+  };
+  $('#lsend').onclick = send; $('#lok').onclick = verify;
+  $('#lemail').onkeydown = e => { if (e.key === 'Enter') send(); };
+  $('#lcode').onkeydown = e => { if (e.key === 'Enter') verify(); };
+  $('#lback').onclick = () => { $('#lstep1').hidden = false; $('#lstep2').hidden = true; msg(''); };
+  $('#llater').onclick = () => { LS.set('loginLater', true); closeModal(); };
+}
+function accountDialog(){
+  openModal(`<h3>Account</h3><p>Ingelogd als <b>${esc(sbUser.email || '')}</b>. Je teksten worden gesynchroniseerd met je andere apparaten.</p>
+    <div class="btns"><button class="btn ghost" id="lout" style="margin-right:auto">Uitloggen</button><button class="btn" data-close>Sluiten</button></div>`);
+  $('#lout').onclick = async () => { closeModal(); await sb.auth.signOut(); toast('Uitgelogd — je teksten blijven op dit apparaat staan'); };
+}
+$('#sync').addEventListener('click', () => {
+  if (!useSupabase || !sb) return;
+  if (sbUser) accountDialog(); else loginDialog();
+});
+addEventListener('online', () => sbPull());
 
 /* ---------------- Library ---------------- */
 function counts(){
@@ -1004,7 +1167,7 @@ function settingsDialog(){
 $('#btnSettings').onclick = settingsDialog;
 
 /* ---------------- Dialogs ---------------- */
-function openModal(html){ $('#dialog').innerHTML = html; $('#modal').classList.add('open'); const f = $('#dialog input[type=text]'); if (f) setTimeout(() => f.focus(), 30); }
+function openModal(html){ $('#dialog').innerHTML = html; $('#modal').classList.add('open'); const f = $('#dialog input[type=text]:not([hidden] *)'); if (f) setTimeout(() => f.focus(), 30); }
 function closeModal(){ $('#modal').classList.remove('open'); $('#dialog').replaceWith($('#dialog').cloneNode(false)); }
 $('#modal').addEventListener('click', e => { if (e.target.id === 'modal' || e.target.closest('[data-close]')) closeModal(); });
 
@@ -1089,7 +1252,7 @@ document.addEventListener('keydown', e => {
     else if (k === 'KeyI' && currentId){ e.preventDefault(); panelOpen ? closePanel() : openPanel(); }
   }
 });
-document.addEventListener('visibilitychange', () => { if (document.hidden){ persistLocal(); for (const id of Object.keys(timers)){ clearTimeout(timers[id]); flush(id); } } });
+document.addEventListener('visibilitychange', () => { if (document.hidden){ persistLocal(); for (const id of Object.keys(timers)){ clearTimeout(timers[id]); flush(id); } } else if (sbUser) sbPull(); });
 
 /* ---------------- Boot ---------------- */
 applySettings();
