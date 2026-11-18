@@ -85,6 +85,12 @@ svg{display:block}
 .sheet{display:block;width:100%;text-align:left;padding:13px 14px 13px 16px;border-radius:12px;margin-bottom:6px;position:relative;border:1px solid transparent}
 .sheet:hover{background:rgba(140,124,196,.06)}
 .sheet.on{background:var(--card);box-shadow:var(--shadow);border-color:var(--line)}
+.sheet .del{position:absolute;right:8px;top:9px;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:var(--faint);opacity:0;transition:opacity .15s}
+.sheet:hover .del,.sheet.on .del{opacity:1}
+.sheet .del:hover{color:#C9776B;background:rgba(233,169,160,.18)}
+.sheet .del svg{width:16px;height:16px}
+@media (hover:none){.sheet .del{opacity:.7}}
+.sheet .t{padding-right:26px}
 .sheet .bar{position:absolute;left:6px;top:14px;bottom:14px;width:3px;border-radius:3px}
 .sheet .t{font-weight:700;font-size:14.5px;margin-bottom:3px;display:flex;gap:6px;align-items:center}
 .sheet .t span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -490,8 +496,10 @@ function syncIdle(){
 }
 function cleanSheet(s){ return {body:s.body||'', group:s.group||'inbox', fav:!!s.fav, trashed:!!s.trashed, goal:s.goal||0, created:s.created||Date.now(), updated:s.updated||Date.now()}; }
 
+let pendingDel = new Set(LS.get('pendingDel', []));
 function saveSheet(id, immediate){
   lastLocalEdit[id] = Date.now();
+  if (!sheets[id]){ pendingDel.add(id); LS.set('pendingDel', [...pendingDel]); }
   persistLocalSoon();
   if (cloud !== 'on') return;
   setSync('busy', 'Opslaan…');
@@ -511,7 +519,7 @@ async function flush(id){
     const s = sheets[id];
     try {
       if (s){ await backend.write(id, cleanSheet(s)); if (sheets[id]){ sheets[id].synced = true; persistLocalSoon(); } }
-      else await backend.remove(id);
+      else { await backend.remove(id); if (!sheets[id]){ pendingDel.delete(id); LS.set('pendingDel', [...pendingDel]); } }
     } catch (e) { handleDbError(e); }
   } while (again[id]);
   inflight[id] = false;
@@ -539,6 +547,7 @@ async function saveProfile(){
 
 /* Apply a sheet that came from the server. Returns true when something changed. */
 function applyRemote(sid, d){
+  if (pendingDel.has(sid)){ if (cloud === 'on') saveSheet(sid, true); return false; }
   const busy = timers[sid] || inflight[sid] || (Date.now() - (lastLocalEdit[sid]||0) < 2500);
   if (busy) return false;
   const local = sheets[sid];
@@ -602,6 +611,7 @@ async function connect(){
     let changed = false;
     if (!snap.metadata.fromCache && !firstServer){
       firstServer = true; clearTimeout(timeout); cloud = 'on'; syncIdle();
+      for (const id of pendingDel) if (!sheets[id]) saveSheet(id, true);
       changed = reconcile(new Set(snap.docs.map(d => d.id))) || changed;
       if (!snap.docs.length && groups.length) saveProfile();
     }
@@ -668,6 +678,7 @@ async function sbPull(){
     ]);
     if (res.error) throw res.error;
     cloud = 'on'; lastError = '';
+    for (const id of pendingDel) if (!sheets[id]) saveSheet(id, true);
     let changed = false;
     for (const r of res.data) changed = applyRemote(r.id, rowToSheet(r)) || changed;
     changed = reconcile(new Set(res.data.map(r => r.id))) || changed;
@@ -839,6 +850,7 @@ function renderList(){
     const g = groups.find(x => x.id === s.group);
     const words = countWords(s.body||'');
     return `<button class="sheet ${s.id===currentId?'on':''}" data-id="${s.id}">
+      <span class="del" role="button" data-del="${s.id}" title="${s.trashed ? 'Definitief verwijderen' : 'Naar prullenbak'}" aria-label="Verwijderen">${icon('trash','')}</span>
       ${g ? `<span class="bar" style="background:${esc(g.color)}"></span>` : ''}
       <div class="t">${s.fav ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9Z"/></svg>' : ''}<span>${esc(titleOf(s))}</span></div>
       <div class="x">${esc(excerptOf(s))}</div>
@@ -847,6 +859,20 @@ function renderList(){
   }).join('');
 }
 $('#sheets').addEventListener('click', e => {
+  const d = e.target.closest('[data-del]');
+  if (d){
+    e.stopPropagation();
+    const id = d.dataset.del, s = sheets[id]; if (!s) return;
+    const done = () => { if (id === currentId) openSheet(null); renderLib(); renderList(); };
+    if (!(s.body || '').trim()){ delete sheets[id]; saveSheet(id, true); done(); toast('Lege tekst verwijderd'); return; }
+    if (s.trashed){
+      confirmDialog('Definitief verwijderen?', 'Deze tekst verdwijnt op al je apparaten en kan niet worden teruggehaald.', 'Verwijderen', () => { delete sheets[id]; saveSheet(id, true); done(); });
+      return;
+    }
+    s.trashed = true; s.updated = Date.now(); saveSheet(id, true); done();
+    toast('Naar de prullenbak — terug te halen via Prullenbak');
+    return;
+  }
   const b = e.target.closest('.sheet'); if (!b) return;
   openSheet(b.dataset.id); setMobile('editor');
   if (!isMobile()) ta.focus();
@@ -915,7 +941,14 @@ function updateCurPara(){
   renderMirror();
 }
 
+/* Empty sheets are thrown away when you leave them (like Ulysses). */
+function discardIfEmpty(id){
+  const s = sheets[id];
+  if (!s || s.trashed || (s.body || '').trim()) return false;
+  delete sheets[id]; saveSheet(id, true); return true;
+}
 function openSheet(id){
+  if (currentId && currentId !== id && discardIfEmpty(currentId)) renderLib();
   if (id && !sheets[id]) id = null;
   currentId = id; LS.set('current', id);
   const has = !!id;
@@ -1809,6 +1842,7 @@ setInterval(renderToday, 60000);   // roll over at midnight
 /* ---------------- Boot ---------------- */
 applySettings();
 renderLib();
+for (const [id, s] of Object.entries(sheets)) if (id !== currentId && !s.trashed && !(s.body || '').trim() && Date.now() - (s.updated || 0) > 10 * 60000){ delete sheets[id]; saveSheet(id, true); }
 if (!sheets[currentId]) currentId = null;
 openSheet(currentId);
 if (!isMobile() && currentId) $('#app').dataset.view = 'editor';
