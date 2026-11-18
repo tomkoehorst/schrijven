@@ -3249,10 +3249,14 @@ function codeOf(e){
   return key || '';
 }
 let lastKeyInfo = '';
+/* AltGr (= Ctrl+Alt on many Windows layouts, e.g. US-International) arrives as a typed
+   character with ctrlKey/altKey cleared; treat it as Ctrl+Alt. */
+const altGr = e => !!(e.getModifierState && e.getModifierState('AltGraph'));
 function comboOf(e){
   const parts = [];
-  if (e.ctrlKey || e.metaKey) parts.push('Ctrl');
-  if (e.altKey) parts.push('Alt');
+  const ag = altGr(e) && !(e.ctrlKey && e.altKey);
+  if (e.ctrlKey || e.metaKey || ag) parts.push('Ctrl');
+  if (e.altKey || ag) parts.push('Alt');
   if (e.shiftKey) parts.push('Shift');
   if (['Control','Alt','Shift','Meta','AltGraph'].includes(e.key) || [16, 17, 18, 91, 92, 93, 225].includes(e.keyCode)) return null;
   const code = codeOf(e); if (!code) return null;
@@ -3270,7 +3274,7 @@ document.addEventListener('keydown', e => {
   const c = comboOf(e); if (!c) return;
   lastKeyInfo = `${prettyCombo(c)}   (code: ${e.code || 'leeg'}, key: ${e.key}, keyCode: ${e.keyCode})`;
   const kt = document.getElementById('keyTest'); if (kt) kt.textContent = lastKeyInfo;
-  const usable = /^F\d+$/.test(codeOf(e)) || e.ctrlKey || e.metaKey || e.altKey;
+  const usable = /^F\d+$/.test(codeOf(e)) || e.ctrlKey || e.metaKey || e.altKey || altGr(e);
   if (!usable) return;
   const map = keyMap(), id = Object.keys(map).find(k => map[k] === c);
   if (!id) return;
@@ -3324,7 +3328,7 @@ function keysDialog(){
       capturing = ev => {
         if (ev.key === 'Escape'){ capturing = null; draw(); return; }
         const c = comboOf(ev); if (!c) return;
-        if (!(/^F\d+$/.test(codeOf(ev)) || ev.ctrlKey || ev.metaKey || ev.altKey)){ st.textContent = 'Gebruik Ctrl/Alt of een F-toets'; return; }
+        if (!(/^F\d+$/.test(codeOf(ev)) || ev.ctrlKey || ev.metaKey || ev.altKey || altGr(ev))){ st.textContent = 'Gebruik Ctrl/Alt of een F-toets'; return; }
         capturing = null;
         settings.keys = {...(settings.keys || {}), [st.dataset.kset]: c}; LS.set('settings', settings); draw();
       };
