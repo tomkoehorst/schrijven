@@ -32,6 +32,21 @@ Een rustige schrijfapp in de browser, met een indeling zoals in Ulysses: bibliot
 
 Hiervoor is de Edge Function `supabase/functions/bronnen` nodig (en voor webzoeken een `BRAVE_API_KEY`).
 
+## Onderzoekspaneel
+
+Naast je tekst (Ctrl+Alt+R):
+- **Gerelateerd:** fragmenten en bronnen die passen bij de alinea waar je schrijft
+- **Zoeken:** in je verzameling (ook de volledige tekst van bronnen), Wikipedia of het web
+- Bronnen lezen in het paneel, tekst selecteren → citeren of als fragment bewaren
+- Fragmenten met één klik invoegen op de plek van je cursor
+
+## Snel bewaren & projecten
+
+- Plak een link in Bronnen of op de Braindump → wordt een bron; plak tekst → wordt een fragment
+- **Snel bewaren** (✚ bij Verzamelen, Ctrl+Alt+S): één vak voor links en tekst
+- Bronnen en fragmenten horen bij een project (groep); filter per project in Bronnen, Braindump en Tijdlijn
+- Nieuwe items komen automatisch in het project van de tekst waar je aan werkt
+
 ## Schrijfcoach (zonder AI)
 
 - **Vandaag:** dagdoel, reeks (dagen op rij), weekoverzicht en beste dag — gesynchroniseerd tussen apparaten

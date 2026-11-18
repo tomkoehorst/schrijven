@@ -404,6 +404,34 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   .seg button{padding:7px 10px}
 }
 
+/* ---------- Projecten & onderzoekspaneel ---------- */
+.pchips{display:flex;gap:6px;flex-wrap:wrap;padding:0 4px 10px}
+.bhead + .pchips{padding:0 22px 8px}
+.psel{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:6px 9px;font-size:13.5px;outline:none;color:var(--text)}
+.card .cproj{font-size:11.5px;font-weight:800;color:var(--text);border-radius:999px;padding:2px 8px;opacity:.85}
+.research{position:absolute;top:calc(56px + var(--sat));right:0;bottom:0;width:380px;background:var(--pane2);border-left:1px solid var(--line);display:none;flex-direction:column;z-index:9}
+.app.rp .research{display:flex}
+.app.srcmode .research,.app.boardmode .research,.app.focus .research{display:none!important}
+@media (min-width:821px){ .app.rp:not(.srcmode):not(.boardmode):not(.focus) #scroll{padding-right:380px} }
+.rphead{display:flex;align-items:center;gap:4px;padding:10px 10px 8px 14px}
+.rphead .ib{font-size:15px}
+.rpscroll{flex:1;min-height:0;overflow:auto;padding:4px 14px 40px}
+.rpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:9px}
+.rpk{font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.05em}
+.rpt{font-size:14px;line-height:1.5;margin-top:4px;display:-webkit-box;-webkit-line-clamp:7;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-line}
+.rph{font-size:11.5px;color:var(--faint);margin-top:5px;font-weight:700}
+.rpa{display:flex;gap:6px;margin-top:8px;align-items:center}
+.rpa button,.rpa a{font-size:12px;font-weight:800;padding:5px 10px;border-radius:8px;background:var(--accent-soft);color:var(--accent);text-decoration:none}
+.rpa a{background:var(--pane2);color:var(--muted)}
+.rpa button[disabled]{opacity:.6}
+.rpback{font-weight:800;color:var(--accent);font-size:13.5px;padding:4px 0}
+.rpbody{font-size:15px;line-height:1.65;margin-top:8px}
+.rpbody p{margin:0 0 .9em}.rpbody h2,.rpbody h3{font-size:16px;margin:1.1em 0 .4em}
+.rpbody blockquote{margin:.8em 0;padding:.1em .9em;border-left:3px solid var(--sage);color:var(--muted)}
+.rpbody a{color:var(--link)}
+.rpbody ::selection{background:var(--hl)}
+@media (max-width:820px){ .research{top:0;width:100%;z-index:26;padding-top:var(--sat);border-left:0} }
+
 /* ---------- Mobile ---------- */
 @media (max-width:820px){
   .app,.app.hide-lib,.app.focus{display:block;position:relative}
@@ -476,6 +504,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <button class="ib" id="btnPreview" title="Voorbeeld (Ctrl+Alt+P)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
       <button class="ib" id="btnFocus" title="Focusscherm (Ctrl+Alt+F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
       <button class="sprint-badge" id="sprintBadge" title="Schrijfsprint"></button>
+      <button class="ib" id="btnResearch" title="Onderzoekspaneel (Ctrl+Alt+R)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H11"/><path d="M6.5 2H20v8"/><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2"/><circle cx="17" cy="16" r="3"/><path d="m21 20-1.8-1.8"/></svg></button>
       <button class="ib" id="btnCoach" title="Schrijfcoach (Ctrl+Alt+C)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2Z"/></svg></button>
       <button class="ib" id="btnInfo" title="Info & doelen (Ctrl+Alt+I)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></button>
     </div>
@@ -504,6 +533,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="scroll" id="readerScroll"><article class="rd" id="readerBody"></article></div>
     </div>
     <div class="board" id="board"></div>
+    <aside class="research" id="research"></aside>
     <div class="panel" id="panel"></div>
     <div class="panel" id="coach"></div>
     <div class="nudge" id="nudge"><span id="nudgeCat"></span><span>Even vast? Ik heb ideeën.</span><span class="x" title="Sluiten">×</span></div>
@@ -927,7 +957,7 @@ function renderLib(){
   h += item('recent', icon('recent'), 'Laatste 7 dagen');
   h += item('fav', icon('star'), 'Favorieten');
   if (useSupabase){
-    h += '<div class="sec">Verzamelen</div>';
+    h += `<div class="sec">Verzamelen <button id="quickSave" title="Snel bewaren (Ctrl+Alt+S)">${icon('plus','',16)}</button></div>`;
     h += item('sources', icon('book'), 'Bronnen');
     h += item('board', icon('board'), 'Braindump');
     h += item('timeline', icon('timeline'), 'Tijdlijn');
@@ -940,6 +970,7 @@ function renderLib(){
 }
 $('#libNav').addEventListener('click', e => {
   if (e.target.closest('#addGroup')) return groupDialog();
+  if (e.target.closest('#quickSave')) return quickDialog();
   const b = e.target.closest('[data-view]'); if (!b) return;
   setView(b.dataset.view);
   setMobile(isBoard() ? 'editor' : 'list');
@@ -1116,6 +1147,7 @@ function openSheet(id){
   if (previewOn) renderPreview();
   renderMirror(); updateCounts(); renderList();
   curWords = countWords(ta.value); typedSinceOpen = false; renderChecks(); hideNudge();
+  if (rpOpen && !rpSrc) rpRefresh();
   scroller.scrollTop = 0;
   if (panelOpen) renderPanel();
 }
@@ -1551,6 +1583,8 @@ function helpDialog(){
     <code>Ctrl Alt P</code><span>Voorbeeld</span>
     <code>Ctrl Alt I</code><span>Info & doelen</span>
     <code>Ctrl Alt C</code><span>Schrijfcoach</span>
+    <code>Ctrl Alt R</code><span>Onderzoekspaneel</span>
+    <code>Ctrl Alt S</code><span>Snel bewaren</span>
   </div>
   <div class="btns"><button class="btn" data-close>Begrepen</button></div>`);
 }
@@ -1571,6 +1605,7 @@ document.addEventListener('keydown', e => {
     if ($('#modal').classList.contains('open')) return closeModal();
     if (panelOpen) return closePanel();
     if (coachOpen) return closeCoach();
+    if (rpOpen && !isBoard() && view !== 'sources' && !$('#app').classList.contains('focus')) return toggleResearch(false);
     if ($('#app').classList.contains('focus')) return toggleFocus();
   }
   if ((e.ctrlKey || e.metaKey) && e.altKey){
@@ -1578,6 +1613,8 @@ document.addEventListener('keydown', e => {
     if (k === 'KeyN'){ e.preventDefault(); view === 'sources' ? addSourceDialog() : newSheet(); }
     else if (k === 'KeyF' && currentId){ e.preventDefault(); toggleFocus(); }
     else if (k === 'KeyP' && currentId){ e.preventDefault(); togglePreview(); }
+    else if (k === 'KeyR'){ e.preventDefault(); toggleResearch(); }
+    else if (k === 'KeyS'){ e.preventDefault(); quickDialog(); }
     else if (k === 'KeyC'){ e.preventDefault(); coachOpen ? closeCoach() : openCoach(); }
     else if (k === 'KeyI' && currentId){ e.preventDefault(); panelOpen ? closePanel() : openPanel(); }
   }
@@ -1990,6 +2027,7 @@ setInterval(renderToday, 60000);   // roll over at midnight
 
 /* ================= Bronnen: artikelen, links en citaten ================= */
 const SRC_META = 'id,kind,url,title,site,byline,published,excerpt,tags,note,fav,created,updated';
+const srcMeta = () => noGrpCol ? SRC_META : SRC_META + ',grp';
 let sources = LS.get('sources', {});          // id -> metadata (content lives in Supabase)
 const srcContent = {};                         // id -> content cache
 let currentSrc = LS.get('currentSrc', null);
@@ -2008,12 +2046,16 @@ I.quote = '<path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 
 /* ----- Supabase I/O ----- */
 async function srcUpsert(row){
   if (!sbUser) throw new Error('Niet ingelogd');
-  const { error } = await sb.from('sources').upsert({...row, user_id: sbUser.id});
+  const payload = {...row, user_id: sbUser.id}; if (noGrpCol) delete payload.grp;
+  let { error } = await sb.from('sources').upsert(payload);
+  if (error && /grp/.test(error.message || '') && !noGrpCol){ noGrpCol = true; delete payload.grp; ({ error } = await sb.from('sources').upsert(payload)); }
   if (error) throw error;
 }
+let noGrpCol = false;
 async function srcPull(){
   if (!sbUser) return;
-  const { data, error } = await sb.from('sources').select(SRC_META).order('updated', {ascending:false}).limit(2000);
+  let { data, error } = await sb.from('sources').select(srcMeta()).order('updated', {ascending:false}).limit(2000);
+  if (error && /grp/.test(error.message || '') && !noGrpCol){ noGrpCol = true; ({ data, error } = await sb.from('sources').select(srcMeta()).order('updated', {ascending:false}).limit(2000)); }
   if (error){ if (/sources/.test(error.message || '')) srcTableMissing = true; return; }
   srcTableMissing = false;
   const next = {};
@@ -2022,10 +2064,10 @@ async function srcPull(){
   for (const [id, s] of Object.entries(sources)) if (s._pending && !next[id]) next[id] = s;
   sources = next; persistSources();
   if (view === 'sources'){ renderList(); renderReader(); }
-  renderLib();
+  renderLib(); if (rpOpen) renderResearch();
 }
 let srcTableMissing = false;
-const srcRow = r => ({id:r.id, kind:r.kind||'article', url:r.url||'', title:r.title||'', site:r.site||'', byline:r.byline||'', published:r.published||'', excerpt:r.excerpt||'', tags:Array.isArray(r.tags) ? r.tags : [], note:r.note||'', fav:!!r.fav, created:Number(r.created)||Date.now(), updated:Number(r.updated)||Date.now()});
+const srcRow = r => ({id:r.id, grp:r.grp||'', kind:r.kind||'article', url:r.url||'', title:r.title||'', site:r.site||'', byline:r.byline||'', published:r.published||'', excerpt:r.excerpt||'', tags:Array.isArray(r.tags) ? r.tags : [], note:r.note||'', fav:!!r.fav, created:Number(r.created)||Date.now(), updated:Number(r.updated)||Date.now()});
 function srcRealtime(p){
   if (p.eventType === 'DELETE'){ if (p.old && sources[p.old.id]){ delete sources[p.old.id]; delete srcContent[p.old.id]; } }
   else if (p.new && p.new.user_id === sbUser.id){
@@ -2076,17 +2118,19 @@ function requireLogin(){
   if (srcTableMissing){ toast('Draai eerst het nieuwe stuk van schema.sql in Supabase'); }
   return true;
 }
-async function saveFromUrl(raw, hint = {}){
+async function saveFromUrl(raw, hint = {}, opts = {}){
   if (!requireLogin()) return null;
   let url = String(raw || '').trim();
   const m = url.match(/https?:\/\/\S+/); if (m) url = m[0];
   else if (/^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(url)) url = 'https://' + url;
   try { new URL(url); } catch(e){ toast('Dat lijkt geen geldige link'); return null; }
   const dup = Object.values(sources).find(s => s.url && normUrl(s.url) === normUrl(url));
-  if (dup){ toast('Die had je al bewaard'); openSource(dup.id); return dup.id; }
+  if (dup){ toast('Die had je al bewaard'); if (!opts.stay) openSource(dup.id); return dup.id; }
   const id = uid(), now = Date.now();
-  const s = {id, kind:'article', url, title: hint.title || host(url) || url, site: hint.site || host(url), byline:'', published:'', excerpt: hint.excerpt || '', tags: hint.tags || [], note:'', fav:false, created:now, updated:now, _pending:true};
-  sources[id] = s; persistSources(); setView('sources'); openSource(id);
+  const s = {id, grp: hint.grp ?? defaultProject(), kind:'article', url, title: hint.title || host(url) || url, site: hint.site || host(url), byline:'', published:'', excerpt: hint.excerpt || '', tags: hint.tags || [], note:'', fav:false, created:now, updated:now, _pending:true};
+  sources[id] = s; persistSources();
+  if (opts.onCreated) opts.onCreated(id);
+  if (!opts.stay){ setView('sources'); openSource(id); } else renderLib();
   try { await srcUpsert(stripLocal(s)); } catch(e){ toast('Bewaren mislukt: ' + (e.message || e)); delete sources[id]; persistSources(); renderList(); renderReader(); return null; }
   try {
     const a = await callFn({action:'fetch', url});
@@ -2097,15 +2141,16 @@ async function saveFromUrl(raw, hint = {}){
   } catch(e){
     toast('Link bewaard — artikel ophalen lukte niet: ' + (e.message || e));
   }
-  delete s._pending; persistSources(); renderList(); if (currentSrc === id) renderReader();
+  delete s._pending; persistSources(); renderList(); if (currentSrc === id) renderReader(); if (rpOpen && rpSrc === id) renderResearch();
+  if (isBoard()) renderBoard();
   return id;
 }
 const stripLocal = s => { const o = {...s}; for (const k of Object.keys(o)) if (k.startsWith('_')) delete o[k]; return o; };
-async function saveWiki(lang, title){
+async function saveWiki(lang, title, opts = {}){
   if (!requireLogin()) return;
   const url = `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, '_'))}`;
   const dup = Object.values(sources).find(s => s.url === url);
-  if (dup){ toast('Die had je al bewaard'); openSource(dup.id); return; }
+  if (dup){ toast('Die had je al bewaard'); if (!opts.stay) openSource(dup.id); return dup.id; }
   try {
     const api = `https://${lang}.wikipedia.org/w/api.php?origin=*&format=json&action=query&prop=extracts|info&inprop=url&explaintext=1&exsectionformat=wiki&redirects=1&titles=${encodeURIComponent(title)}`;
     const j = await (await fetch(api)).json();
@@ -2113,16 +2158,17 @@ async function saveWiki(lang, title){
     const content = (page.extract || '').replace(/^(={2,})\s*(.+?)\s*\1\s*$/gm, (m0, eq, h) => (eq.length <= 2 ? '## ' : '### ') + h).replace(/\n{3,}/g, '\n\n').trim();
     const excerpt = content.split('\n\n')[0].slice(0, 380);
     const id = uid(), now = Date.now();
-    const s = {id, kind:'wiki', url: page.fullurl || url, title: page.title, site: 'Wikipedia (' + lang.toUpperCase() + ')', byline:'', published:'', excerpt, tags:[], note:'', fav:false, created:now, updated:now};
+    const s = {id, grp: defaultProject(), kind:'wiki', url: page.fullurl || url, title: page.title, site: 'Wikipedia (' + lang.toUpperCase() + ')', byline:'', published:'', excerpt, tags:[], note:'', fav:false, created:now, updated:now};
     sources[id] = s; srcContent[id] = content; persistSources();
     await srcUpsert({...s, content: content.slice(0, 200000)});
-    setView('sources'); openSource(id); toast('Wikipedia-artikel bewaard');
-  } catch(e){ toast('Wikipedia ophalen mislukt'); }
+    if (!opts.stay){ setView('sources'); openSource(id); } else renderLib();
+    toast('Wikipedia-artikel bewaard'); return id;
+  } catch(e){ toast('Wikipedia ophalen mislukt'); return null; }
 }
 async function saveNote(title, text, url){
   if (!requireLogin()) return;
   const id = uid(), now = Date.now();
-  const s = {id, kind:'note', url: url || '', title: title || (text.split('\n')[0].slice(0, 80)) || 'Notitie', site: url ? host(url) : 'Eigen notitie', byline:'', published:'', excerpt: text.slice(0, 300), tags:[], note:'', fav:false, created:now, updated:now};
+  const s = {id, grp: defaultProject(), kind:'note', url: url || '', title: title || (text.split('\n')[0].slice(0, 80)) || 'Notitie', site: url ? host(url) : 'Eigen notitie', byline:'', published:'', excerpt: text.slice(0, 300), tags:[], note:'', fav:false, created:now, updated:now};
   sources[id] = s; srcContent[id] = text; persistSources();
   try { await srcUpsert({...s, content: text}); setView('sources'); openSource(id); toast('Bewaard'); }
   catch(e){ delete sources[id]; persistSources(); toast('Bewaren mislukt: ' + (e.message || e)); }
@@ -2138,7 +2184,7 @@ function srcPatch(id, patch){
 /* ----- List ----- */
 function visibleSources(){
   const q = query.trim().toLowerCase();
-  let arr = Object.values(sources);
+  let arr = Object.values(sources).filter(projMatch);
   if (q){
     arr = arr.filter(s => (srcServerHits && srcServerHits.has(s.id)) || [s.title, s.excerpt, s.note, s.site, (s.tags || []).join(' ')].join(' ').toLowerCase().includes(q) || (q.startsWith('#') && (s.tags || []).some(t => t.toLowerCase() === q.slice(1))));
   }
@@ -2150,10 +2196,10 @@ function renderSources(){
   if (!useSupabase){ el.innerHTML = `<div class="empty">${cat('sleepy')}Bronnen werken met je Supabase-account.</div>`; return; }
   if (!sbUser){ el.innerHTML = `<div class="empty">${cat('sleepy')}Log in om artikelen en links te bewaren.<br><br><button class="btn" data-a="login">Inloggen</button></div>`; return; }
   if (!arr.length){
-    el.innerHTML = `<div class="empty">${cat(query.trim() ? 'curious' : 'sleepy')}${query.trim() ? 'Niets gevonden.' : 'Nog geen bronnen.<br>Tik op <b>+</b> om een artikel, link of citaat te bewaren.'}</div>`;
+    el.innerHTML = projChips() + `<div class="empty">${cat(query.trim() ? 'curious' : 'sleepy')}${query.trim() ? 'Niets gevonden.' : 'Nog geen bronnen.<br>Tik op <b>+</b> om een artikel, link of citaat te bewaren.'}</div>`;
     return;
   }
-  el.innerHTML = arr.map(s => `<button class="src ${s.id === currentSrc ? 'on' : ''} ${s._pending ? 'loading' : ''}" data-src="${s.id}">
+  el.innerHTML = projChips() + arr.map(s => `<button class="src ${s.id === currentSrc ? 'on' : ''} ${s._pending ? 'loading' : ''}" data-src="${s.id}">
     <span class="del" role="button" data-sdel="${s.id}" title="Verwijderen" aria-label="Verwijderen">${icon('trash','')}</span>
     <div class="s">${s.fav ? '★ ' : ''}${esc(KIND[s.kind] || 'Bron')} · ${esc(s.site || host(s.url))}</div>
     <div class="t">${esc(s.title || s.url)}</div>
@@ -2184,6 +2230,7 @@ async function loadContent(id){
   const { data } = await sb.from('sources').select('content').eq('id', id).maybeSingle();
   srcContent[id] = (data && data.content) || '';
   if (currentSrc === id) renderReader();
+  if (rpOpen && rpSrc === id) renderResearch();
 }
 function renderReader(){
   const el = $('#readerBody'), s = sources[currentSrc];
@@ -2206,10 +2253,12 @@ function renderReader(){
     <h1>${esc(s.title || s.url)}</h1>
     ${s.url ? `<div class="meta" style="margin-top:-6px"><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(host(s.url))} ↗</a></div>` : ''}
     <div class="tagrow" id="tagrow">${(s.tags || []).map((t, i) => `<span class="tag">#${esc(t)}<button data-untag="${i}" aria-label="Tag verwijderen">×</button></span>`).join('')}<input id="tagIn" placeholder="+ tag" maxlength="30" list="tagList"><datalist id="tagList">${[...new Set(Object.values(sources).flatMap(x => x.tags || []))].map(t => `<option value="${esc(t)}">`).join('')}</datalist></div>
+    ${groups.length ? `<div class="row" style="margin:-6px 0 14px"><span class="muted" style="font-weight:800">Project</span>${projSelect('srcGrp', s.grp)}</div>` : ''}
     <div class="notebox"><div class="lbl">Jouw notitie</div><textarea id="srcNote" rows="2" placeholder="Waarom bewaarde je dit? Wat wil je ermee?">${esc(s.note || '')}</textarea></div>
     ${sourceSnippetsHtml(s.id)}
     ${s.excerpt && s.kind !== 'note' ? `<p class="ex">${esc(s.excerpt)}</p>` : ''}
     <div class="body" id="srcText">${content === undefined ? '<p class="muted">Laden…</p>' : content ? mdToHtml(content) : s._pending ? '<p class="muted">Artikel wordt opgehaald…</p>' : `<p class="muted">Geen leesbare tekst bewaard${s.url ? ' — open het origineel via de link hierboven' : ''}.</p>`}</div>`;
+  if ($('#srcGrp')) $('#srcGrp').onchange = e => { srcPatch(s.id, {grp: e.target.value}); renderList(); toast(e.target.value ? 'Gekoppeld aan ' + grpName(e.target.value) : 'Los van project'); };
   const note = $('#srcNote');
   const fit = () => { note.style.height = 'auto'; note.style.height = note.scrollHeight + 'px'; }; fit();
   note.addEventListener('input', () => { fit(); srcPatch(s.id, {note: note.value}); });
@@ -2223,13 +2272,15 @@ function renderReader(){
 }
 
 /* ----- Citing a selection into the current sheet ----- */
-function selectedSourceText(){
-  const sel = window.getSelection(); if (!sel || sel.isCollapsed) return '';
-  const box = $('#srcText'); if (!box || !box.contains(sel.anchorNode) || !box.contains(sel.focusNode)) return '';
-  return sel.toString().trim();
+function selBox(){
+  const sel = window.getSelection(); if (!sel || sel.isCollapsed) return null;
+  for (const id of ['srcText', 'rpText']){ const box = document.getElementById(id); if (box && box.contains(sel.anchorNode) && box.contains(sel.focusNode)) return id; }
+  return null;
 }
+const selSrcId = () => selBox() === 'rpText' ? rpSrc : currentSrc;
+function selectedSourceText(){ return selBox() ? window.getSelection().toString().trim() : ''; }
 function citeSelection(){
-  const s = sources[currentSrc]; if (!s) return;
+  const s = sources[selSrcId()]; if (!s) return;
   const text = selectedSourceText();
   if (!text){ toast('Selecteer eerst tekst in de bron'); return; }
   insertIntoSheet(quoteBlock(text, s), 'Citaat toegevoegd aan');
@@ -2237,7 +2288,7 @@ function citeSelection(){
 }
 document.addEventListener('selectionchange', () => {
   const bar = $('#citebar');
-  if (view !== 'sources' || !selectedSourceText()){ bar.classList.remove('show'); return; }
+  if (!selectedSourceText()){ bar.classList.remove('show'); return; }
   const r = window.getSelection().getRangeAt(0).getBoundingClientRect();
   bar.style.left = Math.max(10, Math.min(innerWidth - 260, r.left + r.width / 2 - 125)) + 'px';
   bar.style.top = Math.max(10 + (isMobile() ? 60 : 0), r.top - 44) + 'px';
@@ -2402,7 +2453,9 @@ function detectDate(text){
 async function snipUpsert(row){
   if (!sbUser) throw new Error('Niet ingelogd');
   const r = {...row}; delete r._editing;
-  const { error } = await sb.from('snippets').upsert({...r, user_id: sbUser.id});
+  const payload = {...r, user_id: sbUser.id}; if (noGrpCol) delete payload.grp;
+  let { error } = await sb.from('snippets').upsert(payload);
+  if (error && /grp/.test(error.message || '') && !noGrpCol){ noGrpCol = true; delete payload.grp; ({ error } = await sb.from('snippets').upsert(payload)); }
   if (error){ if (/snippets/.test(error.message || '')) snipTableMissing = true; throw error; }
 }
 async function snipPull(){
@@ -2413,9 +2466,9 @@ async function snipPull(){
   const next = {};
   for (const r of data) next[r.id] = snipRow(r);
   for (const [id, s] of Object.entries(snippets)) if (s._pending && !next[id]) next[id] = s;
-  snippets = next; persistSnips(); renderLib(); if (isBoard()) renderBoard(); else if (view === 'sources') renderReader();
+  snippets = next; persistSnips(); renderLib(); if (isBoard()) renderBoard(); else if (view === 'sources') renderReader(); if (rpOpen) renderResearch();
 }
-const snipRow = r => ({id:r.id, source_id:r.source_id||'', text:r.text||'', note:r.note||'', tags:Array.isArray(r.tags) ? r.tags : [], date:r.date||'', color:r.color||'', created:Number(r.created)||Date.now(), updated:Number(r.updated)||Date.now()});
+const snipRow = r => ({id:r.id, grp:r.grp||'', source_id:r.source_id||'', text:r.text||'', note:r.note||'', tags:Array.isArray(r.tags) ? r.tags : [], date:r.date||'', color:r.color||'', created:Number(r.created)||Date.now(), updated:Number(r.updated)||Date.now()});
 function snipRealtime(p){
   if (p.eventType === 'DELETE'){ if (p.old) delete snippets[p.old.id]; }
   else if (p.new && p.new.user_id === sbUser.id){
@@ -2470,7 +2523,7 @@ function quoteBlock(text, src){
 /* ----- Save-fragment dialog ----- */
 function snippetDialog(init){
   const isNew = !init.id;
-  const s = isNew ? {id: uid(), source_id: init.source_id || '', text: init.text || '', note:'', tags: init.tags || [], date: init.date ?? detectDate(init.text || ''), color: init.color || '', created: Date.now(), updated: Date.now()} : {...snippets[init.id]};
+  const s = isNew ? {id: uid(), grp: init.grp ?? (sources[init.source_id] && sources[init.source_id].grp) ?? defaultProject(), source_id: init.source_id || '', text: init.text || '', note:'', tags: init.tags || [], date: init.date ?? detectDate(init.text || ''), color: init.color || '', created: Date.now(), updated: Date.now()} : {...snippets[init.id]};
   const src = sources[s.source_id];
   const allTags = [...new Set(Object.values(snippets).flatMap(x => x.tags || []))];
   openModal(`<h3>${isNew ? (src ? 'Fragment bewaren' : 'Gedachte toevoegen') : 'Fragment bewerken'}</h3>
@@ -2482,6 +2535,7 @@ function snippetDialog(init){
     </div>
     <p class="muted" id="fDateHint" style="margin:-6px 0 10px;min-height:1.2em"></p>
     <input type="text" id="fNote" placeholder="Eigen notitie (optioneel)" value="${esc(s.note)}">
+    ${groups.length ? `<div class="row" style="margin:0 0 12px"><span class="muted" style="font-weight:800">Project</span>${projSelect('fGrp', s.grp || '')}</div>` : ''}
     <div class="swatches" id="fCol">${['', ...COLORS].map(c => `<button data-c="${c}" class="${(s.color || '') === c ? 'on' : ''}" style="background:${c || 'var(--card)'};border-color:${(s.color || '') === c ? 'var(--text)' : 'var(--line)'}" aria-label="kleur"></button>`).join('')}</div>
     <div class="btns">${isNew ? '' : '<button class="btn ghost" id="fDel" style="margin-right:auto">Verwijderen</button>'}<button class="btn ghost" data-close>Annuleren</button><button class="btn" id="fOk">${isNew ? 'Bewaren' : 'Opslaan'}</button></div>`);
   const hint = () => { const v = $('#fDate').value.trim(); const d = parseDate(v); $('#fDateHint').textContent = !v ? 'Zonder datum komt het fragment alleen op de braindump.' : d ? 'Op de tijdlijn bij: ' + d.label : 'Die datum herken ik niet — probeer bv. 1953, maart 1953 of 12-03-1953.'; };
@@ -2492,7 +2546,7 @@ function snippetDialog(init){
     const text = $('#fText').value.trim(); if (!text) return $('#fText').focus();
     const dateRaw = $('#fDate').value.trim();
     if (dateRaw && !parseDate(dateRaw)){ $('#fDate').focus(); return; }
-    Object.assign(s, {text, date: dateRaw, note: $('#fNote').value.trim(), tags: $('#fTags').value.split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean)});
+    Object.assign(s, {text, grp: $('#fGrp') ? $('#fGrp').value : (s.grp || ''), date: dateRaw, note: $('#fNote').value.trim(), tags: $('#fTags').value.split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean)});
     closeModal();
     if (await saveSnippet(s, isNew)) toast(isNew ? (s.date ? 'Bewaard — ook op de tijdlijn' : 'Bewaard op de braindump') : 'Opgeslagen');
   };
@@ -2504,6 +2558,7 @@ const isBoard = () => view === 'board' || view === 'timeline';
 function boardFiltered(){
   const q = boardQ.trim().toLowerCase();
   return Object.values(snippets).filter(s => {
+    if (!projMatch(s)) return false;
     if (boardTag === '__nodate') { if (parseDate(s.date)) return false; }
     else if (boardTag && !(s.tags || []).includes(boardTag)) return false;
     if (!q) return true;
@@ -2516,7 +2571,7 @@ function card(s){
   return `<div class="card" data-snip="${s.id}" style="${s.color ? `background:${s.color}55;border-color:${s.color}` : ''}">
     <div class="ct">${esc(s.text).replace(/\n/g, '<br>')}</div>
     ${s.note ? `<div class="cn">✎ ${esc(s.note)}</div>` : ''}
-    <div class="cmeta">${d ? `<span class="cdate">${esc(d.label)}</span>` : ''}${(s.tags || []).map(t => `<span class="ctag" data-tag="${esc(t)}">#${esc(t)}</span>`).join('')}</div>
+    <div class="cmeta">${!projFilter && s.grp && grpName(s.grp) ? `<span class="cproj" style="background:${esc(grpColor(s.grp))}">${esc(grpName(s.grp))}</span>` : ''}${d ? `<span class="cdate">${esc(d.label)}</span>` : ''}${(s.tags || []).map(t => `<span class="ctag" data-tag="${esc(t)}">#${esc(t)}</span>`).join('')}</div>
     ${src ? `<a href="#" class="cs" data-opensrc="${src.id}">↳ ${esc(src.title)}</a>` : ''}
     <div class="ca"><button data-ins="${s.id}" title="In je tekst zetten">In tekst</button><button data-edit="${s.id}" title="Bewerken">Bewerken</button></div>
   </div>`;
@@ -2554,6 +2609,7 @@ function renderBoard(){
       <div class="grow"></div>
       <div class="search" style="margin:0;width:min(260px,40vw)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="boardQ" type="search" placeholder="Zoeken…" value="${esc(boardQ)}"></div>
     </div>
+    ${projChips()}
     ${tags.length || noDate ? `<div class="btags"><button class="chip ${!boardTag ? 'on' : ''}" data-btag="">Alles · ${all.length}</button>${tags.map(t => `<button class="chip ${boardTag === t ? 'on' : ''}" data-btag="${esc(t)}">#${esc(t)}</button>`).join('')}${!tl && noDate ? `<button class="chip ${boardTag === '__nodate' ? 'on' : ''}" data-btag="__nodate">zonder datum · ${noDate}</button>` : ''}</div>` : ''}
     <div class="bbody">${body}</div>`;
   if (keepQ){ const q = $('#boardQ'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
@@ -2564,7 +2620,7 @@ function renderBoard(){
     cap.addEventListener('keydown', async e => {
       if (e.key === 'Enter' && !e.shiftKey){
         e.preventDefault(); const text = cap.value.trim(); if (!text) return;
-        const s = {id: uid(), source_id:'', text, note:'', tags: boardTag && boardTag !== '__nodate' ? [boardTag] : [], date:'', color:'', created: Date.now(), updated: Date.now()};
+        const s = {id: uid(), source_id:'', grp: defaultProject(), text, note:'', tags: boardTag && boardTag !== '__nodate' ? [boardTag] : [], date:'', color:'', created: Date.now(), updated: Date.now()};
         cap.value = ''; fit();
         if (await saveSnippet(s, true)){ const c = $('#capIn'); if (c) c.focus(); }
       }
@@ -2591,7 +2647,7 @@ $('#cbFrag').addEventListener('mousedown', e => e.preventDefault());
 $('#cbFrag').onclick = () => {
   const text = selectedSourceText(); if (!text) return;
   window.getSelection().removeAllRanges(); $('#citebar').classList.remove('show');
-  snippetDialog({source_id: currentSrc, text});
+  snippetDialog({source_id: selSrcId(), text});
 };
 function sourceSnippetsHtml(id){
   const list = Object.values(snippets).filter(s => s.source_id === id).sort((a, b) => a.created - b.created);
@@ -2600,6 +2656,214 @@ function sourceSnippetsHtml(id){
 }
 $('#reader').addEventListener('click', e => { const ed = e.target.closest('.sfrag[data-edit]'); if (ed) snippetDialog({id: ed.dataset.edit}); });
 
+/* ================= Projecten, plakken & snel bewaren, onderzoekspaneel ================= */
+let projFilter = LS.get('projFilter', '');           // '' = alle, '__none' = zonder project, anders groep-id
+const grpName = id => (groups.find(g => g.id === id) || {}).name || '';
+const grpColor = id => (groups.find(g => g.id === id) || {}).color || 'var(--line)';
+/* Which project does a new source/fragment belong to? */
+function defaultProject(){
+  if (view.startsWith('g:')) return view.slice(2);
+  if ((view === 'sources' || isBoard()) && projFilter && projFilter !== '__none') return projFilter;
+  const sh = sheets[currentId];
+  if (sh && sh.group && sh.group !== 'inbox' && groups.some(g => g.id === sh.group)) return sh.group;
+  return '';
+}
+const projMatch = x => !projFilter || (projFilter === '__none' ? !x.grp || !grpName(x.grp) : x.grp === projFilter);
+function projChips(){
+  if (!groups.length) return '';
+  return `<div class="pchips">${[['', 'Alle projecten'], ...groups.map(g => [g.id, g.name]), ['__none', 'Zonder project']].map(([id, n]) =>
+    `<button class="chip ${projFilter === id ? 'on' : ''}" data-proj="${esc(id)}">${id && id !== '__none' ? `<span class="dot" style="background:${esc(grpColor(id))};margin:0 5px 0 0;width:8px;height:8px;display:inline-block"></span>` : ''}${esc(n)}</button>`).join('')}</div>`;
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-proj]'); if (!b) return;
+  projFilter = b.dataset.proj; LS.set('projFilter', projFilter);
+  if (view === 'sources') renderSources(); if (isBoard()) renderBoard();
+});
+const projSelect = (id, sel) => `<select id="${id}" class="psel"><option value="">Geen project</option>${groups.map(g => `<option value="${g.id}" ${sel === g.id ? 'selected' : ''}>${esc(g.name)}</option>`).join('')}</select>`;
+
+/* ----- Paste to save ----- */
+const isUrl = t => /^https?:\/\/\S+$/.test(t) || /^www\.\S+\.\S+$/.test(t);
+function boardLink(url){
+  const snipId = uid();
+  saveFromUrl(url, {}, {stay: true, onCreated: id => saveSnippet({id: snipId, source_id: id, grp: defaultProject(), text: url, note:'', tags: boardTag && boardTag !== '__nodate' ? [boardTag] : [], date:'', color:'', created: Date.now(), updated: Date.now()}, true)})
+    .then(id => { const s = sources[id], sn = snippets[snipId]; if (s && sn && sn.text === url){ sn.text = s.title + (s.excerpt ? '\n\n' + s.excerpt : ''); saveSnippet(sn, false); } });
+}
+function quickThought(text){
+  return saveSnippet({id: uid(), source_id:'', grp: defaultProject(), text, note:'', tags: boardTag && boardTag !== '__nodate' && isBoard() ? [boardTag] : [], date:'', color:'', created: Date.now(), updated: Date.now()}, true);
+}
+document.addEventListener('paste', e => {
+  const text = ((e.clipboardData && e.clipboardData.getData('text')) || '').trim(); if (!text) return;
+  const url = isUrl(text) ? text : null, t = e.target;
+  if (t.id === 'capIn' && url){ e.preventDefault(); boardLink(url); return; }
+  if (t.id === 'q' && url && view === 'sources'){ e.preventDefault(); saveFromUrl(url); return; }
+  if (t.closest && t.closest('input, textarea, select, [contenteditable="true"]')) return;
+  if ($('#modal').classList.contains('open')) return;
+  if (view === 'sources'){ e.preventDefault(); url ? saveFromUrl(url) : snippetDialog({text}); }
+  else if (isBoard()){ e.preventDefault(); url ? boardLink(url) : quickThought(text).then(ok => ok && toast('Op de braindump gezet')); }
+});
+
+/* ----- "Snel bewaren": one box for links and text ----- */
+function quickDialog(){
+  if (!requireLogin()) return;
+  openModal(`<h3>Snel bewaren</h3><p>Plak een link (wordt een bron) of tekst (wordt een fragment op je braindump).</p>
+    <textarea id="qText" placeholder="Plak of typ hier…" style="min-height:110px"></textarea>
+    ${groups.length ? `<div class="row" style="margin:0 0 12px"><span class="muted" style="font-weight:800">Project</span>${projSelect('qGrp', defaultProject())}</div>` : ''}
+    <div class="btns"><button class="btn ghost" data-close>Annuleren</button><button class="btn" id="qOk">Bewaren</button></div>`);
+  setTimeout(() => $('#qText').focus(), 30);
+  const go = async () => {
+    const v = $('#qText').value.trim(); if (!v) return $('#qText').focus();
+    const grp = $('#qGrp') ? $('#qGrp').value : defaultProject();
+    closeModal();
+    if (isUrl(v)){ toast('Bron wordt bewaard…'); const id = await saveFromUrl(v, {grp}, {stay: true}); if (id && sources[id]) toast('Bron bewaard: ' + sources[id].title); }
+    else { const s = {id: uid(), source_id:'', grp, text: v, note:'', tags:[], date: detectDate(v), color:'', created: Date.now(), updated: Date.now()}; if (await saveSnippet(s, true)) toast('Fragment bewaard' + (s.date ? ' — ook op de tijdlijn' : '')); }
+  };
+  $('#qOk').onclick = go;
+  $('#qText').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) go(); });
+}
+
+/* ================= Onderzoekspaneel ================= */
+let rpOpen = LS.get('rpOpen', false), rpTab = 'related', rpQ = '', rpMode = 'mine', rpSrc = null, rpResults = [], rpServerHits = null;
+const stem = w => { if (w.length > 4) w = w.replace(/(tjes|etjes|jes|tje|je|heden|en|es|s|e)$/, ''); return w.slice(0, 7); };
+function tokens(text){
+  const out = new Set();
+  for (const m of String(text || '').toLowerCase().matchAll(/[\p{L}][\p{L}’'-]{3,}/gu)) if (!STOP.has(m[0])) out.add(stem(m[0]));
+  return out;
+}
+function currentParagraph(){
+  const v = ta.value, p = ta.selectionStart || 0;
+  let a = v.lastIndexOf('\n\n', p - 1); a = a < 0 ? 0 : a + 2;
+  let b = v.indexOf('\n\n', p); if (b < 0) b = v.length;
+  let para = v.slice(a, b);
+  if (tokens(para).size < 4) para = v.slice(Math.max(0, p - 700), p + 200);
+  return para.replace(/\+\+[\s\S]*?\+\+/g, ' ');
+}
+function related(){
+  const sh = sheets[currentId]; if (!sh) return {items: [], words: []};
+  const para = tokens(currentParagraph()), title = tokens(titleOf(sh));
+  const score = (txt, grp) => {
+    const t = tokens(txt); let s = 0; const hit = [];
+    for (const w of t){ if (para.has(w)){ s += 1; hit.push(w); } else if (title.has(w)) s += 0.5; }
+    if (s && grp && grp === sh.group) s += 1;
+    return {s, hit};
+  };
+  const items = [];
+  for (const n of Object.values(snippets)){ const src = sources[n.source_id]; const r = score(n.text + ' ' + n.note + ' ' + (n.tags || []).join(' ') + ' ' + (src ? src.title : ''), n.grp); if (r.s >= 1) items.push({type:'snip', x:n, ...r}); }
+  for (const s of Object.values(sources)){ const r = score(s.title + ' ' + s.excerpt + ' ' + s.note + ' ' + (s.tags || []).join(' '), s.grp); if (r.s >= 1) items.push({type:'src', x:s, ...r}); }
+  items.sort((a, b) => b.s - a.s);
+  return {items: items.slice(0, 10), para};
+}
+function rpItem(it){
+  if (it.type === 'snip'){
+    const n = it.x, src = sources[n.source_id], d = parseDate(n.date);
+    return `<div class="rpi"><div class="rpk">Fragment${src ? ' · ' + esc(src.site || host(src.url)) : ''}${d ? ' · ' + esc(d.label) : ''}</div>
+      <div class="rpt">${esc(n.text)}</div>${it.hit && it.hit.length ? `<div class="rph">past bij: ${it.hit.slice(0, 4).map(esc).join(', ')}</div>` : ''}
+      <div class="rpa"><button data-rpins="${n.id}">Invoegen</button>${src ? `<button data-rpread="${src.id}">Bron lezen</button>` : ''}</div></div>`;
+  }
+  const s = it.x;
+  return `<div class="rpi"><div class="rpk">${esc(KIND[s.kind] || 'Bron')} · ${esc(s.site || host(s.url))}</div>
+    <div class="rpt"><b>${esc(s.title)}</b>${s.note ? '<br>✎ ' + esc(s.note) : s.excerpt ? '<br>' + esc(s.excerpt) : ''}</div>${it.hit && it.hit.length ? `<div class="rph">past bij: ${it.hit.slice(0, 4).map(esc).join(', ')}</div>` : ''}
+    <div class="rpa"><button data-rpread="${s.id}">Lezen</button></div></div>`;
+}
+function renderResearch(){
+  const el = $('#research'); if (!el || !rpOpen) return;
+  const keepQ = document.activeElement && document.activeElement.id === 'rpQ';
+  const head = `<div class="rphead"><div class="seg"><button data-rptab="related" class="${rpTab === 'related' && !rpSrc ? 'on' : ''}">Gerelateerd</button><button data-rptab="search" class="${rpTab === 'search' && !rpSrc ? 'on' : ''}">Zoeken</button></div><div class="grow"></div><button class="ib" data-rpa="quick" title="Snel bewaren">${icon('plus','')}</button><button class="ib" data-rpa="close" title="Sluiten (Ctrl+Alt+R)">✕</button></div>`;
+  let body = '';
+  if (!sbUser) body = `<div class="empty">${cat('sleepy')}Log in om je bronnen en fragmenten hier te zien.</div>`;
+  else if (rpSrc && sources[rpSrc]){
+    const s = sources[rpSrc], c = srcContent[s.id];
+    if (c === undefined) loadContent(s.id);
+    body = `<button class="rpback" data-rpa="back">‹ Terug</button>
+      <div class="rpk" style="margin-top:6px">${esc(KIND[s.kind] || 'Bron')} · ${esc(s.site || host(s.url))}</div>
+      <h3 style="margin:4px 0 6px;font-size:18px;line-height:1.3">${esc(s.title)}</h3>
+      ${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener" class="rpk" style="text-decoration:none">${esc(host(s.url))} ↗</a>` : ''}
+      <p class="muted" style="margin:10px 0">Selecteer tekst om te citeren of als fragment te bewaren.</p>
+      ${sourceSnippetsHtml(s.id)}
+      <div class="body rpbody" id="rpText">${c === undefined ? '<p class="muted">Laden…</p>' : c ? mdToHtml(c) : s._pending ? '<p class="muted">Artikel wordt opgehaald…</p>' : `<p class="muted">Geen leesbare tekst bewaard.</p>${s.excerpt ? `<p>${esc(s.excerpt)}</p>` : ''}`}</div>`;
+  } else if (rpTab === 'related'){
+    const {items} = related();
+    const proj = sheets[currentId] && grpName(sheets[currentId].group);
+    body = `<p class="muted" style="margin:2px 0 12px">Bij de alinea waar je nu schrijft${proj ? ` · project <b>${esc(proj)}</b>` : ''}.</p>` +
+      (items.length ? items.map(rpItem).join('') : `<div class="empty" style="padding:20px 6px">${cat('curious')}Nog niets in je verzameling dat bij deze alinea past.<br>Probeer <a href="#" data-rptab="search" style="color:var(--accent);font-weight:800">Zoeken</a> — ook in Wikipedia of op internet.</div>`);
+  } else {
+    body = `<div class="srow" style="margin-bottom:8px"><input type="text" id="rpQ" placeholder="${rpMode === 'mine' ? 'Zoek in je bronnen en fragmenten…' : rpMode === 'wiki' ? 'Zoek in Wikipedia…' : 'Zoek op internet…'}" value="${esc(rpQ)}" autocomplete="off"></div>
+      <div class="seg" style="margin-bottom:12px;display:inline-flex"><button data-rpmode="mine" class="${rpMode === 'mine' ? 'on' : ''}">Verzameling</button><button data-rpmode="wiki" class="${rpMode === 'wiki' ? 'on' : ''}">Wikipedia</button><button data-rpmode="web" class="${rpMode === 'web' ? 'on' : ''}">Web</button></div>
+      <div id="rpRes">${rpSearchHtml()}</div>`;
+  }
+  el.innerHTML = head + `<div class="rpscroll" id="rpScroll">${body}</div>`;
+  if (keepQ){ const q = $('#rpQ'); if (q){ q.focus(); q.setSelectionRange(q.value.length, q.value.length); } }
+}
+function rpSearchHtml(){
+  const q = rpQ.trim().toLowerCase();
+  if (rpMode === 'mine'){
+    if (!q) return '<p class="muted">Typ om te zoeken. Tip: <b>#tag</b> zoekt op tag.</p>';
+    const tag = q.startsWith('#') ? q.slice(1) : null;
+    const hit = x => tag ? (x.tags || []).some(t => t.toLowerCase() === tag) : null;
+    const sn = Object.values(snippets).filter(n => hit(n) ?? [n.text, n.note, (n.tags || []).join(' ')].join(' ').toLowerCase().includes(q)).map(x => ({type:'snip', x}));
+    const sr = Object.values(sources).filter(s => hit(s) ?? ((rpServerHits && rpServerHits.has(s.id)) || [s.title, s.excerpt, s.note, (s.tags || []).join(' ')].join(' ').toLowerCase().includes(q))).map(x => ({type:'src', x}));
+    const all = [...sn, ...sr];
+    return all.length ? all.slice(0, 40).map(rpItem).join('') : '<p class="muted">Niets gevonden in je verzameling.</p>';
+  }
+  if (!rpResults.length) return `<p class="muted">${rpQ ? 'Druk op Enter om te zoeken.' : rpMode === 'web' ? 'Zoek op internet en bewaar wat je nodig hebt.' : 'Zoek in Wikipedia.'}</p>`;
+  if (rpResults.error) return `<div class="tip">${esc(rpResults.error)}</div>`;
+  return rpResults.map((r, i) => `<div class="rpi"><div class="rpk">${esc(r.site || host(r.url))}</div><div class="rpt"><b>${esc(r.title)}</b><br>${esc(r.description || '')}</div>
+    <div class="rpa"><button data-rpsave="${i}">Bewaar & lees</button><a href="${esc(r.url)}" target="_blank" rel="noopener">Openen ↗</a></div></div>`).join('');
+}
+let rpSearchT;
+async function rpSearch(){
+  const q = rpQ.trim();
+  if (rpMode === 'mine'){
+    $('#rpRes').innerHTML = rpSearchHtml();
+    clearTimeout(rpSearchT); rpServerHits = null;
+    const qq = q.replace(/[,()*%\\#]/g, ' ').trim();
+    if (qq.length >= 3 && sbUser) rpSearchT = setTimeout(async () => {
+      const { data } = await sb.from('sources').select('id').or(`title.ilike.*${qq}*,content.ilike.*${qq}*,note.ilike.*${qq}*`).limit(100);
+      if (data && rpQ.trim() === q){ rpServerHits = new Set(data.map(r => r.id)); if ($('#rpRes')) $('#rpRes').innerHTML = rpSearchHtml(); }
+    }, 350);
+    return;
+  }
+  if (!q) return;
+  $('#rpRes').innerHTML = '<p class="muted">Zoeken…</p>';
+  try {
+    if (rpMode === 'web'){ const r = await callFn({action:'search', q}); rpResults = r.results || []; }
+    else {
+      const lang = LS.get('wikiLang', 'nl');
+      const j = await (await fetch(`https://${lang}.wikipedia.org/w/api.php?origin=*&format=json&action=query&list=search&srlimit=10&srsearch=${encodeURIComponent(q)}`)).json();
+      rpResults = j.query.search.map(r => ({wiki: lang, title: r.title, url: `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(r.title.replace(/ /g, '_'))}`, description: r.snippet.replace(/<[^>]+>/g, '').replace(/&quot;/g, '"').replace(/&amp;/g, '&') + '…', site: 'Wikipedia ' + lang.toUpperCase()}));
+    }
+  } catch(e){ rpResults = []; rpResults.error = e.message || 'Zoeken mislukt'; }
+  if ($('#rpRes')) $('#rpRes').innerHTML = rpSearchHtml();
+}
+function toggleResearch(force){
+  rpOpen = force ?? !rpOpen; LS.set('rpOpen', rpOpen);
+  $('#app').classList.toggle('rp', rpOpen); $('#btnResearch').classList.toggle('on', rpOpen);
+  if (rpOpen){ closePanel(); closeCoach(); renderResearch(); }
+}
+let rpRelT;
+function rpRefresh(){ if (!rpOpen || rpSrc || rpTab !== 'related') return; clearTimeout(rpRelT); rpRelT = setTimeout(renderResearch, 700); }
+ta.addEventListener('input', rpRefresh); ta.addEventListener('click', rpRefresh); ta.addEventListener('keyup', e => { if (e.key.startsWith('Arrow') || e.key === 'Enter') rpRefresh(); });
+$('#btnResearch').onclick = () => toggleResearch();
+$('#research').addEventListener('click', async e => {
+  const t = e.target;
+  const tab = t.closest('[data-rptab]'); if (tab){ e.preventDefault(); rpTab = tab.dataset.rptab; rpSrc = null; renderResearch(); if (rpTab === 'search') setTimeout(() => $('#rpQ') && $('#rpQ').focus(), 0); return; }
+  const md = t.closest('[data-rpmode]'); if (md){ rpMode = md.dataset.rpmode; rpResults = []; renderResearch(); if (rpQ.trim()) rpSearch(); return; }
+  const a = t.closest('[data-rpa]');
+  if (a){ if (a.dataset.rpa === 'close') toggleResearch(false); if (a.dataset.rpa === 'back'){ rpSrc = null; renderResearch(); } if (a.dataset.rpa === 'quick') quickDialog(); return; }
+  const ins = t.closest('[data-rpins]');
+  if (ins){ const n = snippets[ins.dataset.rpins]; const src = sources[n.source_id]; insertIntoSheet(src ? quoteBlock(n.text, src) : n.text, 'Ingevoegd in'); if (!isMobile()) ta.focus(); return; }
+  const rd = t.closest('[data-rpread]'); if (rd){ rpSrc = rd.dataset.rpread; renderResearch(); $('#rpScroll').scrollTop = 0; return; }
+  const sv = t.closest('[data-rpsave]');
+  if (sv){
+    const r = rpResults[+sv.dataset.rpsave]; sv.disabled = true; sv.textContent = 'Bewaren…';
+    const id = r.wiki ? await saveWiki(r.wiki, r.title, {stay: true}) : await saveFromUrl(r.url, {title: r.title, excerpt: r.description, site: r.site, grp: defaultProject()}, {stay: true, onCreated: nid => { rpSrc = nid; renderResearch(); }});
+    if (id){ rpSrc = id; renderResearch(); }
+    return;
+  }
+  const ed = t.closest('.sfrag[data-edit]'); if (ed) snippetDialog({id: ed.dataset.edit});
+});
+$('#research').addEventListener('input', e => { if (e.target.id === 'rpQ'){ rpQ = e.target.value; if (rpMode === 'mine') rpSearch(); else { rpResults = []; $('#rpRes').innerHTML = rpSearchHtml(); } } });
+$('#research').addEventListener('keydown', e => { if (e.target.id === 'rpQ' && e.key === 'Enter'){ e.preventDefault(); rpSearch(); } });
+
 /* ---------------- Boot ---------------- */
 applySettings();
 renderLib();
@@ -2607,6 +2871,7 @@ for (const [id, s] of Object.entries(sheets)) if (id !== currentId && !s.trashed
 if (!sheets[currentId]) currentId = null;
 openSheet(currentId);
 if (!isMobile() && currentId) $('#app').dataset.view = 'editor';
+if (rpOpen){ $('#app').classList.add('rp'); $('#btnResearch').classList.add('on'); renderResearch(); }
 syncIdle();
 $('#nudgeCat').innerHTML = cat('curious');
 $('#rdCite').innerHTML = icon('quote',''); $('#rdOpen').innerHTML = icon('ext',''); $('#rdFav').innerHTML = icon('star',''); $('#rdDel').innerHTML = icon('trash','');

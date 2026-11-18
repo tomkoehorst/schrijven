@@ -101,3 +101,7 @@ grant select, insert, update, delete on public.snippets to authenticated;
 do $$ begin
   alter publication supabase_realtime add table public.snippets;
 exception when duplicate_object then null; end $$;
+
+-- Projecten: bronnen en fragmenten koppelen aan een groep
+alter table public.sources  add column if not exists grp text not null default '';
+alter table public.snippets add column if not exists grp text not null default '';
