@@ -4,8 +4,9 @@ Koppeling (MCP-server) waarmee Claude rechtstreeks in je Schrijfkamer kan beware
 
 - Installeren: dubbelklik op `schrijfkamer-claude.mcpb` (in de hoofdmap) of kies in Claude Desktop
   *Instellingen → Extensies → Extensie installeren…* en vul je e-mailadres en wachtwoord in.
-- Gereedschappen: `save_fragment`, `add_to_timeline`, `save_source`, `search_collection`,
-  `get_timeline`, `read_source`, `list_projects`.
+- Gereedschappen: `save_fragment`, `add_to_timeline`, `add_timeline_events`, `save_source`, `search_collection`,
+  `get_timeline`, `read_source`, `list_projects`, `create_project`, `project_overview`, `create_text`, `append_to_text`.
+- Prompt: `onderzoek_project` (project, onderwerp).
 - Bron: `src/index.js`. Bouwen: `esbuild src/index.js --bundle --minify --platform=node --format=cjs --outfile=server/index.js`,
   daarna `npx @anthropic-ai/mcpb pack . ../schrijfkamer-claude.mcpb`.
 - Praat via REST met Supabase (zelfde RLS als de app); het wachtwoord blijft op je eigen computer.

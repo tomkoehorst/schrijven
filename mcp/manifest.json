@@ -2,17 +2,21 @@
   "manifest_version": "0.2",
   "name": "schrijfkamer",
   "display_name": "Schrijfkamer",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Laat Claude fragmenten, tijdlijnmomenten en bronnen bewaren in je Schrijfkamer, en je verzameling doorzoeken.",
   "long_description": "Koppelt Claude aan je Schrijfkamer (tomkoehorst.github.io/schrijven). Zeg bijvoorbeeld: \"zet dit op mijn tijdlijn\", \"bewaar deze bronnen in project Roman\" of \"wat heb ik al verzameld over Brutus?\". Alles verschijnt direct in je app. De extensie praat rechtstreeks met je eigen Supabase-database en ziet alleen jouw gegevens.",
-  "author": { "name": "Tom" },
+  "author": {
+    "name": "Tom"
+  },
   "icon": "icon.png",
   "server": {
     "type": "node",
     "entry_point": "server/index.js",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/server/index.js"],
+      "args": [
+        "${__dirname}/server/index.js"
+      ],
       "env": {
         "SCHRIJF_EMAIL": "${user_config.email}",
         "SCHRIJF_PASSWORD": "${user_config.password}"
@@ -20,13 +24,54 @@
     }
   },
   "tools": [
-    { "name": "save_fragment", "description": "Fragment bewaren op de braindump (met bron)" },
-    { "name": "add_to_timeline", "description": "Gebeurtenis met datum op de tijdlijn zetten" },
-    { "name": "save_source", "description": "Webpagina bewaren als bron (artikel wordt opgehaald)" },
-    { "name": "search_collection", "description": "Fragmenten en bronnen doorzoeken" },
-    { "name": "get_timeline", "description": "Tijdlijn bekijken" },
-    { "name": "read_source", "description": "Bewaarde bron lezen" },
-    { "name": "list_projects", "description": "Projecten opvragen" }
+    {
+      "name": "save_fragment",
+      "description": "Fragment bewaren op de braindump (met bron)"
+    },
+    {
+      "name": "add_to_timeline",
+      "description": "Gebeurtenis met datum op de tijdlijn zetten"
+    },
+    {
+      "name": "save_source",
+      "description": "Webpagina bewaren als bron (artikel wordt opgehaald)"
+    },
+    {
+      "name": "search_collection",
+      "description": "Fragmenten en bronnen doorzoeken"
+    },
+    {
+      "name": "get_timeline",
+      "description": "Tijdlijn bekijken"
+    },
+    {
+      "name": "read_source",
+      "description": "Bewaarde bron lezen"
+    },
+    {
+      "name": "list_projects",
+      "description": "Projecten opvragen"
+    },
+    {
+      "name": "create_project",
+      "description": "Project (groep) aanmaken"
+    },
+    {
+      "name": "project_overview",
+      "description": "Overzicht van een project"
+    },
+    {
+      "name": "create_text",
+      "description": "Tekst/dossier maken in een project"
+    },
+    {
+      "name": "append_to_text",
+      "description": "Toevoegen aan een bestaande tekst"
+    },
+    {
+      "name": "add_timeline_events",
+      "description": "Meerdere tijdlijnpunten tegelijk"
+    }
   ],
   "user_config": {
     "email": {
@@ -43,10 +88,31 @@
       "required": true
     }
   },
-  "keywords": ["schrijven", "onderzoek", "tijdlijn", "notities"],
+  "keywords": [
+    "schrijven",
+    "onderzoek",
+    "tijdlijn",
+    "notities"
+  ],
   "license": "MIT",
   "compatibility": {
-    "platforms": ["win32", "darwin"],
-    "runtimes": { "node": ">=18.0.0" }
-  }
+    "platforms": [
+      "win32",
+      "darwin"
+    ],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  },
+  "prompts": [
+    {
+      "name": "onderzoek_project",
+      "description": "Onderzoek doen en het researchkader van een project vullen",
+      "arguments": [
+        "project",
+        "onderwerp"
+      ],
+      "text": "Onderzoek ${arguments.onderwerp} voor project ${arguments.project} en vul de Schrijfkamer."
+    }
+  ]
 }

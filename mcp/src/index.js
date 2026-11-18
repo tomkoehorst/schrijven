@@ -134,7 +134,7 @@ const fail = e => ({ content: [{ type: 'text', text: 'Dat lukte niet: ' + (e.mes
 const like = q => `*${String(q).replace(/[,()*%\\]/g, ' ').trim()}*`;
 
 /* ---------------- Server & tools ---------------- */
-const server = new McpServer({ name: 'schrijfkamer', version: '1.0.0' });
+const server = new McpServer({ name: 'schrijfkamer', version: '1.1.0' });
 
 server.tool('save_fragment',
   'Bewaar een fragment (citaat, feit, idee of samenvatting) op de braindump in de Schrijfkamer van de gebruiker. Geef bij voorkeur de bron-URL mee als de informatie van een webpagina komt. Krijgt automatisch de tag "ai". Gebruik dit wanneer de gebruiker vraagt iets te bewaren, op te slaan of te noteren.',
@@ -248,5 +248,124 @@ server.tool('list_projects',
     try { await token(); const gs = await groups(); return ok(gs.length ? 'Projecten: ' + gs.map(g => g.name).join(', ') : 'Er zijn nog geen projecten. Die maak je in de app onder Groepen → +.'); }
     catch (e) { return fail(e); }
   });
+
+/* ---------- Research framework: projects, texts, batches ---------- */
+const COLORS = ['#B8D8C8', '#CFC6EA', '#F6D2BE', '#C4DCEF', '#F4E6B0', '#E9A9A0'];
+async function saveGroups(gs) {
+  const have = await rest('GET', `profiles?select=user_id&user_id=eq.${session.user_id}`);
+  if (have && have.length) return rest('PATCH', `profiles?user_id=eq.${session.user_id}`, { groups: gs }, 'return=minimal');
+  return rest('POST', 'profiles', { user_id: session.user_id, groups: gs }, 'resolution=merge-duplicates,return=minimal');
+}
+const titleOf = body => (String(body || '').split('\n').find(l => l.trim()) || '').replace(/^#{1,6}\s+/, '').trim();
+
+server.tool('create_project',
+  'Maak een nieuw project (groep) aan in de Schrijfkamer, bijvoorbeeld voor een boek of onderzoek. Bestaat het al, dan gebeurt er niets.',
+  { name: z.string(), color: z.string().optional().describe('Optioneel: een kleur als #B8D8C8.') },
+  async ({ name, color }) => {
+    try {
+      await token();
+      const gs = await groups();
+      const ex = gs.find(g => g.name.toLowerCase() === name.toLowerCase());
+      if (ex) return ok(`Project “${ex.name}” bestaat al.`);
+      gs.push({ id: uid(), name, color: color || COLORS[gs.length % COLORS.length] });
+      await saveGroups(gs);
+      return ok(`Project “${name}” aangemaakt. Het staat in de app onder Groepen.`);
+    } catch (e) { return fail(e); }
+  });
+
+server.tool('project_overview',
+  'Geef een overzicht van een project: teksten, aantallen, tijdlijn, bronnen, tags en open uitzoekpunten (??). Gebruik dit vóór je gaat onderzoeken, zodat je niets dubbel doet.',
+  { project: z.string() },
+  async ({ project }) => {
+    try {
+      await token();
+      const gid = await projectId(project);
+      const [texts, sn, src] = await Promise.all([
+        rest('GET', `sheets?select=id,body,updated&grp=eq.${gid}&trashed=eq.false&order=updated.desc`),
+        rest('GET', `snippets?select=text,date,tags&grp=eq.${gid}&order=created.desc&limit=500`),
+        rest('GET', `sources?select=title,url,site&grp=eq.${gid}&order=created.desc&limit=200`)
+      ]);
+      const todos = texts.flatMap(t => [...String(t.body).matchAll(/([^.!?\n]{0,140})(\?\?|\[check[^\]]*\])/g)].map(m => `${m[1].trim()} ${m[2]} (in “${titleOf(t.body)}”)`));
+      const dated = sn.map(x => ({ x, d: parseDate(x.date) })).filter(y => y.d).sort((a, b) => a.d.key.localeCompare(b.d.key));
+      const tags = {}; for (const x of sn) for (const t of (x.tags || [])) tags[t] = (tags[t] || 0) + 1;
+      return ok([
+        `Project “${project}”: ${texts.length} teksten, ${sn.length} fragmenten (${dated.length} op de tijdlijn), ${src.length} bronnen.`,
+        texts.length ? 'Teksten:\n' + texts.map(t => `- ${titleOf(t.body) || '(naamloos)'} (${String(t.body).split(/\s+/).length} woorden)`).join('\n') : '',
+        dated.length ? 'Tijdlijn:\n' + dated.map(y => `- ${y.d.label}: ${y.x.text.replace(/\s+/g, ' ').slice(0, 120)}`).join('\n') : '',
+        src.length ? 'Bronnen:\n' + src.slice(0, 60).map(s => `- ${s.title} ${s.url || ''}`).join('\n') : '',
+        Object.keys(tags).length ? 'Tags: ' + Object.entries(tags).sort((a, b) => b[1] - a[1]).map(([t, n]) => `#${t} (${n})`).join(' ') : '',
+        todos.length ? 'Nog uitzoeken:\n' + todos.slice(0, 40).map(t => '- ' + t).join('\n') : ''
+      ].filter(Boolean).join('\n\n'));
+    } catch (e) { return fail(e); }
+  });
+
+server.tool('create_text',
+  'Maak een nieuwe tekst (document) in de Schrijfkamer, bijvoorbeeld een onderzoeksdossier, personenoverzicht of hoofdstukopzet. De inhoud is Markdown: ## kopjes, - lijsten, > citaten, **vet**. Zet ?? achter feiten die nog gecontroleerd moeten worden; gebruik [[Titel]] om naar andere teksten of bronnen te linken.',
+  { title: z.string(), body: z.string().describe('De inhoud in Markdown (zonder de titel).'), project: z.string().optional() },
+  async ({ title, body, project }) => {
+    try {
+      await token();
+      const gid = project ? await projectId(project) : 'inbox';
+      const now = Date.now();
+      await rest('POST', 'sheets', { id: uid(), user_id: session.user_id, body: `# ${title}\n\n${body.trim()}\n`, grp: gid, fav: false, trashed: false, goal: 0, created: now, updated: now }, 'return=minimal');
+      return ok(`Tekst “${title}” aangemaakt${project ? ' in project ' + project : ''}. De gebruiker ziet hem direct in de app.`);
+    } catch (e) { return fail(e); }
+  });
+
+server.tool('append_to_text',
+  'Voeg tekst toe aan het einde van een bestaande tekst in de Schrijfkamer (gevonden op titel), bijvoorbeeld nieuwe bevindingen in het onderzoeksdossier. Overschrijft niets.',
+  { title: z.string().describe('Titel (eerste regel) van de bestaande tekst.'), content: z.string().describe('Markdown die onderaan wordt toegevoegd.'), project: z.string().optional() },
+  async ({ title, content, project }) => {
+    try {
+      await token();
+      let path = `sheets?select=id,body&trashed=eq.false&order=updated.desc&limit=500`;
+      if (project) path += `&grp=eq.${await projectId(project)}`;
+      const rows = await rest('GET', path);
+      const t = title.toLowerCase().trim();
+      const hit = rows.find(r => titleOf(r.body).toLowerCase() === t) || rows.find(r => titleOf(r.body).toLowerCase().includes(t));
+      if (!hit) return fail(new Error(`Geen tekst gevonden met de titel “${title}”. Bestaande teksten: ${rows.slice(0, 15).map(r => titleOf(r.body)).filter(Boolean).join(', ')}`));
+      const body = String(hit.body).replace(/\s*$/, '') + '\n\n' + content.trim() + '\n';
+      await rest('PATCH', `sheets?id=eq.${enc(hit.id)}`, { body, updated: Date.now() }, 'return=minimal');
+      return ok(`Toegevoegd aan “${titleOf(hit.body)}”.`);
+    } catch (e) { return fail(e); }
+  });
+
+server.tool('add_timeline_events',
+  'Zet meerdere gebeurtenissen tegelijk op de tijdlijn (handig bij het opbouwen van een chronologie). Geef per gebeurtenis een datum, korte tekst en bij voorkeur een bron-URL.',
+  {
+    project: z.string().optional(),
+    events: z.array(z.object({
+      date: z.string(), text: z.string(), source_url: z.string().optional(), source_title: z.string().optional(), tags: z.array(z.string()).optional()
+    })).min(1).max(40)
+  },
+  async ({ project, events }) => {
+    try {
+      const out = [], bad = [];
+      for (const ev of events) {
+        const d = parseDate(ev.date);
+        if (!d) { bad.push(`${ev.date} (${ev.text.slice(0, 40)})`); continue; }
+        await saveSnippet({ ...ev, project });
+        out.push(`${d.label}: ${ev.text.slice(0, 60)}`);
+      }
+      return ok(`${out.length} gebeurtenis(sen) op de tijdlijn gezet:\n${out.map(x => '- ' + x).join('\n')}${bad.length ? `\n\nNiet herkende datums (overgeslagen): ${bad.join('; ')}` : ''}`);
+    } catch (e) { return fail(e); }
+  });
+
+server.prompt('onderzoek_project',
+  'Laat Claude onderzoek doen en het researchkader van een project in de Schrijfkamer vullen.',
+  { project: z.string().describe('Naam van het project, bv. De muntenmaker'), onderwerp: z.string().describe('Waar gaat het onderzoek over?') },
+  ({ project, onderwerp }) => ({ messages: [{ role: 'user', content: { type: 'text', text:
+`Je bent mijn onderzoeksassistent voor mijn schrijfproject “${project}”. Ik concentreer me op het creatieve schrijven; jij doet het feitenwerk en zet alles in mijn Schrijfkamer.
+
+Onderwerp: ${onderwerp}
+
+Werkwijze:
+1. Roep eerst project_overview aan (bestaat het project niet, maak het dan met create_project) zodat je niets dubbel doet.
+2. Zoek op het web naar betrouwbare bronnen (encyclopedieën, musea, wetenschappelijke en historische bronnen). Bewaar de belangrijkste met save_source.
+3. Zet elke gebeurtenis met een datum op de tijdlijn (add_timeline_events), steeds met de bron-URL.
+4. Bewaar losse feiten, citaten en details die bruikbaar zijn voor een verhaal (zintuiglijke details, gebruiken, voorwerpen, plaatsen) als fragmenten met save_fragment, met tags en bron.
+5. Maak met create_text een tekst “Onderzoeksdossier: ${onderwerp}” in het project met: korte samenvatting, belangrijkste personen en plekken (met [[links]] waar zinnig), chronologie in het kort, en een lijst “Open vragen”. Zet ?? achter alles wat onzeker of tegenstrijdig is.
+6. Werk in het Nederlands. Verzin niets: geen bron, dan markeren met ??.
+7. Sluit af met een korte samenvatting in de chat van wat je hebt toegevoegd en welke vragen nog open staan.` } }] }));
 
 server.connect(new StdioServerTransport()).catch(e => { console.error(e); process.exit(1); });

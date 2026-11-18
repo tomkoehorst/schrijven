@@ -48,6 +48,8 @@ Installeren: `chrome://extensions` (of `edge://extensions`) → Ontwikkelaarsmod
 Download [schrijfkamer-claude.mcpb](https://github.com/tomkoehorst/schrijven/raw/main/schrijfkamer-claude.mcpb) en dubbelklik (of Claude Desktop → Instellingen → Extensies → installeren). Vul je Schrijfkamer-e-mail en -wachtwoord in. Daarna kun je Claude vragen:
 - "Zet dit op mijn tijdlijn" · "Bewaar dit als fragment in project Roman" · "Bewaar deze bronnen"
 - "Wat heb ik al verzameld over Brutus?" · "Laat mijn tijdlijn zien"
+- **Onderzoeksopdracht** (prompt `onderzoek_project`): Claude zoekt op het web en vult het project met bronnen, tijdlijn, fragmenten en een onderzoeksdossier met open vragen (??)
+- Extra gereedschappen: `create_project`, `project_overview`, `create_text`, `append_to_text`, `add_timeline_events`
 
 Broncode in `mcp/`.
 
