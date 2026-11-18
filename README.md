@@ -81,6 +81,10 @@ Naast je tekst (Ctrl+Alt+R):
 Alle acties hebben een sneltoets (aan te passen via Instellingen → Sneltoetsen) en staan in het opdrachtenmenu (Ctrl+Alt+A). Ideaal om in Logi Options+ aan muisknoppen of F-toetsen te koppelen:
 Ctrl+Alt+K markeer ??, J/H volgende/vorige uitzoekpunt, L opzoeken, B fragment, Q citeren, R onderzoekspaneel, S snel bewaren, F focus, T sprint.
 
+## Projectpagina
+
+Klik in de bibliotheek op een groep (project) en je ziet alles bij elkaar: aantallen, teksten, open uitzoekpunten, een mini-tijdlijn, de laatste fragmenten en bronnen en de tags. Via het tegel-icoon naast de projectnaam kom je er altijd terug.
+
 ## Snel bewaren & projecten
 
 - Plak een link in Bronnen of op de Braindump → wordt een bron; plak tekst → wordt een fragment

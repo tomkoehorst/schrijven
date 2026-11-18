@@ -514,6 +514,36 @@ body.capture .dialog{box-shadow:none;border:1px solid var(--line)}
 .caplinks input{margin-top:3px;accent-color:var(--accent)}
 .caplinks small{color:var(--muted)}
 .capsrc{font-size:13.5px;line-height:1.45;background:var(--pane2);border-radius:10px;padding:8px 11px;margin:0 0 12px!important}
+/* ---------- Projectpagina ---------- */
+.project{display:none;flex:1;min-height:0;overflow:auto;flex-direction:column;padding:0 0 60px}
+.app.projmode .project{display:flex}
+.app.projmode #topbar,.app.projmode #fmtMob,.app.projmode #scroll,.app.projmode #nosheet,.app.projmode #nudge,.app.projmode .focus-exit,.app.projmode #reader,.app.projmode #board,.app.projmode .research{display:none!important}
+.phead{display:flex;align-items:center;gap:10px;padding:18px 28px 6px;flex-wrap:wrap}
+.phead h1{font-size:26px;margin:0;letter-spacing:-.01em}
+.pdot{width:14px;height:14px;border-radius:50%;flex:none}
+.phead .btn{padding:8px 14px;font-size:13.5px}
+.pstats{display:flex;gap:10px;flex-wrap:wrap;padding:10px 28px 14px}
+.pstat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 14px;min-width:96px}
+.pstat b{display:block;font-size:20px;font-weight:800}
+.pstat span{font-size:12px;color:var(--muted);font-weight:700}
+.pwelcome{display:flex;gap:16px;align-items:center;margin:0 28px 14px;background:var(--accent-soft);border-radius:16px;padding:14px 18px}
+.pwelcome .cat{width:72px;height:72px;flex:none}.pwelcome h3{margin:0 0 4px}.pwelcome p{margin:0;font-size:14px;line-height:1.5}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;padding:0 28px}
+.pcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow);min-width:0}
+.pcard.pwide{grid-column:1/-1}
+.pcard h4{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:2px 0 8px;font-weight:800}
+.prow{display:block;width:100%;text-align:left;padding:8px 8px;border-radius:10px}
+.prow:hover{background:var(--pane2)}
+.prow b{display:block;font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prow span{display:block;font-size:12px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pmore{font-size:12.5px;font-weight:800;color:var(--accent);padding:6px 8px;margin-top:2px}
+.ptl{position:relative;padding-left:14px;border-left:2px solid var(--line);margin:4px 0 4px 6px}
+.ptli{position:relative;padding:4px 0 8px}
+.ptli::before{content:'';position:absolute;left:-20px;top:9px;width:10px;height:10px;border-radius:50%;background:var(--card);border:2.5px solid var(--sage)}
+.ptli span{font-size:11.5px;font-weight:800;color:#B07A3C}
+.ptli p{margin:1px 0 0;font-size:13.5px;line-height:1.4}
+.ptli.gap::before{display:none}.ptli.gap span{color:var(--faint)}
+@media (max-width:820px){ .phead{padding:12px 14px 4px}.phead h1{font-size:21px}.phead .btn{padding:7px 10px;font-size:12.5px}.pstats{padding:8px 14px 12px;gap:6px}.pstat{min-width:0;flex:1 1 30%;padding:7px 10px}.pstat b{font-size:17px}.pgrid{padding:0 12px;grid-template-columns:1fr}.pwelcome{margin:0 12px 12px} }
 /* ---------- Mobile ---------- */
 @media (max-width:820px){
   .app,.app.hide-lib,.app.focus{display:block;position:relative}
@@ -567,6 +597,7 @@ body.capture .dialog{box-shadow:none;border:1px solid var(--line)}
       <button class="ib back" id="backLib" title="Bibliotheek"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
       <button class="ib hide-m" id="toggleLib" title="Bibliotheek tonen/verbergen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg></button>
       <h2 id="listTitle">Inbox</h2>
+      <button class="ib" id="btnProj" title="Projectoverzicht" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/></svg></button>
       <button class="ib" id="btnNew" title="Nieuwe tekst (Ctrl+Alt+N)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>
     </div>
     <div class="search">
@@ -615,6 +646,7 @@ body.capture .dialog{box-shadow:none;border:1px solid var(--line)}
       <div class="scroll" id="readerScroll"><article class="rd" id="readerBody"></article></div>
     </div>
     <div class="board" id="board"></div>
+    <div class="project" id="project"></div>
     <aside class="research" id="research"></aside>
     <div class="panel" id="panel"></div>
     <div class="panel" id="coach"></div>
@@ -1051,13 +1083,14 @@ function renderLib(){
   for (const g of groups) h += item('g:'+g.id, `<span class="dot" style="background:${esc(g.color)}"></span>`, g.name);
   h += '<div style="height:10px"></div>' + item('trash', icon('trash'), 'Prullenbak');
   $('#libNav').innerHTML = h;
+  if (typeof projOpen === 'function' && projOpen()) renderProject();
 }
 $('#libNav').addEventListener('click', e => {
   if (e.target.closest('#addGroup')) return groupDialog();
   if (e.target.closest('#quickSave')) return quickDialog();
   const b = e.target.closest('[data-view]'); if (!b) return;
   setView(b.dataset.view);
-  setMobile(isBoard() ? 'editor' : 'list');
+  setMobile(isBoard() || view.startsWith('g:') ? 'editor' : 'list');
 });
 $('#libNav').addEventListener('dblclick', e => {
   const b = e.target.closest('[data-view^="g:"]'); if (b) groupDialog(groups.find(g => 'g:'+g.id === b.dataset.view));
@@ -1077,6 +1110,7 @@ function setView(v){
   if (src){ closePanel(); closeCoach(); if ($('#app').classList.contains('focus')) toggleFocus(); srcServerSearch(); renderReader(); }
   else if (wasSrc || wasBoard) openSheet(currentId);
   renderLib(); renderList();
+  showProject(v.startsWith('g:'));
 }
 
 /* ---------------- Sheet list ---------------- */
@@ -1138,12 +1172,14 @@ $('#sheets').addEventListener('click', e => {
     return;
   }
   const b = e.target.closest('.sheet'); if (!b) return;
+  if (projOpen()) showProject(false);
   openSheet(b.dataset.id); setMobile('editor');
   if (!isMobile()) ta.focus();
 });
 $('#q').addEventListener('input', e => { query = e.target.value; srcServerSearch(); renderList(); });
 
 function newSheet(){
+  if (typeof projOpen === 'function' && projOpen()) showProject(false);
   const id = uid();
   let group = 'inbox';
   if (view.startsWith('g:')) group = view.slice(2);
@@ -1643,8 +1679,8 @@ function groupDialog(g){
   function ok(){
     const name = $('#gname').value.trim(); if (!name) return $('#gname').focus();
     if (g){ g.name = name; g.color = color; }
-    else { const ng = {id: uid(), name, color}; groups.push(ng); view = 'g:' + ng.id; LS.set('view', view); }
-    saveProfile(); closeModal(); renderLib(); renderList();
+    else { const ng = {id: uid(), name, color}; groups.push(ng); saveProfile(); closeModal(); setView('g:' + ng.id); setMobile('editor'); return; }
+    saveProfile(); closeModal(); renderLib(); renderList(); if (projOpen()) renderProject();
   }
 }
 function confirmDialog(title, text, okLabel, fn){
@@ -3012,8 +3048,10 @@ function todosIn(id){
   const v = (sheets[id] && sheets[id].body) || '', out = [];
   for (const m of v.matchAll(TODO_RE)){
     const i = m.index;
-    let start = Math.max(v.lastIndexOf('\n', i - 1), v.lastIndexOf('. ', i - 1) + 1, v.lastIndexOf('! ', i - 1) + 1, v.lastIndexOf('? ', i - 1) + 1);
-    if (start < 0) start = 0;
+    // start of the sentence; abbreviations like "v.Chr." or "bv." are not sentence ends
+    let start = Math.max(0, v.lastIndexOf('\n', i - 1) + 1);
+    const ABBR = /(?:v\.\s?chr|n\.\s?chr|v\.\s?c|bv|o\.a|ca|dr|mr|st|nr|blz|jr|vs|etc|ibid|e\.a|resp|zgn|evt|incl|d\.w\.z|i\.p\.v)\.$/i;
+    for (let j = i - 1; j > start; j--){ if (/[.!?]/.test(v[j]) && /\s/.test(v[j + 1] || '') && !ABBR.test(v.slice(Math.max(start, j - 10), j + 1))){ start = j + 1; break; } }
     const sentence = v.slice(start, i).replace(/^[\s.!?#>*-]+/, '').replace(/\+\+/g, '').trim();
     const q = (m[1] || '').trim();
     let pa = v.lastIndexOf('\n\n', i); pa = pa < 0 ? 0 : pa + 2; let pb = v.indexOf('\n\n', i); if (pb < 0) pb = v.length;
@@ -3840,6 +3878,86 @@ function processCapture(){
   $('#dialog').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) go(); });
 }
 
+/* ================= Projectpagina ================= */
+function projOpen(){ return $('#app').classList.contains('projmode'); }
+function showProject(on){
+  $('#app').classList.toggle('projmode', !!on);
+  $('#btnProj').style.display = view.startsWith('g:') ? '' : 'none';
+  $('#btnProj').classList.toggle('on', !!on);
+  if (on){ closePanel(); closeCoach(); if ($('#app').classList.contains('focus')) toggleFocus(); renderProject(); }
+}
+function projectData(gid){
+  const texts = Object.entries(sheets).filter(([, s]) => !s.trashed && s.group === gid).map(([id, s]) => ({id, ...s})).sort((a, b) => b.updated - a.updated);
+  const srcs = Object.values(sources).filter(s => s.grp === gid).sort((a, b) => b.created - a.created);
+  const textSrc = new Set(srcs.map(s => s.id));
+  const snips = Object.values(snippets).filter(n => n.grp === gid || (!n.grp && textSrc.has(n.source_id))).sort((a, b) => b.created - a.created);
+  const dated = snips.map(n => ({n, d: parseDate(n.date)})).filter(x => x.d).sort((a, b) => a.d.key.localeCompare(b.d.key));
+  const todos = texts.flatMap(t => todosIn(t.id));
+  const words = texts.reduce((a, t) => a + countWords(t.body || ''), 0);
+  const tags = {}; for (const x of [...snips, ...srcs]) for (const t of (x.tags || [])) tags[t] = (tags[t] || 0) + 1;
+  return {texts, srcs, snips, dated, todos, words, tags: Object.entries(tags).sort((a, b) => b[1] - a[1]).slice(0, 24)};
+}
+function renderProject(){
+  const el = $('#project'); if (!el || !view.startsWith('g:')) return;
+  const gid = view.slice(2), g = groups.find(x => x.id === gid);
+  if (!g){ el.innerHTML = ''; return; }
+  const D = projectData(gid);
+  const stat = (n, l) => `<div class="pstat"><b>${n.toLocaleString('nl-NL')}</b><span>${l}</span></div>`;
+  const more = (label, act) => `<button class="pmore" data-pact="${act}">${label} →</button>`;
+  const empty = t => `<p class="muted" style="margin:4px 0">${t}</p>`;
+  todoList = D.todos;
+  el.innerHTML = `
+  <div class="phead">
+    <button class="ib back" data-pact="lib" title="Bibliotheek"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+    <span class="pdot" style="background:${esc(g.color)}"></span>
+    <h1>${esc(g.name)}</h1>
+    <div class="grow"></div>
+    <button class="btn ghost" data-pact="edit">Bewerken</button>
+    <button class="btn ghost" data-pact="quick">＋ Snel bewaren</button>
+    <button class="btn" data-pact="new">＋ Nieuwe tekst</button>
+  </div>
+  <div class="pstats">${stat(D.texts.length, D.texts.length === 1 ? 'tekst' : 'teksten')}${stat(D.words, 'woorden')}${stat(D.srcs.length, D.srcs.length === 1 ? 'bron' : 'bronnen')}${stat(D.snips.length, D.snips.length === 1 ? 'fragment' : 'fragmenten')}${stat(D.dated.length, 'op de tijdlijn')}${stat(D.todos.length, 'nog uitzoeken')}</div>
+  ${!D.texts.length && !D.srcs.length && !D.snips.length ? `<div class="pwelcome">${cat('happy')}<div><h3>Welkom bij ${esc(g.name)}!</h3><p>Begin met een <b>nieuwe tekst</b>, bewaar bronnen met de browser-extensie of vraag Claude om iets “in project ${esc(g.name)}” te zetten. Alles van dit project komt hier samen.</p></div></div>` : ''}
+  <div class="pgrid">
+    <section class="pcard pwide"><h4>Teksten</h4>
+      ${D.texts.length ? D.texts.slice(0, 8).map(t => `<button class="prow" data-popen="${t.id}"><b>${esc(titleOf(t))}</b><span>${countWords(t.body || '').toLocaleString('nl-NL')} woorden · ${fmtDate(t.updated)}</span></button>`).join('') + (D.texts.length > 8 ? empty(`en nog ${D.texts.length - 8} — zie de lijst links`) : '') : empty('Nog geen teksten. Klik op “Nieuwe tekst”.')}
+    </section>
+    <section class="pcard"><h4>Nog uitzoeken${D.todos.length ? ' · ' + D.todos.length : ''}</h4>
+      ${D.todos.length ? D.todos.slice(0, 6).map((t, i) => `<button class="prow" data-ptodo="${i}"><b>${esc(t.text.slice(0, 90))}</b><span>${esc(titleOf(sheets[t.sheet]))}</span></button>`).join('') + (D.todos.length > 6 ? more('Alle uitzoekpunten', 'todos') : '') : empty('Niets open. Typ <b>??</b> in je tekst bij iets wat je nog moet nakijken.')}
+    </section>
+    <section class="pcard"><h4>Tijdlijn</h4>
+      ${D.dated.length ? `<div class="ptl">${(D.dated.length > 8 ? [...D.dated.slice(0, 4), null, ...D.dated.slice(-3)] : D.dated).map(x => x ? `<div class="ptli"><span>${esc(x.d.label)}</span><p>${esc(x.n.text.replace(/\s+/g, ' ').slice(0, 110))}</p></div>` : '<div class="ptli gap"><span>…</span></div>').join('')}</div>` + more('Hele tijdlijn', 'timeline') : empty('Nog geen momenten. Geef fragmenten een datum, of gebruik “Zet op tijdlijn”.')}
+    </section>
+    <section class="pcard"><h4>Laatste fragmenten</h4>
+      ${D.snips.length ? D.snips.slice(0, 5).map(n => `<button class="prow" data-psnip="${n.id}"><b>${esc(n.text.replace(/\s+/g, ' ').slice(0, 120))}</b><span>${[n.date && parseDate(n.date) ? parseDate(n.date).label : '', (sources[n.source_id] || {}).title || '', fmtDate(n.created)].filter(Boolean).map(esc).join(' · ')}</span></button>`).join('') + more('Braindump', 'board') : empty('Nog geen fragmenten.')}
+    </section>
+    <section class="pcard"><h4>Laatste bronnen</h4>
+      ${D.srcs.length ? D.srcs.slice(0, 5).map(s => `<button class="prow" data-psrc="${s.id}"><b>${esc(s.title)}</b><span>${esc(KIND[s.kind] || 'Bron')} · ${esc(s.site || host(s.url))}</span></button>`).join('') + more('Alle bronnen', 'sources') : empty('Nog geen bronnen.')}
+    </section>
+    ${D.tags.length ? `<section class="pcard pwide"><h4>Tags</h4><div class="chips">${D.tags.map(([t, n]) => `<button class="chip" data-ptag="${esc(t)}">#${esc(t)} · ${n}</button>`).join('')}</div></section>` : ''}
+  </div>`;
+}
+$('#project').addEventListener('click', e => {
+  const t = e.target, gid = view.slice(2);
+  const a = t.closest('[data-pact]');
+  if (a){
+    const act = a.dataset.pact;
+    if (act === 'new'){ showProject(false); newSheet(); }
+    if (act === 'quick') quickDialog();
+    if (act === 'edit') groupDialog(groups.find(g => g.id === gid));
+    if (act === 'lib') setMobile('lib');
+    if (['timeline', 'board', 'sources'].includes(act)){ projFilter = gid; LS.set('projFilter', gid); boardTag = ''; setView(act); setMobile(act === 'sources' ? 'list' : 'editor'); }
+    if (act === 'todos'){ showProject(false); openSheet(todoList[0] && todoList[0].sheet); todoScope = 'project'; LS.set('todoScope', 'project'); rpTab = 'todo'; toggleResearch(true); renderResearch(); setMobile('editor'); }
+    return;
+  }
+  const op = t.closest('[data-popen]'); if (op){ showProject(false); openSheet(op.dataset.popen); setMobile('editor'); if (!isMobile()) ta.focus(); return; }
+  const td = t.closest('[data-ptodo]'); if (td){ const x = todoList[+td.dataset.ptodo]; showProject(false); openSheet(x.sheet); setMobile('editor'); setTimeout(() => { ta.focus(); ta.setSelectionRange(x.index, x.index + x.len); typewriter(); }, isMobile() ? 320 : 0); return; }
+  const sn = t.closest('[data-psnip]'); if (sn){ snippetDialog({id: sn.dataset.psnip}); return; }
+  const sr = t.closest('[data-psrc]'); if (sr){ setView('sources'); openSource(sr.dataset.psrc); return; }
+  const tg = t.closest('[data-ptag]'); if (tg){ projFilter = gid; LS.set('projFilter', gid); boardTag = tg.dataset.ptag; setView('board'); setMobile('editor'); return; }
+});
+$('#btnProj').onclick = () => { showProject(true); setMobile('editor'); };
+
 /* ---------------- Boot ---------------- */
 applySettings();
 renderLib();
@@ -3847,6 +3965,7 @@ for (const [id, s] of Object.entries(sheets)) if (id !== currentId && !s.trashed
 if (!sheets[currentId]) currentId = null;
 openSheet(currentId);
 if (!isMobile() && currentId) $('#app').dataset.view = 'editor';
+if (view.startsWith('g:')) $('#btnProj').style.display = '';
 if (rpOpen){ $('#app').classList.add('rp'); $('#btnResearch').classList.add('on'); renderResearch(); }
 syncIdle();
 $('#nudgeCat').innerHTML = cat('curious');
