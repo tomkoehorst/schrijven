@@ -1971,7 +1971,7 @@ function srcRealtime(p){
   if (view === 'sources'){ renderList(); if (p.new && p.new.id === currentSrc && !document.activeElement.closest?.('#reader')) renderReader(); }
 }
 async function callFn(body){
-  const { data, error } = await sb.functions.invoke('bronnen', {body});
+  const { data, error } = await sb.functions.invoke(CFG.bronnenFunction || 'bronnen', {body});
   if (error){
     let msg = error.message || 'Fout', status = 0;
     const ctx = error.context;
