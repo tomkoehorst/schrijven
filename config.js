@@ -6,5 +6,5 @@ window.SCHRIJF_CONFIG = {
   supabaseUrl: 'https://ssnbuwuqacjaxewrmdgg.supabase.co',
   supabaseKey: 'sb_publishable_4QtjFhDoIjPgvp0gAnPLkg_AqBLnxxz',
   // Laatste deel van de URL van de Edge Function (…/functions/v1/<dit>)
-  bronnenFunction: 'quick-function'
+  bronnenFunction: 'bronnen'
 };
