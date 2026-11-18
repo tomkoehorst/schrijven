@@ -2084,7 +2084,7 @@ I.quote = '<path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 
 /* ----- Supabase I/O ----- */
 async function srcUpsert(row){
   if (!sbUser) throw new Error('Niet ingelogd');
-  const payload = {...row, user_id: sbUser.id}; if (noGrpCol) delete payload.grp;
+  const payload = {...stripLocal(row), user_id: sbUser.id}; if (noGrpCol) delete payload.grp;
   let { error } = await sb.from('sources').upsert(payload);
   if (error && /grp/.test(error.message || '') && !noGrpCol){ noGrpCol = true; delete payload.grp; ({ error } = await sb.from('sources').upsert(payload)); }
   if (error) throw error;
@@ -2491,7 +2491,7 @@ function detectDate(text){
 /* ----- Supabase ----- */
 async function snipUpsert(row){
   if (!sbUser) throw new Error('Niet ingelogd');
-  const r = {...row}; delete r._editing;
+  const r = stripLocal(row);
   const payload = {...r, user_id: sbUser.id}; if (noGrpCol) delete payload.grp;
   let { error } = await sb.from('snippets').upsert(payload);
   if (error && /grp/.test(error.message || '') && !noGrpCol){ noGrpCol = true; delete payload.grp; ({ error } = await sb.from('snippets').upsert(payload)); }
