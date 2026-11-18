@@ -351,6 +351,59 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .citebar.show{display:block}
 @media (max-width:820px){ .rd{padding:6px 20px 40vh} .rd h1{font-size:23px} }
 
+/* ---------- Braindump & tijdlijn ---------- */
+.board{display:none;flex:1;min-height:0;overflow:auto;flex-direction:column}
+.app.boardmode .board{display:flex}
+.app.boardmode #topbar,.app.boardmode #fmtMob,.app.boardmode #scroll,.app.boardmode #nosheet,.app.boardmode #nudge,.app.boardmode .focus-exit,.app.boardmode #reader{display:none!important}
+@media (min-width:821px){ .app.boardmode,.app.boardmode.show-lib{grid-template-columns:230px 0 1fr}.app.boardmode .list{opacity:0;pointer-events:none}.app.boardmode .lib{opacity:1;pointer-events:auto} }
+.bhead{display:flex;align-items:center;gap:10px;padding:12px 22px;position:sticky;top:0;background:var(--bg);z-index:3}
+.seg{display:flex;background:var(--pane2);border-radius:11px;padding:3px;gap:2px}
+.seg button{padding:7px 14px;border-radius:9px;font-weight:800;font-size:13.5px;color:var(--muted)}
+.seg button.on{background:var(--card);color:var(--text);box-shadow:var(--shadow)}
+.btags{display:flex;gap:6px;flex-wrap:wrap;padding:0 22px 10px}
+.bbody{padding:6px 22px 60px}
+.capture{max-width:760px;margin:0 auto 18px}
+.capture textarea{width:100%;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:14px 16px;font:inherit;font-size:15.5px;line-height:1.5;resize:none;outline:none;box-shadow:var(--shadow);color:var(--text);overflow:hidden}
+.capture textarea:focus{border-color:var(--sage)}
+.cards{columns:4 240px;column-gap:14px}
+.card{break-inside:avoid;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 14px 10px;margin:0 0 14px;box-shadow:var(--shadow);display:block}
+.card .ct{font-size:14.5px;line-height:1.55;white-space:normal;overflow-wrap:anywhere}
+.card .cn{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.45}
+.card .cmeta{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.card .cmeta:empty{display:none}
+.card .cdate{font-size:11.5px;font-weight:800;color:#B07A3C;background:rgba(244,230,176,.6);border-radius:999px;padding:2px 8px}
+.card .ctag{font-size:11.5px;font-weight:800;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 8px;cursor:pointer}
+.card .cs{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-top:8px;text-decoration:none;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.card .cs:hover{color:var(--accent)}
+.card .ca{display:flex;gap:4px;margin-top:8px;opacity:0;transition:opacity .15s}
+.card:hover .ca{opacity:1}
+@media (hover:none){.card .ca{opacity:1}}
+.card .ca button{font-size:12px;font-weight:800;padding:4px 9px;border-radius:8px;color:var(--muted);background:var(--pane2)}
+.card .ca button:hover{color:var(--accent);background:var(--accent-soft)}
+.tline{max-width:760px;margin:0 auto;position:relative;padding-left:120px}
+.tline::before{content:'';position:absolute;left:96px;top:6px;bottom:6px;width:2px;background:var(--line);border-radius:2px}
+.ty{font-size:22px;font-weight:800;margin:22px 0 10px -120px;width:90px;text-align:right;color:var(--accent)}
+.ty:first-child{margin-top:0}
+.ti{position:relative;margin-bottom:14px}
+.ti .tdot{position:absolute;left:-29px;top:16px;width:12px;height:12px;border-radius:50%;background:var(--card);border:3px solid var(--sage)}
+.ti .tdl{position:absolute;left:-120px;width:86px;text-align:right;top:13px;font-size:12px;font-weight:800;color:var(--muted);line-height:1.3}
+.ti .card{margin:0}
+.sfrag{padding:8px 0;border-top:1px solid var(--line);font-size:14px;line-height:1.5;cursor:pointer;display:flex;gap:10px;justify-content:space-between}
+.sfrag:first-of-type{border-top:0}
+.sfrag:hover span{color:var(--accent)}
+.sfrag b{font-size:11.5px;color:#B07A3C;white-space:nowrap}
+.citebar{padding:0;display:none;overflow:hidden}
+.citebar.show{display:flex}
+.citebar button{color:inherit;padding:8px 12px;font-weight:800;font-size:13px}
+.citebar button + button{border-left:1px solid rgba(255,255,255,.2)}
+.citebar button:hover{background:rgba(255,255,255,.12)}
+@media (max-width:820px){
+  .bhead{padding:10px 12px;gap:6px}.btags{padding:0 12px 8px}.bbody{padding:4px 12px 50vh}
+  .cards{columns:1}
+  .tl{padding-left:86px}.tline::before{left:66px}.ty{margin-left:-86px;width:60px;font-size:18px}.ti .tdl{left:-86px;width:52px;font-size:11px}.ti .tdot{left:-26px}
+  .seg button{padding:7px 10px}
+}
+
 /* ---------- Mobile ---------- */
 @media (max-width:820px){
   .app,.app.hide-lib,.app.focus{display:block;position:relative}
@@ -450,6 +503,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       </div>
       <div class="scroll" id="readerScroll"><article class="rd" id="readerBody"></article></div>
     </div>
+    <div class="board" id="board"></div>
     <div class="panel" id="panel"></div>
     <div class="panel" id="coach"></div>
     <div class="nudge" id="nudge"><span id="nudgeCat"></span><span>Even vast? Ik heb ideeën.</span><span class="x" title="Sluiten">×</span></div>
@@ -458,7 +512,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 </div>
 
 <div class="sprint-line" id="sprintLine"></div>
-<button class="citebar" id="citebar">❝ Citeer in je tekst</button>
+<div class="citebar" id="citebar"><button id="cbCite">❝ Citeer in tekst</button><button id="cbFrag">✚ Fragment</button></div>
 <div class="modal" id="modal"><div class="dialog" id="dialog"></div></div>
 <div class="toast" id="toast"></div>
 
@@ -728,9 +782,10 @@ async function startSupabase(user){
     }
   };
   await sbPull();
-  srcPull().then(processIncoming);
+  srcPull().then(processIncoming); snipPull();
   sbChannel = sb.channel('sync-' + user.id)
     .on('postgres_changes', {event:'*', schema:'public', table:'sources'}, p => srcRealtime(p))
+    .on('postgres_changes', {event:'*', schema:'public', table:'snippets'}, p => snipRealtime(p))
     .on('postgres_changes', {event:'*', schema:'public', table:'sheets'}, p => {
       let changed;
       if (p.eventType === 'DELETE') changed = p.old && applyRemoteDelete(p.old.id);
@@ -860,18 +915,23 @@ function counts(){
   return c;
 }
 function viewName(v){
-  return {sources:'Bronnen', inbox:'Inbox', all:'Alle teksten', recent:'Laatste 7 dagen', fav:'Favorieten', trash:'Prullenbak'}[v]
+  return {board:'Braindump', timeline:'Tijdlijn', sources:'Bronnen', inbox:'Inbox', all:'Alle teksten', recent:'Laatste 7 dagen', fav:'Favorieten', trash:'Prullenbak'}[v]
     || (groups.find(g => 'g:'+g.id === v) || {}).name || 'Inbox';
 }
 function renderLib(){
-  const c = counts(); c.sources = Object.keys(typeof sources === 'object' ? sources : {}).length;
+  const c = counts(); c.sources = Object.keys(sources).length; c.board = Object.keys(snippets).length; c.timeline = Object.values(snippets).filter(x => parseDate(x.date)).length;
   const item = (v, ic, label, extra='') => `<button class="nav ${view===v?'on':''}" data-view="${v}">${ic}<span class="name">${esc(label)}</span><span class="cnt">${c[v]||''}</span>${extra}</button>`;
   let h = '<div class="sec" style="padding-top:6px">Bibliotheek</div>';
   h += item('inbox', icon('inbox'), 'Inbox');
   h += item('all', icon('all'), 'Alle teksten');
   h += item('recent', icon('recent'), 'Laatste 7 dagen');
   h += item('fav', icon('star'), 'Favorieten');
-  if (useSupabase) h += item('sources', icon('book'), 'Bronnen');
+  if (useSupabase){
+    h += '<div class="sec">Verzamelen</div>';
+    h += item('sources', icon('book'), 'Bronnen');
+    h += item('board', icon('board'), 'Braindump');
+    h += item('timeline', icon('timeline'), 'Tijdlijn');
+  }
   h += `<div class="sec">Groepen <button id="addGroup" title="Nieuwe groep">${icon('plus','',16)}</button></div>`;
   if (!groups.length) h += `<div class="muted" style="padding:2px 10px 6px">Maak groepen voor projecten, zoals “Roman” of “Blog”.</div>`;
   for (const g of groups) h += item('g:'+g.id, `<span class="dot" style="background:${esc(g.color)}"></span>`, g.name);
@@ -882,7 +942,7 @@ $('#libNav').addEventListener('click', e => {
   if (e.target.closest('#addGroup')) return groupDialog();
   const b = e.target.closest('[data-view]'); if (!b) return;
   setView(b.dataset.view);
-  setMobile('list');
+  setMobile(isBoard() ? 'editor' : 'list');
 });
 $('#libNav').addEventListener('dblclick', e => {
   const b = e.target.closest('[data-view^="g:"]'); if (b) groupDialog(groups.find(g => 'g:'+g.id === b.dataset.view));
@@ -892,13 +952,15 @@ $('#libNav').addEventListener('contextmenu', e => {
   e.preventDefault(); groupDialog(groups.find(g => 'g:'+g.id === b.dataset.view));
 });
 function setView(v){
-  const wasSrc = view === 'sources';
+  const wasSrc = view === 'sources', wasBoard = view === 'board' || view === 'timeline';
   view = v; LS.set('view', v);
-  const src = v === 'sources';
+  const src = v === 'sources', board = v === 'board' || v === 'timeline';
   $('#app').classList.toggle('srcmode', src);
+  $('#app').classList.toggle('boardmode', board);
+  if (board){ closePanel(); closeCoach(); if ($('#app').classList.contains('focus')) toggleFocus(); renderBoard(); }
   $('#q').placeholder = src ? 'Zoeken in bronnen…' : 'Zoeken in teksten…';
   if (src){ closePanel(); closeCoach(); if ($('#app').classList.contains('focus')) toggleFocus(); srcServerSearch(); renderReader(); }
-  else if (wasSrc) openSheet(currentId);
+  else if (wasSrc || wasBoard) openSheet(currentId);
   renderLib(); renderList();
 }
 
@@ -924,6 +986,7 @@ function visibleSheets(){
 }
 function renderList(){
   if (view === 'sources') return renderSources();
+  if (view === 'board' || view === 'timeline') return;
   $('#listTitle').textContent = query.trim() ? 'Zoekresultaten' : viewName(view);
   const arr = visibleSheets();
   const el = $('#sheets');
@@ -1519,7 +1582,7 @@ document.addEventListener('keydown', e => {
     else if (k === 'KeyI' && currentId){ e.preventDefault(); panelOpen ? closePanel() : openPanel(); }
   }
 });
-document.addEventListener('visibilitychange', () => { if (document.hidden){ persistLocal(); for (const id of Object.keys(timers)){ clearTimeout(timers[id]); flush(id); } } else if (sbUser){ sbPull(); srcPull(); } });
+document.addEventListener('visibilitychange', () => { if (document.hidden){ persistLocal(); for (const id of Object.keys(timers)){ clearTimeout(timers[id]); flush(id); } } else if (sbUser){ sbPull(); srcPull(); snipPull(); } });
 
 /* ================= Schrijfcoach (zonder AI) ================= */
 const DEV = LS.get('dev', null) || (() => { const d = uid(); LS.set('dev', d); return d; })();
@@ -1936,6 +1999,8 @@ const persistSources = () => LS.set('sources', sources);
 const host = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch(e){ return ''; } };
 const normUrl = u => { try { const x = new URL(u); x.hash = ''; ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','fbclid','gclid'].forEach(k => x.searchParams.delete(k)); return x.href.replace(/\/$/, ''); } catch(e){ return u; } };
 const KIND = {article:'Artikel', wiki:'Wikipedia', note:'Notitie', link:'Link'};
+I.board = '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>';
+I.timeline = '<path d="M12 3v18"/><circle cx="12" cy="7" r="2"/><circle cx="12" cy="17" r="2"/><path d="M14 7h6M4 17h6"/>';
 I.book = '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/>';
 I.ext = '<path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>';
 I.quote = '<path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/>';
@@ -2142,6 +2207,7 @@ function renderReader(){
     ${s.url ? `<div class="meta" style="margin-top:-6px"><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(host(s.url))} ↗</a></div>` : ''}
     <div class="tagrow" id="tagrow">${(s.tags || []).map((t, i) => `<span class="tag">#${esc(t)}<button data-untag="${i}" aria-label="Tag verwijderen">×</button></span>`).join('')}<input id="tagIn" placeholder="+ tag" maxlength="30" list="tagList"><datalist id="tagList">${[...new Set(Object.values(sources).flatMap(x => x.tags || []))].map(t => `<option value="${esc(t)}">`).join('')}</datalist></div>
     <div class="notebox"><div class="lbl">Jouw notitie</div><textarea id="srcNote" rows="2" placeholder="Waarom bewaarde je dit? Wat wil je ermee?">${esc(s.note || '')}</textarea></div>
+    ${sourceSnippetsHtml(s.id)}
     ${s.excerpt && s.kind !== 'note' ? `<p class="ex">${esc(s.excerpt)}</p>` : ''}
     <div class="body" id="srcText">${content === undefined ? '<p class="muted">Laden…</p>' : content ? mdToHtml(content) : s._pending ? '<p class="muted">Artikel wordt opgehaald…</p>' : `<p class="muted">Geen leesbare tekst bewaard${s.url ? ' — open het origineel via de link hierboven' : ''}.</p>`}</div>`;
   const note = $('#srcNote');
@@ -2166,36 +2232,20 @@ function citeSelection(){
   const s = sources[currentSrc]; if (!s) return;
   const text = selectedSourceText();
   if (!text){ toast('Selecteer eerst tekst in de bron'); return; }
-  const quote = text.split(/\n+/).map(l => '> ' + l.trim()).filter(l => l.length > 2).join('\n>\n');
-  const ref = s.url ? `[${s.title.replace(/[\[\]]/g, '')}](${s.url})` : s.title;
-  const block = `${quote}\n> — ${s.site && s.kind !== 'note' ? s.site + ', ' : ''}${ref}`;
-  let id = currentId && sheets[currentId] && !sheets[currentId].trashed ? currentId : null;
-  if (!id){
-    id = uid(); sheets[id] = {body:'', group:'inbox', fav:false, trashed:false, goal:0, created:Date.now(), updated:Date.now()};
-    currentId = id; LS.set('current', id); ta.value = '';
-  }
-  const sh = sheets[id], v = sh.body || '';
-  let pos = id === currentId && ta.value === v ? ta.selectionEnd : v.length; if (!pos) pos = v.length;
-  const before = v.slice(0, pos), after = v.slice(pos);
-  const pre = !before ? '' : before.endsWith('\n\n') ? '' : before.endsWith('\n') ? '\n' : '\n\n';
-  const body = before + pre + block + '\n\n' + after.replace(/^\n+/, '');
-  sh.body = body; sh.updated = Date.now();
-  if (id === currentId){ ta.value = body; const p = (before + pre + block + '\n\n').length; ta.setSelectionRange(p, p); curWords = countWords(body); renderMirror(); }
-  saveSheet(id, true); renderLib();
+  insertIntoSheet(quoteBlock(text, s), 'Citaat toegevoegd aan');
   window.getSelection().removeAllRanges(); $('#citebar').classList.remove('show');
-  toast('Citaat toegevoegd aan “' + titleOf(sh) + '”');
 }
 document.addEventListener('selectionchange', () => {
   const bar = $('#citebar');
   if (view !== 'sources' || !selectedSourceText()){ bar.classList.remove('show'); return; }
   const r = window.getSelection().getRangeAt(0).getBoundingClientRect();
-  bar.style.left = Math.max(10, Math.min(innerWidth - 190, r.left + r.width / 2 - 85)) + 'px';
+  bar.style.left = Math.max(10, Math.min(innerWidth - 260, r.left + r.width / 2 - 125)) + 'px';
   bar.style.top = Math.max(10 + (isMobile() ? 60 : 0), r.top - 44) + 'px';
   if (isMobile()) bar.style.top = Math.min(innerHeight - 60, r.bottom + 14) + 'px';
   bar.classList.add('show');
 });
 $('#citebar').addEventListener('mousedown', e => e.preventDefault());
-$('#citebar').onclick = citeSelection;
+$('#cbCite').onclick = citeSelection;
 
 /* ----- Add dialog: link, web, Wikipedia, note ----- */
 let addTab = 'link';
@@ -2313,6 +2363,243 @@ $('#sheets').addEventListener('click', e => {
   const l = e.target.closest('[data-a="login"]'); if (l) loginDialog();
 }, true);
 
+/* ================= Fragmenten: braindump en tijdlijn ================= */
+let snippets = LS.get('snippets', {});
+let boardTag = '', boardQ = '', snipTableMissing = false;
+const persistSnips = () => LS.set('snippets', snippets);
+const MONTHS = ['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
+const MON_RE = MONTHS.join('|') + '|jan|feb|mrt|apr|jun|jul|aug|sep|sept|okt|nov|dec';
+const monthIdx = m => { m = m.toLowerCase(); const i = MONTHS.findIndex(x => x.startsWith(m.slice(0, 3)) || (m === 'mrt' && x === 'maart')); return i; };
+/* "12 maart 1953", "maart 1953", "1953-03-12", "12-03-1953", "1953" → {key:'1953-03-12', label} */
+function parseDate(str){
+  str = String(str || '').trim(); if (!str) return null;
+  let m;
+  if ((m = str.match(/^(\d{4})-(\d{1,2})(?:-(\d{1,2}))?$/))) return mk(+m[1], +m[2], m[3] ? +m[3] : 0);
+  if ((m = str.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/))) return mk(+m[3], +m[2], +m[1]);
+  if ((m = str.match(new RegExp('^(\\d{1,2})\\s+(' + MON_RE + ')\\.?\\s+(\\d{3,4})$', 'i')))) return mk(+m[3], monthIdx(m[2]) + 1, +m[1]);
+  if ((m = str.match(new RegExp('^(' + MON_RE + ')\\.?\\s+(\\d{3,4})$', 'i')))) return mk(+m[2], monthIdx(m[1]) + 1, 0);
+  if ((m = str.match(/^(?:ca\.?\s*|rond\s+)?(\d{3,4})$/i))) return mk(+m[1], 0, 0);
+  return null;
+  function mk(y, mo, d){
+    if (!y || mo > 12 || d > 31) return null;
+    const key = String(y).padStart(4, '0') + '-' + String(mo).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+    const label = (d ? d + ' ' : '') + (mo ? MONTHS[mo - 1] + ' ' : '') + y;
+    return {key, label, year: y};
+  }
+}
+/* Find a date inside a piece of text, for pre-filling */
+function detectDate(text){
+  let m = text.match(new RegExp('\\b(\\d{1,2})\\s+(' + MON_RE + ')\\.?\\s+(\\d{4})\\b', 'i'));
+  if (m) return `${+m[1]} ${MONTHS[monthIdx(m[2])]} ${m[3]}`;
+  m = text.match(new RegExp('\\b(' + MON_RE + ')\\.?\\s+(\\d{4})\\b', 'i'));
+  if (m) return `${MONTHS[monthIdx(m[1])]} ${m[2]}`;
+  m = text.match(/\b(\d{1,2})-(\d{1,2})-(\d{4})\b/); if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  m = text.match(/\b(1[0-9]{3}|20[0-9]{2})\b/); if (m) return m[1];
+  return '';
+}
+
+/* ----- Supabase ----- */
+async function snipUpsert(row){
+  if (!sbUser) throw new Error('Niet ingelogd');
+  const r = {...row}; delete r._editing;
+  const { error } = await sb.from('snippets').upsert({...r, user_id: sbUser.id});
+  if (error){ if (/snippets/.test(error.message || '')) snipTableMissing = true; throw error; }
+}
+async function snipPull(){
+  if (!sbUser) return;
+  const { data, error } = await sb.from('snippets').select('*').order('created', {ascending:false}).limit(5000);
+  if (error){ if (/snippets/.test(error.message || '')) snipTableMissing = true; return; }
+  snipTableMissing = false;
+  const next = {};
+  for (const r of data) next[r.id] = snipRow(r);
+  for (const [id, s] of Object.entries(snippets)) if (s._pending && !next[id]) next[id] = s;
+  snippets = next; persistSnips(); renderLib(); if (isBoard()) renderBoard(); else if (view === 'sources') renderReader();
+}
+const snipRow = r => ({id:r.id, source_id:r.source_id||'', text:r.text||'', note:r.note||'', tags:Array.isArray(r.tags) ? r.tags : [], date:r.date||'', color:r.color||'', created:Number(r.created)||Date.now(), updated:Number(r.updated)||Date.now()});
+function snipRealtime(p){
+  if (p.eventType === 'DELETE'){ if (p.old) delete snippets[p.old.id]; }
+  else if (p.new && p.new.user_id === sbUser.id){
+    const l = snippets[p.new.id]; if (l && l._editing && Date.now() - l._editing < 3000) return;
+    snippets[p.new.id] = snipRow(p.new);
+  }
+  persistSnips(); renderLib();
+  if (isBoard() && !(document.activeElement && document.activeElement.closest && document.activeElement.closest('#board'))) renderBoard();
+}
+async function saveSnippet(s, isNew){
+  s.updated = Date.now(); if (isNew) s._pending = true;
+  snippets[s.id] = s; persistSnips(); renderLib();
+  if (isBoard()) renderBoard(); if (view === 'sources') renderReader();
+  try { await snipUpsert(s); delete s._pending; persistSnips(); return true; }
+  catch(e){
+    if (isNew){ delete snippets[s.id]; persistSnips(); if (isBoard()) renderBoard(); if (view === 'sources') renderReader(); }
+    toast(snipTableMissing ? 'Draai eerst het nieuwe stuk van schema.sql (tabel “snippets”)' : 'Bewaren mislukt: ' + (e.message || e));
+    return false;
+  }
+}
+async function removeSnippet(id){
+  const s = snippets[id]; if (!s) return;
+  delete snippets[id]; persistSnips(); renderLib(); if (isBoard()) renderBoard(); if (view === 'sources') renderReader();
+  try { const { error } = await sb.from('snippets').delete().eq('id', id); if (error) throw error; }
+  catch(e){ snippets[id] = s; persistSnips(); if (isBoard()) renderBoard(); toast('Verwijderen mislukt'); }
+}
+
+/* ----- Insert text into the sheet you last worked on ----- */
+function insertIntoSheet(block, msg){
+  let id = currentId && sheets[currentId] && !sheets[currentId].trashed ? currentId : null;
+  if (!id){
+    id = uid(); sheets[id] = {body:'', group:'inbox', fav:false, trashed:false, goal:0, created:Date.now(), updated:Date.now()};
+    currentId = id; LS.set('current', id); ta.value = '';
+  }
+  const sh = sheets[id], v = sh.body || '';
+  let pos = id === currentId && ta.value === v ? ta.selectionEnd : v.length; if (!pos) pos = v.length;
+  const before = v.slice(0, pos), after = v.slice(pos);
+  const pre = !before ? '' : before.endsWith('\n\n') ? '' : before.endsWith('\n') ? '\n' : '\n\n';
+  const body = before + pre + block + '\n\n' + after.replace(/^\n+/, '');
+  sh.body = body; sh.updated = Date.now();
+  if (id === currentId){ ta.value = body; const p = (before + pre + block + '\n\n').length; ta.setSelectionRange(p, p); curWords = countWords(body); renderMirror(); }
+  saveSheet(id, true); renderLib();
+  toast((msg || 'Toegevoegd aan') + ' “' + titleOf(sh) + '”');
+}
+function quoteBlock(text, src){
+  const quote = text.split(/\n+/).map(l => '> ' + l.trim()).filter(l => l.length > 2).join('\n>\n');
+  if (!src) return quote;
+  const ref = src.url ? `[${src.title.replace(/[\[\]]/g, '')}](${src.url})` : src.title;
+  return `${quote}\n> — ${src.site && src.kind !== 'note' ? src.site + ', ' : ''}${ref}`;
+}
+
+/* ----- Save-fragment dialog ----- */
+function snippetDialog(init){
+  const isNew = !init.id;
+  const s = isNew ? {id: uid(), source_id: init.source_id || '', text: init.text || '', note:'', tags: init.tags || [], date: init.date ?? detectDate(init.text || ''), color: init.color || '', created: Date.now(), updated: Date.now()} : {...snippets[init.id]};
+  const src = sources[s.source_id];
+  const allTags = [...new Set(Object.values(snippets).flatMap(x => x.tags || []))];
+  openModal(`<h3>${isNew ? (src ? 'Fragment bewaren' : 'Gedachte toevoegen') : 'Fragment bewerken'}</h3>
+    ${src ? `<p style="margin-bottom:10px">Uit: <b>${esc(src.title)}</b></p>` : ''}
+    <textarea id="fText" style="min-height:120px">${esc(s.text)}</textarea>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div><div class="muted" style="font-weight:800;font-size:12px;margin-bottom:4px">Datum (voor de tijdlijn)</div><input type="text" id="fDate" placeholder="bv. 1953 of 12 maart 1953" value="${esc(s.date)}"></div>
+      <div><div class="muted" style="font-weight:800;font-size:12px;margin-bottom:4px">Tags</div><input type="text" id="fTags" placeholder="bv. jeugd, oorlog" list="fTagList" value="${esc((s.tags || []).join(', '))}"><datalist id="fTagList">${allTags.map(t => `<option value="${esc(t)}">`).join('')}</datalist></div>
+    </div>
+    <p class="muted" id="fDateHint" style="margin:-6px 0 10px;min-height:1.2em"></p>
+    <input type="text" id="fNote" placeholder="Eigen notitie (optioneel)" value="${esc(s.note)}">
+    <div class="swatches" id="fCol">${['', ...COLORS].map(c => `<button data-c="${c}" class="${(s.color || '') === c ? 'on' : ''}" style="background:${c || 'var(--card)'};border-color:${(s.color || '') === c ? 'var(--text)' : 'var(--line)'}" aria-label="kleur"></button>`).join('')}</div>
+    <div class="btns">${isNew ? '' : '<button class="btn ghost" id="fDel" style="margin-right:auto">Verwijderen</button>'}<button class="btn ghost" data-close>Annuleren</button><button class="btn" id="fOk">${isNew ? 'Bewaren' : 'Opslaan'}</button></div>`);
+  const hint = () => { const v = $('#fDate').value.trim(); const d = parseDate(v); $('#fDateHint').textContent = !v ? 'Zonder datum komt het fragment alleen op de braindump.' : d ? 'Op de tijdlijn bij: ' + d.label : 'Die datum herken ik niet — probeer bv. 1953, maart 1953 of 12-03-1953.'; };
+  hint(); $('#fDate').addEventListener('input', hint);
+  setTimeout(() => { const t = $('#fText'); t.focus(); t.setSelectionRange(t.value.length, t.value.length); }, 30);
+  $('#fCol').addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (!b) return; s.color = b.dataset.c; $('#fCol').querySelectorAll('button').forEach(x => { x.classList.toggle('on', x === b); x.style.borderColor = x === b ? 'var(--text)' : 'var(--line)'; }); });
+  $('#fOk').onclick = async () => {
+    const text = $('#fText').value.trim(); if (!text) return $('#fText').focus();
+    const dateRaw = $('#fDate').value.trim();
+    if (dateRaw && !parseDate(dateRaw)){ $('#fDate').focus(); return; }
+    Object.assign(s, {text, date: dateRaw, note: $('#fNote').value.trim(), tags: $('#fTags').value.split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean)});
+    closeModal();
+    if (await saveSnippet(s, isNew)) toast(isNew ? (s.date ? 'Bewaard — ook op de tijdlijn' : 'Bewaard op de braindump') : 'Opgeslagen');
+  };
+  if (!isNew) $('#fDel').onclick = () => { closeModal(); removeSnippet(s.id); toast('Fragment verwijderd'); };
+}
+
+/* ----- Board views ----- */
+const isBoard = () => view === 'board' || view === 'timeline';
+function boardFiltered(){
+  const q = boardQ.trim().toLowerCase();
+  return Object.values(snippets).filter(s => {
+    if (boardTag === '__nodate') { if (parseDate(s.date)) return false; }
+    else if (boardTag && !(s.tags || []).includes(boardTag)) return false;
+    if (!q) return true;
+    const src = sources[s.source_id];
+    return [s.text, s.note, s.date, (s.tags || []).join(' '), src ? src.title : ''].join(' ').toLowerCase().includes(q);
+  });
+}
+function card(s){
+  const src = sources[s.source_id], d = parseDate(s.date);
+  return `<div class="card" data-snip="${s.id}" style="${s.color ? `background:${s.color}55;border-color:${s.color}` : ''}">
+    <div class="ct">${esc(s.text).replace(/\n/g, '<br>')}</div>
+    ${s.note ? `<div class="cn">✎ ${esc(s.note)}</div>` : ''}
+    <div class="cmeta">${d ? `<span class="cdate">${esc(d.label)}</span>` : ''}${(s.tags || []).map(t => `<span class="ctag" data-tag="${esc(t)}">#${esc(t)}</span>`).join('')}</div>
+    ${src ? `<a href="#" class="cs" data-opensrc="${src.id}">↳ ${esc(src.title)}</a>` : ''}
+    <div class="ca"><button data-ins="${s.id}" title="In je tekst zetten">In tekst</button><button data-edit="${s.id}" title="Bewerken">Bewerken</button></div>
+  </div>`;
+}
+function renderBoard(){
+  const el = $('#board'); if (!el) return;
+  const tl = view === 'timeline';
+  const all = Object.values(snippets);
+  const tags = [...new Set(all.flatMap(s => s.tags || []))].sort();
+  const noDate = all.filter(s => !parseDate(s.date)).length;
+  const list = boardFiltered();
+  let body;
+  if (!sbUser){ body = `<div class="empty">${cat('sleepy')}Log in om fragmenten te verzamelen.<br><br><button class="btn" data-a="login">Inloggen</button></div>`; }
+  else if (tl){
+    const dated = list.map(s => ({s, d: parseDate(s.date)})).filter(x => x.d).sort((a, b) => a.d.key.localeCompare(b.d.key));
+    if (!dated.length) body = `<div class="empty">${cat('curious')}Nog niets op de tijdlijn.<br>Geef fragmenten een datum (bv. <b>1953</b> of <b>maart 1953</b>) — de app herkent jaartallen in de tekst vaak al zelf.</div>`;
+    else {
+      let lastYear = null, h = '<div class="tline">';
+      for (const {s, d} of dated){
+        if (d.year !== lastYear){ h += `<div class="ty">${d.year}</div>`; lastYear = d.year; }
+        h += `<div class="ti"><div class="tdot"></div><div class="tdl">${esc(d.label)}</div>${card(s)}</div>`;
+      }
+      body = h + '</div>' + (noDate ? `<p class="muted" style="text-align:center;margin-top:20px">${noDate} fragment${noDate === 1 ? '' : 'en'} zonder datum staan alleen op de <a href="#" data-goview="board" style="color:var(--accent);font-weight:800">braindump</a>.</p>` : '');
+    }
+  } else {
+    body = `<div class="capture"><textarea id="capIn" rows="1" placeholder="Wat schiet je te binnen? Enter om te bewaren"></textarea></div>`;
+    const sorted = list.sort((a, b) => b.created - a.created);
+    body += sorted.length ? `<div class="cards">${sorted.map(card).join('')}</div>`
+      : `<div class="empty">${cat('sleepy')}${boardQ || boardTag ? 'Niets gevonden.' : 'Je braindump is nog leeg.<br>Typ hierboven een gedachte, of selecteer tekst in een <a href="#" data-goview="sources" style="color:var(--accent);font-weight:800">bron</a> en kies <b>Fragment</b>.'}</div>`;
+  }
+  const keepQ = document.activeElement && document.activeElement.id === 'boardQ';
+  el.innerHTML = `<div class="bhead">
+      <button class="ib back" data-a="blib" title="Bibliotheek"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div class="seg"><button data-goview="board" class="${!tl ? 'on' : ''}">Braindump</button><button data-goview="timeline" class="${tl ? 'on' : ''}">Tijdlijn</button></div>
+      <div class="grow"></div>
+      <div class="search" style="margin:0;width:min(260px,40vw)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="boardQ" type="search" placeholder="Zoeken…" value="${esc(boardQ)}"></div>
+    </div>
+    ${tags.length || noDate ? `<div class="btags"><button class="chip ${!boardTag ? 'on' : ''}" data-btag="">Alles · ${all.length}</button>${tags.map(t => `<button class="chip ${boardTag === t ? 'on' : ''}" data-btag="${esc(t)}">#${esc(t)}</button>`).join('')}${!tl && noDate ? `<button class="chip ${boardTag === '__nodate' ? 'on' : ''}" data-btag="__nodate">zonder datum · ${noDate}</button>` : ''}</div>` : ''}
+    <div class="bbody">${body}</div>`;
+  if (keepQ){ const q = $('#boardQ'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+  const cap = $('#capIn');
+  if (cap){
+    const fit = () => { cap.style.height = 'auto'; cap.style.height = cap.scrollHeight + 'px'; };
+    cap.addEventListener('input', fit);
+    cap.addEventListener('keydown', async e => {
+      if (e.key === 'Enter' && !e.shiftKey){
+        e.preventDefault(); const text = cap.value.trim(); if (!text) return;
+        const s = {id: uid(), source_id:'', text, note:'', tags: boardTag && boardTag !== '__nodate' ? [boardTag] : [], date:'', color:'', created: Date.now(), updated: Date.now()};
+        cap.value = ''; fit();
+        if (await saveSnippet(s, true)){ const c = $('#capIn'); if (c) c.focus(); }
+      }
+    });
+  }
+}
+$('#board').addEventListener('click', e => {
+  const t = e.target;
+  const gv = t.closest('[data-goview]'); if (gv){ e.preventDefault(); setView(gv.dataset.goview); return; }
+  const bt = t.closest('[data-btag]'); if (bt){ boardTag = bt.dataset.btag; renderBoard(); return; }
+  const ct = t.closest('[data-tag]'); if (ct){ boardTag = ct.dataset.tag; renderBoard(); return; }
+  const os = t.closest('[data-opensrc]'); if (os){ e.preventDefault(); setView('sources'); openSource(os.dataset.opensrc); return; }
+  const ins = t.closest('[data-ins]');
+  if (ins){ const s = snippets[ins.dataset.ins]; const src = sources[s.source_id]; insertIntoSheet(src ? quoteBlock(s.text, src) : s.text, 'Toegevoegd aan'); return; }
+  const ed = t.closest('[data-edit]'); if (ed){ snippetDialog({id: ed.dataset.edit}); return; }
+  const a = t.closest('[data-a]');
+  if (a && a.dataset.a === 'blib') setMobile('lib');
+  if (a && a.dataset.a === 'login') loginDialog();
+});
+$('#board').addEventListener('input', e => { if (e.target.id === 'boardQ'){ boardQ = e.target.value; renderBoard(); } });
+
+/* ----- In the reader: selection toolbar + fragments of this source ----- */
+$('#cbFrag').addEventListener('mousedown', e => e.preventDefault());
+$('#cbFrag').onclick = () => {
+  const text = selectedSourceText(); if (!text) return;
+  window.getSelection().removeAllRanges(); $('#citebar').classList.remove('show');
+  snippetDialog({source_id: currentSrc, text});
+};
+function sourceSnippetsHtml(id){
+  const list = Object.values(snippets).filter(s => s.source_id === id).sort((a, b) => a.created - b.created);
+  if (!list.length) return '';
+  return `<div class="notebox"><div class="lbl">Fragmenten uit deze bron · ${list.length}</div>${list.map(s => `<div class="sfrag" data-edit="${s.id}"><span>${esc(s.text.length > 220 ? s.text.slice(0, 220) + '…' : s.text)}</span>${s.date && parseDate(s.date) ? `<b>${esc(parseDate(s.date).label)}</b>` : ''}</div>`).join('')}</div>`;
+}
+$('#reader').addEventListener('click', e => { const ed = e.target.closest('.sfrag[data-edit]'); if (ed) snippetDialog({id: ed.dataset.edit}); });
+
 /* ---------------- Boot ---------------- */
 applySettings();
 renderLib();
@@ -2323,6 +2610,8 @@ if (!isMobile() && currentId) $('#app').dataset.view = 'editor';
 syncIdle();
 $('#nudgeCat').innerHTML = cat('curious');
 $('#rdCite').innerHTML = icon('quote',''); $('#rdOpen').innerHTML = icon('ext',''); $('#rdFav').innerHTML = icon('star',''); $('#rdDel').innerHTML = icon('trash','');
+if ((view === 'board' || view === 'timeline') && useSupabase){ $('#app').classList.add('boardmode'); renderBoard(); if (isMobile()) $('#app').dataset.view = 'editor'; }
+else if (view === 'board' || view === 'timeline') view = 'inbox';
 if (view === 'sources'){ if (!useSupabase) view = 'inbox'; else { $('#app').classList.add('srcmode'); $('#q').placeholder = 'Zoeken in bronnen…'; renderList(); renderReader(); } }
 connect();
 })();

@@ -24,6 +24,12 @@ Een rustige schrijfapp in de browser, met een indeling zoals in Ulysses: bibliot
 - Tekst selecteren in een bron → **Citeer in je tekst** (met bronvermelding)
 - Bewaren vanaf de telefoon (deelmenu op Android, Opdracht op iPhone) of met een bladwijzer
 
+**Fragmenten:** selecteer tekst in een bron en kies **Fragment** — met datum, tags en kleur.
+
+- **Braindump:** bord met kaartjes voor fragmenten en losse gedachten (snel intikken bovenaan)
+- **Tijdlijn:** fragmenten met een datum op volgorde, per jaar; jaartallen en datums worden herkend
+- Elk kaartje kan met één klik in je tekst (als citaat met bronvermelding)
+
 Hiervoor is de Edge Function `supabase/functions/bronnen` nodig (en voor webzoeken een `BRAVE_API_KEY`).
 
 ## Schrijfcoach (zonder AI)

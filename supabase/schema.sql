@@ -77,3 +77,27 @@ grant select, insert, update, delete on public.sources to authenticated;
 do $$ begin
   alter publication supabase_realtime add table public.sources;
 exception when duplicate_object then null; end $$;
+
+-- Fragmenten: stukken uit bronnen en losse gedachten (braindump en tijdlijn)
+create table if not exists public.snippets (
+  id        text primary key,
+  user_id   uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  source_id text not null default '',
+  text      text not null default '',
+  note      text not null default '',
+  tags      jsonb not null default '[]'::jsonb,
+  date      text not null default '',
+  color     text not null default '',
+  created   bigint not null,
+  updated   bigint not null
+);
+create index if not exists snippets_user_idx on public.snippets(user_id);
+alter table public.snippets enable row level security;
+drop policy if exists "eigen fragmenten" on public.snippets;
+create policy "eigen fragmenten" on public.snippets
+  for all to authenticated
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
+grant select, insert, update, delete on public.snippets to authenticated;
+do $$ begin
+  alter publication supabase_realtime add table public.snippets;
+exception when duplicate_object then null; end $$;
