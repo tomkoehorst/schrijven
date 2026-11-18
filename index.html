@@ -1638,7 +1638,7 @@ function helpDialog(){
 }
 
 let toastT;
-function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200); }
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), Math.min(9000, Math.max(2200, String(msg).length * 55))); }
 
 /* ---------------- Mobile navigation ---------------- */
 const isMobile = () => innerWidth <= 820;
@@ -2495,12 +2495,12 @@ async function snipUpsert(row){
   const payload = {...r, user_id: sbUser.id}; if (noGrpCol) delete payload.grp;
   let { error } = await sb.from('snippets').upsert(payload);
   if (error && /grp/.test(error.message || '') && !noGrpCol){ noGrpCol = true; delete payload.grp; ({ error } = await sb.from('snippets').upsert(payload)); }
-  if (error){ if (/snippets/.test(error.message || '')) snipTableMissing = true; throw error; }
+  if (error){ snipTableMissing = /does not exist|could not find the table|schema cache/i.test(error.message || '') && !/column/i.test(error.message || ''); throw error; }
 }
 async function snipPull(){
   if (!sbUser) return;
   const { data, error } = await sb.from('snippets').select('*').order('created', {ascending:false}).limit(5000);
-  if (error){ if (/snippets/.test(error.message || '')) snipTableMissing = true; return; }
+  if (error){ snipTableMissing = /does not exist|could not find the table|schema cache/i.test(error.message || ''); return; }
   snipTableMissing = false;
   const next = {};
   for (const r of data) next[r.id] = snipRow(r);
@@ -2524,7 +2524,7 @@ async function saveSnippet(s, isNew){
   try { await snipUpsert(s); delete s._pending; persistSnips(); return true; }
   catch(e){
     if (isNew){ delete snippets[s.id]; persistSnips(); if (isBoard()) renderBoard(); if (view === 'sources') renderReader(); }
-    toast(snipTableMissing ? 'Draai eerst het nieuwe stuk van schema.sql (tabel “snippets”)' : 'Bewaren mislukt: ' + (e.message || e));
+    toast((snipTableMissing ? 'Tabel “snippets” niet gevonden — draai schema.sql in Supabase. ' : 'Fragment bewaren mislukt: ') + (e.message || e) + (e.code ? ' [' + e.code + ']' : ''));
     return false;
   }
 }
