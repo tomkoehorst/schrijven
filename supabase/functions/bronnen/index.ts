@@ -2,6 +2,8 @@
 // Haalt artikelen op (leesbare tekst) en zoekt op internet via Brave Search.
 // Plak dit in Supabase → Edge Functions → Deploy a new function → Via Editor (naam: bronnen).
 // Voor zoeken op internet: Edge Functions → Secrets → BRAVE_API_KEY.
+// Zet bij deze functie "Verify JWT" UIT: de functie controleert zelf of je bent ingelogd
+// (werkt ook met de nieuwe sb_publishable_-sleutels).
 
 import { Readability } from "npm:@mozilla/readability@0.5.0";
 import { parseHTML } from "npm:linkedom@0.18.5";
@@ -17,6 +19,7 @@ const json = (data: unknown, status = 200) =>
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
+    if (!(await isLoggedIn(req))) return json({ error: "Niet ingelogd — log opnieuw in in de app" }, 401);
     const { action, url, q } = await req.json();
     if (action === "fetch") return json(await fetchArticle(String(url || "")));
     if (action === "search") return json(await search(String(q || "")));
@@ -26,6 +29,20 @@ Deno.serve(async (req) => {
     return json({ error: String((e as Error)?.message || e) }, 500);
   }
 });
+
+/* ---------- Alleen voor ingelogde gebruikers van dit project ---------- */
+async function isLoggedIn(req: Request) {
+  const auth = req.headers.get("Authorization") || "";
+  const apikey = req.headers.get("apikey") || Deno.env.get("SUPABASE_ANON_KEY") || "";
+  const base = Deno.env.get("SUPABASE_URL");
+  if (!auth.startsWith("Bearer ") || !base) return false;
+  try {
+    const r = await fetch(`${base}/auth/v1/user`, { headers: { Authorization: auth, apikey }, signal: AbortSignal.timeout(5000) });
+    if (!r.ok) return false;
+    const u = await r.json();
+    return !!(u && u.id);
+  } catch { return false; }
+}
 
 /* ---------- Artikel ophalen ---------- */
 async function fetchArticle(raw: string) {
