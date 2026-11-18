@@ -134,7 +134,7 @@ const fail = e => ({ content: [{ type: 'text', text: 'Dat lukte niet: ' + (e.mes
 const like = q => `*${String(q).replace(/[,()*%\\]/g, ' ').trim()}*`;
 
 /* ---------------- Server & tools ---------------- */
-const server = new McpServer({ name: 'schrijfkamer', version: '1.1.0' });
+const server = new McpServer({ name: 'schrijfkamer', version: '1.1.1' });
 
 server.tool('save_fragment',
   'Bewaar een fragment (citaat, feit, idee of samenvatting) op de braindump in de Schrijfkamer van de gebruiker. Geef bij voorkeur de bron-URL mee als de informatie van een webpagina komt. Krijgt automatisch de tag "ai". Gebruik dit wanneer de gebruiker vraagt iets te bewaren, op te slaan of te noteren.',
@@ -351,21 +351,10 @@ server.tool('add_timeline_events',
     } catch (e) { return fail(e); }
   });
 
+const PROMPT_ONDERZOEK = "Je bent mijn onderzoeksassistent voor mijn schrijfproject “${arguments.project}”. Ik concentreer me op het creatieve schrijven; jij doet het feitenwerk en zet alles in mijn Schrijfkamer.\n\nOnderwerp: ${arguments.onderwerp}\n\nWerkwijze:\n1. Roep eerst project_overview aan (bestaat het project niet, maak het dan met create_project) zodat je niets dubbel doet.\n2. Zoek op het web naar betrouwbare bronnen (encyclopedieën, musea, wetenschappelijke en historische bronnen). Bewaar de belangrijkste met save_source.\n3. Zet elke gebeurtenis met een datum op de tijdlijn (add_timeline_events), steeds met de bron-URL.\n4. Bewaar losse feiten, citaten en details die bruikbaar zijn voor een verhaal (zintuiglijke details, gebruiken, voorwerpen, plaatsen) als fragmenten met save_fragment, met tags en bron.\n5. Maak met create_text een tekst “Onderzoeksdossier: ${arguments.onderwerp}” in het project met: korte samenvatting, belangrijkste personen en plekken (met [[links]] waar zinnig), chronologie in het kort, en een lijst “Open vragen”. Zet ?? achter alles wat onzeker of tegenstrijdig is.\n6. Werk in het Nederlands. Verzin niets: geen bron, dan markeren met ??.\n7. Sluit af met een korte samenvatting in de chat van wat je hebt toegevoegd en welke vragen nog open staan.";
 server.prompt('onderzoek_project',
   'Laat Claude onderzoek doen en het researchkader van een project in de Schrijfkamer vullen.',
   { project: z.string().describe('Naam van het project, bv. De muntenmaker'), onderwerp: z.string().describe('Waar gaat het onderzoek over?') },
-  ({ project, onderwerp }) => ({ messages: [{ role: 'user', content: { type: 'text', text:
-`Je bent mijn onderzoeksassistent voor mijn schrijfproject “${project}”. Ik concentreer me op het creatieve schrijven; jij doet het feitenwerk en zet alles in mijn Schrijfkamer.
-
-Onderwerp: ${onderwerp}
-
-Werkwijze:
-1. Roep eerst project_overview aan (bestaat het project niet, maak het dan met create_project) zodat je niets dubbel doet.
-2. Zoek op het web naar betrouwbare bronnen (encyclopedieën, musea, wetenschappelijke en historische bronnen). Bewaar de belangrijkste met save_source.
-3. Zet elke gebeurtenis met een datum op de tijdlijn (add_timeline_events), steeds met de bron-URL.
-4. Bewaar losse feiten, citaten en details die bruikbaar zijn voor een verhaal (zintuiglijke details, gebruiken, voorwerpen, plaatsen) als fragmenten met save_fragment, met tags en bron.
-5. Maak met create_text een tekst “Onderzoeksdossier: ${onderwerp}” in het project met: korte samenvatting, belangrijkste personen en plekken (met [[links]] waar zinnig), chronologie in het kort, en een lijst “Open vragen”. Zet ?? achter alles wat onzeker of tegenstrijdig is.
-6. Werk in het Nederlands. Verzin niets: geen bron, dan markeren met ??.
-7. Sluit af met een korte samenvatting in de chat van wat je hebt toegevoegd en welke vragen nog open staan.` } }] }));
+  ({ project, onderwerp }) => ({ messages: [{ role: 'user', content: { type: 'text', text: PROMPT_ONDERZOEK.replace(/\$\{arguments\.project\}/g, project).replace(/\$\{arguments\.onderwerp\}/g, onderwerp) } }] }));
 
 server.connect(new StdioServerTransport()).catch(e => { console.error(e); process.exit(1); });
