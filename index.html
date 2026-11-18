@@ -106,7 +106,18 @@ svg{display:block}
 .fmt .ib{width:34px;height:32px;font-weight:800;font-size:14px}
 .sep{width:1px;height:18px;background:var(--line);margin:0 3px}
 .wc{font-size:12.5px;color:var(--muted);font-weight:700;padding:0 8px;white-space:nowrap}
-.app.focus .topbar:not(:hover){opacity:.12}
+.app.focus .topbar{position:absolute;top:var(--sat);left:0;right:0;z-index:10;opacity:0;pointer-events:none;transition:opacity .35s;background:linear-gradient(var(--bg) 60%,transparent)}
+.app.focus:not(.reveal) .topbar{opacity:0!important;pointer-events:none}
+.app.focus.reveal .topbar{opacity:1!important;pointer-events:auto}
+.app.focus .fmtbar{display:none!important}
+.app.focus .paper{padding-top:14vh}
+.app.focus .scroll{scrollbar-width:none}
+.app.focus .scroll::-webkit-scrollbar{display:none}
+.app.focus .panel{display:none}
+.focus-exit{position:fixed;top:calc(12px + var(--sat));right:12px;z-index:11;width:38px;height:38px;border-radius:50%;display:none;place-items:center;color:var(--muted);opacity:.35;background:var(--bg)}
+.focus-exit svg{width:18px;height:18px}
+.app.focus .focus-exit{display:grid}
+@media (min-width:821px){ .app.focus .focus-exit{opacity:0;pointer-events:none;transition:opacity .35s} .app.focus.reveal .focus-exit{opacity:.6;pointer-events:auto} }
 .app.typing .topbar:not(:hover){opacity:.25}
 .back{display:none}
 
@@ -228,7 +239,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   .panel{left:10px;right:10px;width:auto;top:calc(54px + var(--sat))}
   .sheet{padding:14px 14px 14px 18px}
   :root{--ed-size:18px}
-  .app.focus .topbar:not(:hover),.app.typing .topbar:not(:hover){opacity:1}
+  .app.typing .topbar:not(:hover){opacity:1}
+  .app.focus .paper{padding-top:10vh}
 }
 @media (min-width:821px){ .fmtbar{display:none} }
 @media (max-width:1100px) and (min-width:821px){ .app{grid-template-columns:0 290px 1fr}.app .lib{opacity:0;pointer-events:none}.app.show-lib{grid-template-columns:220px 290px 1fr}.app.show-lib .lib{opacity:1;pointer-events:auto}.app.focus{grid-template-columns:0 0 1fr} }
@@ -274,7 +286,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="grow"></div>
       <span class="wc" id="wc"></span>
       <button class="ib" id="btnPreview" title="Voorbeeld (Ctrl+Alt+P)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
-      <button class="ib hide-m" id="btnFocus" title="Focusmodus (Ctrl+Alt+F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+      <button class="ib" id="btnFocus" title="Focusscherm (Ctrl+Alt+F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
       <button class="ib" id="btnInfo" title="Info & doelen (Ctrl+Alt+I)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></button>
     </div>
     <div class="fmtbar" id="fmtMob"><div class="fmt"></div></div>
@@ -290,6 +302,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     </div>
     <div class="nosheet" id="nosheet" hidden></div>
     <div class="panel" id="panel"></div>
+    <button class="focus-exit" id="focusExit" title="Focusscherm verlaten (Esc)" aria-label="Focusscherm verlaten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></button>
   </main>
 </div>
 
@@ -1163,12 +1176,32 @@ $('#btnTheme').onclick = () => {
 };
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => settings.theme === 'auto' && applySettings());
 
+/* Focus screen: only the page. Moving the mouse briefly reveals the toolbar; typing hides it again. */
+let revealT, focusToggledAt = 0;
 function toggleFocus(){
-  const app = $('#app'); app.classList.toggle('focus');
-  $('#btnFocus').classList.toggle('on', app.classList.contains('focus'));
-  ta.focus();
+  if (Date.now() - focusToggledAt < 400) return;
+  focusToggledAt = Date.now();
+  const app = $('#app'), on = !app.classList.contains('focus');
+  app.classList.toggle('focus', on); app.classList.remove('reveal');
+  $('#btnFocus').classList.toggle('on', on);
+  closePanel();
+  try {
+    if (on && !isMobile() && document.documentElement.requestFullscreen && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+    if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  } catch(e){}
+  if (on && !previewOn) setTimeout(() => ta.focus({preventScroll:true}), 50);
+  if (on && !previewOn && settings.typewriter) typewriter();
 }
 $('#btnFocus').onclick = toggleFocus;
+$('#focusExit').onclick = toggleFocus;
+['#btnFocus','#focusExit'].forEach(sel => $(sel).addEventListener('mousedown', e => e.preventDefault()));
+document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && $('#app').classList.contains('focus') && !isMobile()) toggleFocus(); });
+document.addEventListener('mousemove', e => {
+  const app = $('#app'); if (!app.classList.contains('focus') || (e.movementX === 0 && e.movementY === 0)) return;
+  app.classList.add('reveal'); clearTimeout(revealT);
+  revealT = setTimeout(() => { if (!$('#topbar').matches(':hover')) app.classList.remove('reveal'); }, 1800);
+});
+ta.addEventListener('input', () => $('#app').classList.remove('reveal'));
 $('#toggleLib').onclick = () => {
   const app = $('#app');
   if (innerWidth <= 1100) app.classList.toggle('show-lib'); else app.classList.toggle('hide-lib');
@@ -1252,7 +1285,7 @@ function helpDialog(){
   <h4 class="sec" style="padding:0 0 8px">Sneltoetsen</h4>
   <div class="help">
     <code>Ctrl Alt N</code><span>Nieuwe tekst</span>
-    <code>Ctrl Alt F</code><span>Focusmodus</span>
+    <code>Ctrl Alt F</code><span>Focusscherm: alleen je blad (Esc om te sluiten)</span>
     <code>Ctrl Alt P</code><span>Voorbeeld</span>
     <code>Ctrl Alt I</code><span>Info & doelen</span>
   </div>
