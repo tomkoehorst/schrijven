@@ -13,7 +13,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-180.png">
-<script src="config.js"></script>
+<script src="config.js?v=3"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1995,7 +1995,7 @@ async function callFn(body){
 let lastFnError = '';
 async function testFunction(){
   openModal(`<h3>Verbinding testen</h3><p id="tfMsg">Bezig met testen…</p><div class="btns"><button class="btn" data-close>Sluiten</button></div>`);
-  const out = [];
+  const out = ['Functie-adres: …/functions/v1/' + (CFG.bronnenFunction || 'bronnen')];
   try { const r = await callFn({action:'ping'}); out.push('✅ Edge Function “bronnen” werkt.'); out.push(r.search ? '✅ Zoeksleutel (BRAVE_API_KEY) is ingesteld.' : 'ℹ️ Zoeksleutel nog niet ingesteld — zoeken op internet werkt pas na stap 3.'); }
   catch(e){ out.push('❌ ' + e.message); }
   try { const { error } = await sb.from('sources').select('id').limit(1); out.push(error ? '❌ Tabel “sources”: ' + error.message : '✅ Tabel “sources” bestaat.'); } catch(e){}
