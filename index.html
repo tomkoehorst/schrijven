@@ -468,6 +468,33 @@ kbd.dupe{border-color:var(--coral);color:#C9776B}
 .krow{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
 .krow span{flex:1}
 .krow .chip{padding:4px 10px;font-size:12px}
+/* ---------- Ontdek ---------- */
+.dterms{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 10px}
+.dterms button{font-size:12.5px;font-weight:800;padding:4px 10px;border-radius:999px;background:var(--pane);color:var(--faint);text-decoration:line-through}
+.dterms button.on{background:var(--accent-soft);color:var(--accent);text-decoration:none}
+.dterms button:last-child{text-decoration:none;color:var(--muted)}
+.dtrail{font-size:12.5px;color:var(--muted);margin:-2px 0 10px;line-height:1.5}
+.dtrail button{font-weight:800;color:var(--accent);margin-right:4px}
+.dmain img{float:right;width:84px;height:84px;object-fit:cover;border-radius:10px;margin:0 0 6px 10px}
+.dmain::after{content:'';display:block;clear:both}
+.dh{margin:3px 0 4px;font-size:17px;line-height:1.3}
+.dsec{margin:16px 0 8px}
+.dload{text-align:center;padding:20px 0}.dload .cat{width:70px;height:70px;margin:0 auto 6px}
+.facts{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px 12px;margin-bottom:9px}
+.fr{display:grid;grid-template-columns:110px 1fr;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13.5px;line-height:1.45}
+.fr:last-child{border-bottom:0}
+.fr > span{color:var(--muted);font-weight:700;font-size:12.5px}
+.fr .fx{color:var(--link);font-weight:700;text-align:left;font-size:13.5px}
+.fr .fx:hover{text-decoration:underline}
+.fr .fx + .fx::before{content:'· ';color:var(--faint)}
+.fdate{font-weight:700}
+.ftl{font-size:11px;font-weight:800;color:#B07A3C;background:rgba(244,230,176,.6);border-radius:999px;padding:1px 7px;margin-left:6px}
+.rpi .facts{border:0;padding:0;margin:6px 0 0;background:transparent}
+.ans{background:rgba(143,196,168,.14);border-radius:10px;padding:9px 10px;margin-top:8px;font-size:13.5px;line-height:1.5}
+.ans.weak{background:var(--pane2)}
+.ansf{font-weight:800;margin-bottom:3px}
+.answer{margin-top:4px}
+
 /* ---------- Mobile ---------- */
 @media (max-width:820px){
   .app,.app.hide-lib,.app.focus{display:block;position:relative}
@@ -2463,22 +2490,26 @@ const monthIdx = m => { m = m.toLowerCase(); const i = MONTHS.findIndex(x => x.s
 /* "12 maart 1953", "maart 1953", "1953-03-12", "12-03-1953", "1953" → {key:'1953-03-12', label} */
 function parseDate(str){
   str = String(str || '').trim(); if (!str) return null;
-  let m;
+  let m, bc = false;
+  if ((m = str.match(/^(.*?)\s*(v\.\s?chr\.?|v\.\s?c\.?|voor christus|bce?)$/i))){ bc = true; str = m[1].trim(); }
   if ((m = str.match(/^(\d{4})-(\d{1,2})(?:-(\d{1,2}))?$/))) return mk(+m[1], +m[2], m[3] ? +m[3] : 0);
   if ((m = str.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/))) return mk(+m[3], +m[2], +m[1]);
-  if ((m = str.match(new RegExp('^(\\d{1,2})\\s+(' + MON_RE + ')\\.?\\s+(\\d{3,4})$', 'i')))) return mk(+m[3], monthIdx(m[2]) + 1, +m[1]);
-  if ((m = str.match(new RegExp('^(' + MON_RE + ')\\.?\\s+(\\d{3,4})$', 'i')))) return mk(+m[2], monthIdx(m[1]) + 1, 0);
-  if ((m = str.match(/^(?:ca\.?\s*|rond\s+)?(\d{3,4})$/i))) return mk(+m[1], 0, 0);
+  if ((m = str.match(new RegExp('^(\\d{1,2})\\s+(' + MON_RE + ')\\.?\\s+(\\d{1,4})$', 'i')))) return mk(+m[3], monthIdx(m[2]) + 1, +m[1]);
+  if ((m = str.match(new RegExp('^(' + MON_RE + ')\\.?\\s+(\\d{1,4})$', 'i')))) return mk(+m[2], monthIdx(m[1]) + 1, 0);
+  if ((m = str.match(/^(?:ca\.?\s*|rond\s+)?(\d{1,4})$/i))) return mk(+m[1], 0, 0);
   return null;
   function mk(y, mo, d){
     if (!y || mo > 12 || d > 31) return null;
-    const key = String(y).padStart(4, '0') + '-' + String(mo).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-    const label = (d ? d + ' ' : '') + (mo ? MONTHS[mo - 1] + ' ' : '') + y;
+    if (bc) y = -y;
+    const key = String(y + 100000).padStart(6, '0') + '-' + String(mo).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+    const label = (d ? d + ' ' : '') + (mo ? MONTHS[mo - 1] + ' ' : '') + (y < 0 ? (-y) + ' v.Chr.' : y);
     return {key, label, year: y};
   }
 }
 /* Find a date inside a piece of text, for pre-filling */
 function detectDate(text){
+  let bcm = text.match(new RegExp('\\b((?:\\d{1,2}\\s+)?(?:(?:' + MON_RE + ')\\.?\\s+)?\\d{1,4})\\s*v\\.\\s?chr\\.?', 'i'));
+  if (bcm && parseDate(bcm[1] + ' v.Chr.')) return parseDate(bcm[1] + ' v.Chr.').label;
   let m = text.match(new RegExp('\\b(\\d{1,2})\\s+(' + MON_RE + ')\\.?\\s+(\\d{4})\\b', 'i'));
   if (m) return `${+m[1]} ${MONTHS[monthIdx(m[2])]} ${m[3]}`;
   m = text.match(new RegExp('\\b(' + MON_RE + ')\\.?\\s+(\\d{4})\\b', 'i'));
@@ -2630,7 +2661,7 @@ function renderBoard(){
     else {
       let lastYear = null, h = '<div class="tline">';
       for (const {s, d} of dated){
-        if (d.year !== lastYear){ h += `<div class="ty">${d.year}</div>`; lastYear = d.year; }
+        if (d.year !== lastYear){ h += `<div class="ty">${d.year < 0 ? (-d.year) + ' v.Chr.' : d.year}</div>`; lastYear = d.year; }
         h += `<div class="ti"><div class="tdot"></div><div class="tdl">${esc(d.label)}</div>${card(s)}</div>`;
       }
       body = h + '</div>' + (noDate ? `<p class="muted" style="text-align:center;margin-top:20px">${noDate} fragment${noDate === 1 ? '' : 'en'} zonder datum staan alleen op de <a href="#" data-goview="board" style="color:var(--accent);font-weight:800">braindump</a>.</p>` : '');
@@ -2806,7 +2837,7 @@ function rpItem(it){
 function renderResearch(){
   const el = $('#research'); if (!el || !rpOpen) return;
   const keepQ = document.activeElement && document.activeElement.id === 'rpQ';
-  const head = `<div class="rphead"><div class="seg"><button data-rptab="related" class="${rpTab === 'related' && !rpSrc && !rpLookup ? 'on' : ''}">Gerelateerd</button><button data-rptab="search" class="${rpTab === 'search' && !rpSrc && !rpLookup ? 'on' : ''}">Zoeken</button><button data-rptab="todo" class="${rpTab === 'todo' && !rpSrc && !rpLookup ? 'on' : ''}">Uitzoeken${todoCount() ? ' · ' + todoCount() : ''}</button></div><div class="grow"></div><button class="ib" data-rpa="quick" title="Snel bewaren">${icon('plus','')}</button><button class="ib" data-rpa="close" title="Sluiten (Ctrl+Alt+R)">✕</button></div>`;
+  const head = `<div class="rphead"><div class="seg"><button data-rptab="discover" class="${rpTab === 'discover' && !rpSrc && !rpLookup ? 'on' : ''}">Ontdek</button><button data-rptab="related" class="${rpTab === 'related' && !rpSrc && !rpLookup ? 'on' : ''}">Verzameling</button><button data-rptab="search" class="${rpTab === 'search' && !rpSrc && !rpLookup ? 'on' : ''}">Zoeken</button><button data-rptab="todo" class="${rpTab === 'todo' && !rpSrc && !rpLookup ? 'on' : ''}">Uitzoeken${todoCount() ? ' · ' + todoCount() : ''}</button></div><div class="grow"></div><button class="ib" data-rpa="quick" title="Snel bewaren">${icon('plus','')}</button><button class="ib" data-rpa="close" title="Sluiten (Ctrl+Alt+R)">✕</button></div>`;
   let body = '';
   if (!sbUser) body = `<div class="empty">${cat('sleepy')}Log in om je bronnen en fragmenten hier te zien.</div>`;
   else if (rpSrc && sources[rpSrc]){
@@ -2822,6 +2853,8 @@ function renderResearch(){
       <div class="body rpbody" id="rpText">${c === undefined ? '<p class="muted">Laden…</p>' : c ? mdToHtml(c) : s._pending ? '<p class="muted">Artikel wordt opgehaald…</p>' : `<p class="muted">Geen leesbare tekst bewaard.</p>${s.excerpt ? `<p>${esc(s.excerpt)}</p>` : ''}`}</div>`;
   } else if (rpLookup){
     body = lookupHtml();
+  } else if (rpTab === 'discover'){
+    body = discoverHtml();
   } else if (rpTab === 'todo'){
     todoList = allTodos(); body = todoHtml();
   } else if (rpTab === 'related'){
@@ -2835,6 +2868,7 @@ function renderResearch(){
       <div id="rpRes">${rpSearchHtml()}</div>`;
   }
   el.innerHTML = head + `<div class="rpscroll" id="rpScroll">${body}</div>`;
+  if (rpTab === 'todo' && !rpSrc && !rpLookup) setTimeout(fillAnswers, 0);
   if (keepQ){ const q = $('#rpQ'); if (q){ q.focus(); q.setSelectionRange(q.value.length, q.value.length); } }
 }
 function rpSearchHtml(){
@@ -2886,7 +2920,8 @@ function toggleResearch(force){
 let rpRelT;
 function rpRefresh(){ if (!rpOpen || rpSrc || rpTab !== 'related') return; clearTimeout(rpRelT); rpRelT = setTimeout(renderResearch, 700); }
 ta.addEventListener('input', rpRefresh); ta.addEventListener('click', rpRefresh); ta.addEventListener('keyup', e => { if (e.key.startsWith('Arrow') || e.key === 'Enter') rpRefresh(); });
-$('#btnResearch').onclick = () => toggleResearch();
+$('#btnResearch').title = 'Ontdek — onderzoek je alinea (Ctrl+Alt+O)';
+$('#btnResearch').onclick = () => { if (rpOpen) toggleResearch(false); else startDiscover(); };
 $('#research').addEventListener('click', async e => {
   const t = e.target;
   const tab = t.closest('[data-rptab]'); if (tab){ e.preventDefault(); rpTab = tab.dataset.rptab; rpSrc = null; rpLookup = null; renderResearch(); if (rpTab === 'search') setTimeout(() => $('#rpQ') && $('#rpQ').focus(), 0); return; }
@@ -2921,7 +2956,8 @@ function todosIn(id){
     if (start < 0) start = 0;
     const sentence = v.slice(start, i).replace(/^[\s.!?#>*-]+/, '').replace(/\+\+/g, '').trim();
     const q = (m[1] || '').trim();
-    out.push({sheet: id, index: i, len: m[0].length, marker: m[0], question: q, text: q || sentence || '(leeg)', context: sentence});
+    let pa = v.lastIndexOf('\n\n', i); pa = pa < 0 ? 0 : pa + 2; let pb = v.indexOf('\n\n', i); if (pb < 0) pb = v.length;
+    out.push({sheet: id, index: i, len: m[0].length, marker: m[0], question: q, text: q || sentence || '(leeg)', context: sentence, para: v.slice(pa, pb)});
   }
   return out;
 }
@@ -2932,6 +2968,13 @@ function allTodos(){
   return Object.entries(sheets).filter(([, s]) => !s.trashed && (s.group || 'inbox') === g).flatMap(([id]) => todosIn(id));
 }
 function todoKeywords(t){
+  if (typeof termsFrom === 'function' && t.para){
+    const own = termsFrom(t.question || t.context), all = termsFrom(t.para);
+    const parts = [...own.names, ...all.names.filter(n => !own.names.includes(n))].slice(0, 3);
+    const keys = [...own.keys, ...all.keys].filter(k => !/^(gebeurde|precies|eigenlijk|ongeveer|gebeurd|wanneer|waarom|hoeveel)$/.test(k));
+    const q = [...parts, ...keys.slice(0, parts.length ? 1 : 3)].join(' ').trim();
+    if (q) return q;
+  }
   const words = [...String(t.question || t.context).matchAll(/[\p{L}\p{N}][\p{L}\p{N}’'-]*/gu)].map(m => m[0]).filter(w => w.length > 2 && !STOP.has(w.toLowerCase()));
   const names = words.filter(w => /^\p{Lu}/u.test(w));
   return [...new Set([...names, ...words])].slice(0, 5).join(' ');
@@ -2943,6 +2986,7 @@ function todoHtml(){
   if (!list.length) return scope + `<div class="empty" style="padding:16px 6px">${cat('happy')}Niets meer uit te zoeken.<br><span class="muted">Typ <b>??</b> achter iets wat je nog moet nakijken, of <b>[check: je vraag]</b>.</span></div>`;
   return scope + list.map((t, i) => `<div class="rpi todo-i"><div class="rpk">Nog uitzoeken${multi && t.sheet !== currentId ? ' · ' + esc(titleOf(sheets[t.sheet])) : ''}</div>
     <div class="rpt">${esc(t.text)}</div>
+    <div class="answer" data-answer="${i}"><span class="muted">Antwoord zoeken…</span></div>
     <div class="rpa"><button data-todo="find" data-ti="${i}">Zoek</button><button data-todo="wiki" data-ti="${i}">Wikipedia</button><button data-todo="web" data-ti="${i}">Web</button><button data-todo="go" data-ti="${i}" class="ghost">Ga naar</button><button data-todo="done" data-ti="${i}" class="ok">✓ Klaar</button></div></div>`).join('');
 }
 let todoList = [];
@@ -3217,6 +3261,7 @@ const ACTIONS = [
   {id:'lookup',   label:'Woord opzoeken',                       def:'Ctrl+Alt+KeyL', run: lookupAtCaret},
   {id:'fragment', label:'Selectie bewaren als fragment',        def:'Ctrl+Alt+KeyB', run: fragmentFromSelection},
   {id:'cite',     label:'Selectie uit bron citeren in je tekst',def:'Ctrl+Alt+KeyQ', run: citeFromSelection},
+  {id:'discover', label:'Ontdek: onderzoek je alinea of selectie', def:'Ctrl+Alt+KeyO', run: () => startDiscover()},
   {id:'research', label:'Onderzoekspaneel open/dicht',           def:'Ctrl+Alt+KeyR', run: () => toggleResearch()},
   {id:'quick',    label:'Snel bewaren (link of tekst)',         def:'Ctrl+Alt+KeyS', run: () => quickDialog()},
   {id:'focus',    label:'Focusscherm',                          def:'Ctrl+Alt+KeyF', run: () => { if (currentId) toggleFocus(); }},
@@ -3336,6 +3381,248 @@ function keysDialog(){
   };
   draw();
 }
+
+/* ================= Ontdek: Wikipedia, Wikidata-feiten, boeken & wetenschap ================= */
+KIND.book = 'Boek'; KIND.paper = 'Wetenschap';
+const netCache = new Map();
+async function getJSON(url){
+  if (netCache.has(url)) return netCache.get(url);
+  const p = fetch(url).then(r => r.ok ? r.json() : null).catch(() => null);
+  netCache.set(url, p);
+  const v = await p; if (v === null) netCache.delete(url);
+  return v;
+}
+const wikiLang = () => LS.get('wikiLang', 'nl');
+async function wpSearch(q, lang, n = 6){
+  const j = await getJSON(`https://${lang}.wikipedia.org/w/api.php?origin=*&format=json&action=query&list=search&srlimit=${n}&srsearch=${encodeURIComponent(q)}`);
+  return (j && j.query && j.query.search) || [];
+}
+async function wpSummary(title, lang){
+  const s = await getJSON(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title.replace(/ /g, '_'))}`);
+  return s && s.extract ? {lang, title: s.title, extract: s.extract, desc: s.description || '', qid: s.wikibase_item || '', thumb: s.thumbnail && s.thumbnail.source, url: s.content_urls && s.content_urls.desktop.page, type: s.type} : null;
+}
+/* Find the best article for a query; Dutch first, English as fallback */
+async function wpBest(q){
+  for (const lang of [wikiLang(), wikiLang() === 'nl' ? 'en' : 'nl']){
+    const hits = await wpSearch(q, lang, 6);
+    if (hits.length){
+      for (const h of hits.slice(0, 3)){ const s = await wpSummary(h.title, lang); if (s && s.type !== 'disambiguation') return {main: s, hits, lang}; }
+    }
+  }
+  return null;
+}
+
+/* ----- Wikidata facts ----- */
+const PROPS = [
+  ['P31','Is een'], ['P585','Datum'], ['P580','Begin'], ['P582','Einde'], ['P569','Geboren'], ['P19','Geboorteplaats'], ['P570','Overleden'], ['P20','Plaats van overlijden'],
+  ['P1196','Doodsoorzaak'], ['P157','Gedood door'], ['P710','Betrokkenen'], ['P276','Plaats'], ['P131','Ligt in'], ['P17','Land'], ['P27','Nationaliteit'], ['P106','Beroep'], ['P39','Functie'],
+  ['P22','Vader'], ['P25','Moeder'], ['P26','Partner'], ['P40','Kinderen'], ['P571','Opgericht / ontstaan'], ['P576','Opgeheven'], ['P1082','Inwoners'], ['P50','Auteur'], ['P577','Verschenen'], ['P800','Bekend werk'], ['P793','Belangrijke gebeurtenis']
+];
+const DATE_PROPS = new Set(['P585','P580','P582','P569','P570','P571','P576','P577']);
+function wdTime(v){
+  const m = /^([+-])(\d+)-(\d\d)-(\d\d)/.exec(v.time || ''); if (!m) return null;
+  let y = +m[2]; if (m[1] === '-') y = -y;
+  const mo = v.precision >= 10 ? +m[3] : 0, d = v.precision >= 11 ? +m[4] : 0;
+  const yy = y < 0 ? `${-y} v.Chr.` : String(y);
+  return (d ? d + ' ' : '') + (mo ? MONTHS[mo - 1] + ' ' : '') + yy;
+}
+async function wdFacts(qid){
+  if (!qid) return null;
+  const j = await getJSON(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${qid}&props=claims|labels|descriptions&languages=nl|en&format=json&origin=*`);
+  const ent = j && j.entities && j.entities[qid]; if (!ent) return null;
+  const rows = [], refIds = new Set();
+  for (const [pid, label] of PROPS){
+    const cl = (ent.claims[pid] || []).filter(c => c.mainsnak && c.mainsnak.datavalue && c.rank !== 'deprecated').slice(0, pid === 'P710' || pid === 'P40' ? 8 : 3);
+    if (!cl.length) continue;
+    const vals = cl.map(c => {
+      const dv = c.mainsnak.datavalue;
+      if (dv.type === 'wikibase-entityid'){ refIds.add(dv.value.id); return {ref: dv.value.id}; }
+      if (dv.type === 'time') return {text: wdTime(dv.value), date: wdTime(dv.value)};
+      if (dv.type === 'quantity') return {text: Number(dv.value.amount).toLocaleString('nl-NL')};
+      if (dv.type === 'string') return {text: dv.value};
+      if (dv.type === 'monolingualtext') return {text: dv.value.text};
+      return null;
+    }).filter(Boolean);
+    if (vals.length) rows.push({pid, label, vals});
+  }
+  const ids = [...refIds].slice(0, 45);
+  const labels = {};
+  if (ids.length){
+    const lj = await getJSON(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${ids.join('|')}&props=labels|sitelinks&sitefilter=nlwiki|enwiki&languages=nl|en&format=json&origin=*`);
+    for (const [id, e] of Object.entries((lj && lj.entities) || {})){
+      const l = e.labels && (e.labels.nl || e.labels.en);
+      const sl = e.sitelinks && (e.sitelinks.nlwiki ? {lang:'nl', title: e.sitelinks.nlwiki.title} : e.sitelinks.enwiki ? {lang:'en', title: e.sitelinks.enwiki.title} : null);
+      labels[id] = {label: l ? l.value : id, wiki: sl};
+    }
+  }
+  for (const r of rows) for (const v of r.vals) if (v.ref){ v.text = (labels[v.ref] || {}).label || v.ref; v.wiki = (labels[v.ref] || {}).wiki; }
+  const lab = ent.labels && (ent.labels.nl || ent.labels.en);
+  return {qid, label: lab ? lab.value : qid, rows};
+}
+
+/* ----- Books (Open Library) & science (OpenAlex) ----- */
+async function booksFor(q){
+  const j = await getJSON(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=5&fields=key,title,author_name,first_publish_year,publisher,language,subject`);
+  return ((j && j.docs) || []).map(d => ({kind:'book', title: d.title, authors: (d.author_name || []).slice(0, 3).join(', '), year: d.first_publish_year || '', site: 'Open Library', url: 'https://openlibrary.org' + d.key, excerpt: (d.subject || []).slice(0, 6).join(', ')}));
+}
+function oaAbstract(inv){
+  if (!inv) return '';
+  const words = []; for (const [w, pos] of Object.entries(inv)) for (const p of pos) words[p] = w;
+  return words.join(' ').slice(0, 600);
+}
+async function papersFor(q){
+  const j = await getJSON(`https://api.openalex.org/works?search=${encodeURIComponent(q)}&per-page=5&select=id,doi,title,publication_year,authorships,primary_location,abstract_inverted_index,cited_by_count`);
+  return ((j && j.results) || []).filter(w => w.title).map(w => ({kind:'paper', title: w.title, authors: (w.authorships || []).slice(0, 3).map(a => a.author && a.author.display_name).filter(Boolean).join(', '), year: w.publication_year || '', site: (w.primary_location && w.primary_location.source && w.primary_location.source.display_name) || 'OpenAlex', url: w.doi || w.id, excerpt: oaAbstract(w.abstract_inverted_index), cited: w.cited_by_count || 0}));
+}
+
+/* ----- Term extraction from your paragraph ----- */
+function termsFrom(text){
+  text = String(text || '').replace(/\+\+[\s\S]*?\+\+/g, ' ').replace(/\[\[|\]\]/g, ' ').replace(/[#>*_=`]/g, ' ');
+  const names = [], seen = new Set();
+  for (const m of text.matchAll(/(^|[^\p{L}])(\p{Lu}[\p{L}’'-]+(?:\s+(?:van|de|der|den|von|la|le)?\s*\p{Lu}[\p{L}’'-]+)*)/gu)){
+    const w = m[2].trim(), low = w.toLowerCase();
+    const sentenceStart = /(^|[.!?]\s*|\n\s*)$/.test(text.slice(0, m.index + m[1].length));
+    if (STOP.has(low) || low.length < 3 || (sentenceStart && STOP.has(low.split(' ')[0]))) continue;
+    if (sentenceStart && !/\s/.test(w) && text.split(w).length < 3 && STOP.has(low)) continue;
+    if (!seen.has(low)){ seen.add(low); names.push(w); }
+  }
+  const counts = {};
+  for (const m of text.toLowerCase().matchAll(/[\p{L}][\p{L}’'-]{3,}/gu)){ const w = m[0]; if (STOP.has(w) || seen.has(w)) continue; counts[w] = (counts[w] || 0) + 1 + (w.length > 6 ? 0.5 : 0); }
+  const keys = Object.entries(counts).sort((a, b) => b[1] - a[1]).map(x => x[0]).filter(w => !names.some(n => n.toLowerCase().includes(w)));
+  return {names: names.slice(0, 5), keys: keys.slice(0, 4)};
+}
+
+/* ----- State & rendering ----- */
+let disc = null;     // {terms:[{t,on}], data, trail:[{title,lang}], loading}
+function discoverContext(){
+  const sel = document.activeElement === ta || (ta.selectionEnd > ta.selectionStart) ? ta.value.slice(ta.selectionStart, ta.selectionEnd).trim() : '';
+  if (sel) return sel;
+  return currentId ? currentParagraph() : '';
+}
+async function startDiscover(text){
+  const {names, keys} = termsFrom(text || discoverContext());
+  const terms = [...names.map(t => ({t, on: true, name: true})), ...keys.map((t, i) => ({t, on: i < 2}))];
+  disc = {terms, trail: [], loading: true, data: null};
+  rpTab = 'discover'; rpSrc = null; rpLookup = null;
+  if (!rpOpen) toggleResearch(true); else renderResearch();
+  if (!terms.length){ disc.loading = false; disc.empty = true; renderResearch(); return; }
+  runDiscover();
+}
+async function runDiscover(explicitTitle, lang){
+  const d = disc; if (!d) return;
+  d.loading = true; renderResearch();
+  const q = explicitTitle || d.terms.filter(x => x.on).map(x => x.t).join(' ');
+  const best = explicitTitle ? {main: await wpSummary(explicitTitle, lang || wikiLang()), hits: []} : await wpBest(q);
+  if (disc !== d) return;
+  const main = best && best.main;
+  const L = main ? main.lang : wikiLang();
+  const [facts, morelike, books, papers, people] = await Promise.all([
+    main ? wdFacts(main.qid) : null,
+    main ? wpSearch('morelike:' + main.title, L, 8) : [],
+    booksFor(main ? main.title : q),
+    papersFor(main && L === 'en' ? main.title : q),
+    explicitTitle ? [] : Promise.all(d.terms.filter(x => x.on && x.name).slice(0, 3).map(async x => {
+      const hit = (await wpSearch(x.t + ' ' + d.terms.filter(y => y.on && y !== x).map(y => y.t).join(' '), L, 1))[0] || (await wpSearch(x.t, L, 1))[0];
+      if (!hit || (main && hit.title === main.title)) return null;
+      const s = await wpSummary(hit.title, L); if (!s) return null;
+      return {name: x.t, s, facts: await wdFacts(s.qid)};
+    }))
+  ]);
+  if (disc !== d) return;
+  const related = [...(morelike || []).map(h => h.title), ...((best && best.hits) || []).slice(1).map(h => h.title)].filter((t, i, a) => main && t !== main.title && a.indexOf(t) === i).slice(0, 10);
+  d.data = {q, main, facts, related, books, papers, people: (people || []).filter(Boolean), lang: L};
+  d.loading = false; renderResearch();
+}
+function factRowsHtml(f, max = 14, compact){
+  if (!f || !f.rows.length) return '';
+  return `<div class="facts">${f.rows.slice(0, max).filter(r => !compact || ['P31','P569','P570','P585','P580','P19','P20','P106','P276','P17','P710'].includes(r.pid)).map(r => `<div class="fr"><span>${esc(r.label)}</span><div>${r.vals.map(v => v.wiki ? `<button class="fx" data-dexp="${esc(v.wiki.title)}" data-dlang="${v.wiki.lang}">${esc(v.text)}</button>` : DATE_PROPS.has(r.pid) && v.date ? `<span class="fdate">${esc(v.text)}</span><button class="ftl" data-ftl="${esc(r.label)}|${esc(v.date)}|${esc(f.label)}" title="Op je tijdlijn zetten">＋ tijdlijn</button>` : `<span>${esc(v.text)}</span>`).join(' ')}</div></div>`).join('')}</div>`;
+}
+function discoverHtml(){
+  if (!disc) return `<div class="empty" style="padding:20px 6px">${cat('curious')}Schrijf iets (bv. <i>Caesar werd vermoord door Brutus</i>) en druk op <b>Ontdek</b>, of selecteer een paar woorden.</div><div style="text-align:center"><button class="btn" data-dgo="1">Ontdek mijn alinea</button></div>`;
+  const d = disc;
+  let h = `<div class="dterms">${d.terms.map((x, i) => `<button class="${x.on ? 'on' : ''}" data-dterm="${i}">${esc(x.t)}</button>`).join('')}<button data-dgo="1" title="Opnieuw met je huidige alinea">↻</button></div>`;
+  if (d.trail.length) h += `<div class="dtrail"><button data-dback="1">‹ Terug</button> ${d.trail.map(t => esc(t.title)).join(' › ')}</div>`;
+  if (d.empty) return h + '<p class="muted">Geen namen of kernwoorden gevonden in je alinea. Selecteer de woorden die je wilt onderzoeken.</p>';
+  if (d.loading) return h + `<div class="dload">${cat('curious')}<p class="muted">Bezig met ontdekken…</p></div>`;
+  const D = d.data;
+  if (!D || !D.main) return h + `<p class="muted">Niets gevonden op Wikipedia voor “${esc(D ? D.q : '')}”. Zet woorden aan of uit hierboven, of probeer <a href="#" data-rptab="search" style="color:var(--accent);font-weight:800">Zoeken</a>.</p>`;
+  const m = D.main;
+  h += `<div class="rpi dmain">${m.thumb ? `<img src="${esc(m.thumb)}" alt="" loading="lazy">` : ''}<div class="rpk">Wikipedia${m.lang !== 'nl' ? ' (' + m.lang.toUpperCase() + ')' : ''}${m.desc ? ' · ' + esc(m.desc) : ''}</div>
+    <h3 class="dh">${esc(m.title)}</h3><div class="rpt" style="-webkit-line-clamp:9">${esc(m.extract)}</div>
+    <div class="rpa"><button data-dsave="main">Bewaar & lees</button><button data-dsnip="main" class="ghost">Als fragment</button>${m.url ? `<a href="${esc(m.url)}" target="_blank" rel="noopener">Openen ↗</a>` : ''}</div></div>`;
+  if (D.facts && D.facts.rows.length) h += `<div class="rpk dsec">Feiten · Wikidata</div>` + factRowsHtml(D.facts);
+  if (D.people.length) h += `<div class="rpk dsec">Personen & plekken uit je tekst</div>` + D.people.map(p => `<div class="rpi"><div class="rpk">${esc(p.name)} → ${esc(p.s.title)}</div><div class="rpt" style="-webkit-line-clamp:4">${esc(p.s.extract)}</div>${factRowsHtml(p.facts, 8, true)}<div class="rpa"><button data-dexp="${esc(p.s.title)}" data-dlang="${p.s.lang}">Verder ontdekken</button></div></div>`).join('');
+  if (D.related.length) h += `<div class="rpk dsec">Verwante onderwerpen</div><div class="lchips">${D.related.map(t => `<button data-dexp="${esc(t)}" data-dlang="${D.lang}">${esc(t)}</button>`).join('')}</div>`;
+  const lit = [...D.books.slice(0, 3), ...D.papers.slice(0, 3)];
+  if (lit.length){
+    window.__lit = lit;
+    h += `<div class="rpk dsec">Boeken & wetenschap</div>` + lit.map((x, i) => `<div class="rpi"><div class="rpk">${esc(KIND[x.kind])} · ${esc(x.site)}${x.year ? ' · ' + x.year : ''}${x.cited ? ' · ' + x.cited + '× geciteerd' : ''}</div><div class="rpt"><b>${esc(x.title)}</b>${x.authors ? '<br>' + esc(x.authors) : ''}${x.excerpt ? '<br><span class="muted">' + esc(x.excerpt.slice(0, 220)) + (x.excerpt.length > 220 ? '…' : '') + '</span>' : ''}</div><div class="rpa"><button data-dlit="${i}">Bewaar als bron</button><a href="${esc(x.url)}" target="_blank" rel="noopener">Openen ↗</a></div></div>`).join('');
+  }
+  const mine = related().items.slice(0, 4);
+  if (mine.length) h += `<div class="rpk dsec">In je verzameling</div>` + mine.map(rpItem).join('');
+  return h;
+}
+function saveLit(x){
+  if (!requireLogin()) return;
+  const dup = Object.values(sources).find(s => s.url === x.url); if (dup){ toast('Die had je al bewaard'); return; }
+  const id = uid(), now = Date.now();
+  const s = {id, grp: defaultProject(), kind: x.kind, url: x.url, title: x.title, site: [x.authors, x.site].filter(Boolean).join(' · '), byline: x.authors || '', published: x.year ? String(x.year) : '', excerpt: x.excerpt || '', tags: [], note: '', fav: false, created: now, updated: now};
+  sources[id] = s; srcContent[id] = x.excerpt || ''; persistSources(); renderLib();
+  srcUpsert({...s, content: x.excerpt || ''}).then(() => toast(KIND[x.kind] + ' bewaard als bron')).catch(e => { delete sources[id]; persistSources(); toast('Bewaren mislukt: ' + (e.message || e)); });
+}
+$('#research').addEventListener('click', e => {
+  const t = e.target;
+  const go = t.closest('[data-dgo]'); if (go){ startDiscover(); return; }
+  const tm = t.closest('[data-dterm]'); if (tm){ disc.terms[+tm.dataset.dterm].on = !disc.terms[+tm.dataset.dterm].on; disc.trail = []; runDiscover(); return; }
+  const ex = t.closest('[data-dexp]');
+  if (ex){ if (!disc || ex.dataset.fromtodo) disc = {terms: [], trail: [], loading: true, data: null}; rpTab = 'discover'; rpSrc = null; rpLookup = null; if (disc.data && disc.data.main) disc.trail.push({title: disc.data.main.title, lang: disc.data.main.lang}); runDiscover(ex.dataset.dexp, ex.dataset.dlang); $('#rpScroll') && ($('#rpScroll').scrollTop = 0); return; }
+  const bk = t.closest('[data-dback]'); if (bk && disc){ const prev = disc.trail.pop(); if (prev && disc.trail.length) runDiscover(prev.title, prev.lang); else if (prev){ disc.trail = []; runDiscover(); } return; }
+  const sv = t.closest('[data-dsave]');
+  if (sv && disc && disc.data && disc.data.main){ const m = disc.data.main; sv.disabled = true; sv.textContent = 'Bewaren…'; saveWiki(m.lang, m.title, {stay: true}).then(id => { if (id){ rpSrc = id; renderResearch(); } }); return; }
+  const sn = t.closest('[data-dsnip]');
+  if (sn && disc && disc.data && disc.data.main){ const m = disc.data.main; snippetDialog({text: m.extract.split(/(?<=\.)\s/).slice(0, 2).join(' ') + '\n\n(Wikipedia: ' + m.title + ')', date: ''}); return; }
+  const tl = t.closest('[data-ftl]');
+  if (tl){ const [label, date, subj] = tl.dataset.ftl.split('|'); if (!requireLogin()) return; snippetDialog({text: `${subj} — ${label.toLowerCase()}: ${date}`, date, tags: ['wikidata']}); return; }
+  const lt = t.closest('[data-dlit]'); if (lt && window.__lit){ saveLit(window.__lit[+lt.dataset.dlit]); lt.disabled = true; lt.textContent = 'Bewaard'; return; }
+}, true);
+
+/* ----- 7. Possible answers for ?? items ----- */
+const answerCache = {};
+function sentencesOf(t){ return String(t).split(/(?<=[.!?])\s+/).filter(s => s.length > 20); }
+async function answerFor(todo){
+  const key = todo.text; if (answerCache[key]) return answerCache[key];
+  const q = todoKeywords(todo); if (!q) return null;
+  const p = (async () => {
+    const best = await wpBest(q); if (!best || !best.main) return null;
+    const want = tokens(todo.question || todo.context);
+    const wantsDate = /wanneer|welk jaar|hoe laat|datum|in welk/i.test(todo.question || todo.context);
+    let top = null, score = -1;
+    for (const s of sentencesOf(best.main.extract)){ const tk = tokens(s); let sc = 0; for (const w of want) if (tk.has(w)) sc++; if (wantsDate && /\d{3,4}|v\.Chr/.test(s)) sc += 1.5; if (sc > score){ score = sc; top = s; } }
+    let fact = null;
+    if (wantsDate){ const f = await wdFacts(best.main.qid); const r = f && f.rows.find(r => DATE_PROPS.has(r.pid)); if (r) fact = `${r.label}: ${r.vals.map(v => v.text).join(', ')}`; }
+    return {title: best.main.title, lang: best.main.lang, url: best.main.url, sentence: top || sentencesOf(best.main.extract)[0] || best.main.extract.slice(0, 200), fact, confident: score >= 2};
+  })();
+  answerCache[key] = p;
+  return p;
+}
+function fillAnswers(){
+  document.querySelectorAll('[data-answer]').forEach(async el => {
+    const t = todoList[+el.dataset.answer]; if (!t || el.dataset.done) return;
+    el.dataset.done = '1';
+    const a = await answerFor(t);
+    if (!a){ el.innerHTML = '<span class="muted">Geen antwoord gevonden — probeer de zoekknoppen.</span>'; return; }
+    el.innerHTML = `<div class="ans ${a.confident ? '' : 'weak'}"><div class="rpk">${a.confident ? 'Mogelijk antwoord' : 'Misschien relevant'} · Wikipedia: ${esc(a.title)}</div>
+      ${a.fact ? `<div class="ansf">${esc(a.fact)}</div>` : ''}<div>${esc(a.sentence)}</div>
+      <div class="rpa"><button data-ansnip="${el.dataset.answer}">Bewaar als fragment</button><button data-dexp="${esc(a.title)}" data-dlang="${a.lang}" data-fromtodo="1" class="ghost">Ontdek</button>${a.url ? `<a href="${esc(a.url)}" target="_blank" rel="noopener">Bron ↗</a>` : ''}</div></div>`;
+    el._ans = a;
+  });
+}
+$('#research').addEventListener('click', e => {
+  const s = e.target.closest('[data-ansnip]');
+  if (s){ const el = document.querySelector(`[data-answer="${s.dataset.ansnip}"]`); const a = el && el._ans; if (!a) return; const t = todoList[+s.dataset.ansnip];
+    snippetDialog({text: (a.fact ? a.fact + '\n\n' : '') + a.sentence + '\n\n(Wikipedia: ' + a.title + ')', date: detectDate((a.fact || '') + ' ' + a.sentence), tags: ['uitgezocht']});
+    if (t) toast('Tip: vink het punt daarna af met ✓ Klaar'); return; }
+}, true);
 
 /* ---------------- Boot ---------------- */
 applySettings();

@@ -32,6 +32,16 @@ Een rustige schrijfapp in de browser, met een indeling zoals in Ulysses: bibliot
 
 Hiervoor is de Edge Function `supabase/functions/bronnen` nodig (en voor webzoeken een `BRAVE_API_KEY`).
 
+## Ontdek
+
+Druk op de onderzoeksknop (of Ctrl+Alt+O) en de app onderzoekt je alinea of selectie:
+- herkent namen en kernwoorden (aan/uit te zetten) en zoekt het beste Wikipedia-artikel (NL, anders EN)
+- **feitenkaart uit Wikidata**: datum, plaats, betrokkenen, geboren/overleden… — datums met één klik op de tijdlijn (ook v.Chr.)
+- **personen & plekken** uit je alinea met een minikaartje
+- **verwante onderwerpen** om op door te klikken, met kruimelpad terug
+- **boeken** (Open Library) en **wetenschappelijke artikelen** (OpenAlex), te bewaren als bron
+- bij `??`-punten een **mogelijk antwoord** met bron
+
 ## Onderzoekspaneel
 
 Naast je tekst (Ctrl+Alt+R):
