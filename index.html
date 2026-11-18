@@ -1973,14 +1973,33 @@ function srcRealtime(p){
 async function callFn(body){
   const { data, error } = await sb.functions.invoke('bronnen', {body});
   if (error){
-    let msg = error.message || 'Fout';
-    try { const j = await error.context.json(); if (j && j.error) msg = j.error; } catch(e){}
-    if (/not found|404|Failed to send|FunctionsFetchError|relay/i.test(msg)) { srcFnOk = false; msg = 'De Edge Function “bronnen” is nog niet neergezet'; }
+    let msg = error.message || 'Fout', status = 0;
+    const ctx = error.context;
+    if (ctx && typeof ctx.status === 'number'){
+      status = ctx.status;
+      try { const t = await ctx.text(); try { const j = JSON.parse(t); msg = j.error || j.msg || j.message || t; } catch(_){ if (t) msg = t; } } catch(_){}
+    }
+    srcFnOk = false;
+    if (status === 404) msg = 'Edge Function “bronnen” niet gevonden (404) — controleer of hij precies zo heet';
+    else if (status === 401) msg = 'Geen toegang tot de Edge Function (401) — log opnieuw in';
+    else if (status === 503 || /BOOT_ERROR|boot/i.test(msg)) msg = 'De Edge Function start niet op (' + (status || 'boot error') + ') — kijk bij Logs in Supabase';
+    else if (!status) msg = 'Kan de Edge Function niet bereiken: ' + (error.name || '') + ' ' + (error.message || '');
+    else msg = 'Edge Function fout ' + status + ': ' + String(msg).slice(0, 200);
+    lastFnError = msg;
     throw new Error(msg);
   }
-  srcFnOk = true;
+  srcFnOk = true; lastFnError = '';
   if (data && data.error) throw new Error(data.error);
   return data;
+}
+let lastFnError = '';
+async function testFunction(){
+  openModal(`<h3>Verbinding testen</h3><p id="tfMsg">Bezig met testen…</p><div class="btns"><button class="btn" data-close>Sluiten</button></div>`);
+  const out = [];
+  try { const r = await callFn({action:'ping'}); out.push('✅ Edge Function “bronnen” werkt.'); out.push(r.search ? '✅ Zoeksleutel (BRAVE_API_KEY) is ingesteld.' : 'ℹ️ Zoeksleutel nog niet ingesteld — zoeken op internet werkt pas na stap 3.'); }
+  catch(e){ out.push('❌ ' + e.message); }
+  try { const { error } = await sb.from('sources').select('id').limit(1); out.push(error ? '❌ Tabel “sources”: ' + error.message : '✅ Tabel “sources” bestaat.'); } catch(e){}
+  const el = $('#tfMsg'); if (el) el.innerHTML = out.map(esc).join('<br>');
 }
 
 /* ----- Saving ----- */
@@ -2107,7 +2126,7 @@ function renderReader(){
       <h3 style="color:var(--text);margin:0 0 6px">Je bronnenbibliotheek</h3>
       <p style="line-height:1.55;margin:0 0 18px">Bewaar artikelen, Wikipedia-pagina’s en citaten.<br>Selecteer tekst in een bron om hem als citaat in je tekst te zetten.</p>
       <button class="btn" data-a="add">Bron toevoegen</button>
-      <p class="muted" style="margin-top:26px">Bewaren vanaf je telefoon of andere websites? <a href="#" data-a="howto" style="color:var(--accent);font-weight:800">Zo werkt het</a></p></div>`;
+      <p class="muted" style="margin-top:26px">Bewaren vanaf je telefoon of andere websites? <a href="#" data-a="howto" style="color:var(--accent);font-weight:800">Zo werkt het</a> · <a href="#" data-a="test" style="color:var(--accent);font-weight:800">Verbinding testen</a></p></div>`;
     return;
   }
   $('#rdOpen').href = s.url || '#'; $('#rdOpen').style.display = s.url ? '' : 'none';
@@ -2268,7 +2287,7 @@ function processIncoming(){
 /* ----- Wiring ----- */
 $('#reader').addEventListener('click', e => {
   const a = e.target.closest('[data-a]');
-  if (a){ e.preventDefault(); if (a.dataset.a === 'add') addSourceDialog(); if (a.dataset.a === 'howto') howtoDialog(); }
+  if (a){ e.preventDefault(); if (a.dataset.a === 'add') addSourceDialog(); if (a.dataset.a === 'howto') howtoDialog(); if (a.dataset.a === 'test') testFunction(); }
   const u = e.target.closest('[data-untag]');
   if (u){ const s = sources[currentSrc]; const tags = (s.tags || []).filter((_, i) => i !== +u.dataset.untag); srcPatch(s.id, {tags}); renderReader(); renderList(); }
 });
