@@ -3076,6 +3076,7 @@ async function wikiSummary(term){
 }
 async function lookup(term){
   term = String(term || '').trim().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ''); if (!term) return;
+  if (term.split(/\s+/).length >= 2){ startDiscover(term, true); return; }
   if (!rpOpen) toggleResearch(true);
   rpSrc = null; rpLookup = {term, loading: true};
   const low = term.toLowerCase();
@@ -3084,9 +3085,9 @@ async function lookup(term){
     ...Object.values(sources).filter(s => (s.title + ' ' + s.excerpt + ' ' + s.note).toLowerCase().includes(low)).map(x => ({type:'src', x}))
   ].slice(0, 8);
   renderResearch();
-  const [dict, wiki] = await Promise.all([dictLookup(term), wikiSummary(term)]);
+  const [dict, wiki, more] = await Promise.all([dictLookup(term), wikiSummary(term), wikiHits(term)]);
   if (!rpLookup || rpLookup.term !== term) return;
-  Object.assign(rpLookup, {dict, wiki, loading: false}); renderResearch();
+  Object.assign(rpLookup, {dict, wiki, more: (more || []).filter(m => !wiki || m.title !== wiki.title), loading: false}); renderResearch();
 }
 function lookupHtml(){
   const L = rpLookup;
@@ -3100,6 +3101,7 @@ function lookupHtml(){
     h += `<div class="rpi"><div class="rpk">Wikipedia · ${esc(L.wiki.title)}</div><div class="rpt" style="-webkit-line-clamp:12">${esc(L.wiki.extract)}</div>
       <div class="rpa"><button data-lkwiki="1">Bewaar & lees</button>${L.wiki.url ? `<a href="${esc(L.wiki.url)}" target="_blank" rel="noopener">Openen ↗</a>` : ''}</div></div>`;
   } else if (!L.loading) h += `<p class="muted">Geen Wikipedia-artikel gevonden.</p>`;
+  if (L.more && L.more.length) h += moreHtml(L.more);
   h += `<div class="rpk" style="margin:14px 0 8px">In je verzameling</div>` + (L.mine.length ? L.mine.map(rpItem).join('') : '<p class="muted">Nog niets bewaard over dit onderwerp.</p>');
   return h;
 }
@@ -3203,7 +3205,7 @@ function updatePill(){
     let html = '', act = null;
     if (b > a){
       const sel = v.slice(a, b).trim();
-      if (sel && sel.length <= 60 && !sel.includes('\n') && sel.split(/\s+/).length <= 5){ html = `🔍 Opzoeken: <b>${esc(sel.length > 24 ? sel.slice(0, 24) + '…' : sel)}</b>`; act = {type:'lookup', term: sel}; }
+      if (sel && sel.length <= 60 && !sel.includes('\n') && sel.split(/\s+/).length <= 5){ html = `🔍 ${sel.split(/\s+/).length > 1 ? 'Ontdek' : 'Opzoeken'}: <b>${esc(sel.length > 24 ? sel.slice(0, 24) + '…' : sel)}</b>`; act = {type:'lookup', term: sel}; }
     } else {
       const ls = v.lastIndexOf('[[', a), le = v.indexOf(']]', ls);
       if (ls >= 0 && le >= a - 1 && !v.slice(ls, a).includes('\n') && !v.slice(ls + 2, a).includes(']]')){
@@ -3546,9 +3548,9 @@ function discoverContext(){
   if (sel) return sel;
   return currentId ? currentParagraph() : '';
 }
-async function startDiscover(text){
+async function startDiscover(text, allOn){
   const {names, keys} = termsFrom(text || discoverContext());
-  const terms = [...names.map(t => ({t, on: true, name: true})), ...keys.map((t, i) => ({t, on: i < 2}))];
+  const terms = [...names.map(t => ({t, on: true, name: true})), ...keys.map((t, i) => ({t, on: allOn || i < 2}))];
   disc = {terms, trail: [], loading: true, data: null};
   rpTab = 'discover'; rpSrc = null; rpLookup = null;
   if (!rpOpen) toggleResearch(true); else renderResearch();
@@ -3563,7 +3565,7 @@ async function runDiscover(explicitTitle, lang){
   if (disc !== d) return;
   const main = best && best.main;
   const L = main ? main.lang : wikiLang();
-  const [facts, morelike, lead, books, papers, people] = await Promise.all([
+  const [facts, morelike, lead, books, papers, people, more] = await Promise.all([
     main ? wdFacts(main.qid) : null,
     main ? wpSearch('morelike:' + main.title, L, 6) : [],
     main ? wpLeadLinks(main.title, L) : [],
@@ -3574,7 +3576,8 @@ async function runDiscover(explicitTitle, lang){
       if (!hit || (main && hit.title === main.title)) return null;
       const s = await wpSummary(hit.title, L); if (!s) return null;
       return {name: x.t, s, facts: await wdFacts(s.qid)};
-    }))
+    })),
+    explicitTitle ? [] : wikiHits(q)
   ]);
   if (disc !== d) return;
   // Rank: named in the summary or a Wikidata fact > other intro links > search hits > "more like this"
@@ -3589,8 +3592,11 @@ async function runDiscover(explicitTitle, lang){
   const relTitles = [...scored.entries()].sort((a, b) => b[1] - a[1]).map(x => x[0]).slice(0, 10);
   const descs = await wpDescriptions(relTitles, L);
   const related = relTitles.map(t => ({title: t, desc: descs[t] || ''}));
-  d.data = {q, main, facts, related, books, papers, people: (people || []).filter(Boolean), lang: L};
+  d.data = {q, main, facts, related, books, papers, people: (people || []).filter(Boolean), lang: L, more: (more || []).filter(m => !main || m.title !== main.title)};
   d.loading = false; renderResearch();
+}
+function moreHtml(list){
+  return `<div class="rpk dsec">Meer op Wikipedia</div><div class="rel">${list.map(w => `<button data-dexp="${esc(w.title)}" data-dlang="${w.lang}"><b>${esc(w.title)} <small class="lg">${w.lang.toUpperCase()}</small></b>${w.desc ? `<span>${esc(w.desc)}</span>` : ''}</button>`).join('')}</div>`;
 }
 function factRowsHtml(f, max = 14, compact){
   if (!f || !f.rows.length) return '';
@@ -3609,6 +3615,7 @@ function discoverHtml(){
   h += `<div class="rpi dmain">${m.thumb ? `<img src="${esc(m.thumb)}" alt="" loading="lazy">` : ''}<div class="rpk">Wikipedia${m.lang !== 'nl' ? ' (' + m.lang.toUpperCase() + ')' : ''}${m.desc ? ' · ' + esc(m.desc) : ''}</div>
     <h3 class="dh">${esc(m.title)}</h3><div class="rpt" style="-webkit-line-clamp:9">${esc(m.extract)}</div>
     <div class="rpa"><button data-dsave="main">Bewaar & lees</button><button data-dsnip="main" class="ghost">Als fragment</button>${m.url ? `<a href="${esc(m.url)}" target="_blank" rel="noopener">Openen ↗</a>` : ''}</div></div>`;
+  if (D.more && D.more.length) h += moreHtml(D.more);
   if (D.facts && D.facts.rows.length) h += `<div class="rpk dsec">Feiten · Wikidata</div>` + factRowsHtml(D.facts);
   if (D.people.length) h += `<div class="rpk dsec">Personen & plekken uit je tekst</div>` + D.people.map(p => `<div class="rpi"><div class="rpk">${esc(p.name)} → ${esc(p.s.title)}</div><div class="rpt" style="-webkit-line-clamp:4">${esc(p.s.extract)}</div>${factRowsHtml(p.facts, 8, true)}<div class="rpa"><button data-dexp="${esc(p.s.title)}" data-dlang="${p.s.lang}">Verder ontdekken</button></div></div>`).join('');
   if (D.related.length) h += `<div class="rpk dsec">Verwante onderwerpen</div><div class="rel">${D.related.map(r => `<button data-dexp="${esc(r.title)}" data-dlang="${D.lang}"><b>${esc(r.title)}</b>${r.desc ? `<span>${esc(r.desc)}</span>` : ''}</button>`).join('')}</div>`;
