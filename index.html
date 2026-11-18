@@ -469,6 +469,14 @@ kbd.dupe{border-color:var(--coral);color:#C9776B}
 .krow span{flex:1}
 .krow .chip{padding:4px 10px;font-size:12px}
 /* ---------- Ontdek ---------- */
+.rel{display:flex;flex-direction:column;gap:5px}
+.rel button{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 10px}
+.rel button:hover{border-color:var(--sage)}
+.rel b{display:block;color:var(--link);font-size:13.5px}
+.rel span{display:block;font-size:12px;color:var(--muted);margin-top:1px}
+.dterms .grow{flex:1}
+.dlang{padding:2px}.dlang button{padding:3px 9px!important;font-size:11.5px!important;text-decoration:none!important;color:var(--muted)!important;background:transparent!important}
+.dlang button.on{background:var(--card)!important;color:var(--text)!important}
 .dterms{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 10px}
 .dterms button{font-size:12.5px;font-weight:800;padding:4px 10px;border-radius:999px;background:var(--pane);color:var(--faint);text-decoration:line-through}
 .dterms button.on{background:var(--accent-soft);color:var(--accent);text-decoration:none}
@@ -3412,6 +3420,19 @@ async function wpBest(q){
   return null;
 }
 
+/* Links in the introduction of an article: the most relevant "related topics" */
+const NOISE = new RegExp('^(\\d|.*v\\.\\s?Chr|.*eeuw$|' + MONTHS.join('|') + '|januari|BC$|AD$|Help:|Bestand:|Categorie:|Wikipedia:|Sjabloon:)', 'i');
+async function wpLeadLinks(title, lang){
+  const j = await getJSON(`https://${lang}.wikipedia.org/w/api.php?action=parse&format=json&origin=*&prop=links&section=0&redirects=1&page=${encodeURIComponent(title)}`);
+  return ((j && j.parse && j.parse.links) || []).filter(l => l.ns === 0 && ('exists' in l || l.exists !== false)).map(l => l['*'] || l.title).filter(t => t && !NOISE.test(t));
+}
+async function wpDescriptions(titles, lang){
+  if (!titles.length) return {};
+  const j = await getJSON(`https://${lang}.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=description&redirects=1&titles=${encodeURIComponent(titles.join('|'))}`);
+  const out = {}; for (const pg of Object.values((j && j.query && j.query.pages) || {})) if (pg.title) out[pg.title] = pg.description || '';
+  return out;
+}
+
 /* ----- Wikidata facts ----- */
 const PROPS = [
   ['P31','Is een'], ['P585','Datum'], ['P580','Begin'], ['P582','Einde'], ['P569','Geboren'], ['P19','Geboorteplaats'], ['P570','Overleden'], ['P20','Plaats van overlijden'],
@@ -3516,9 +3537,10 @@ async function runDiscover(explicitTitle, lang){
   if (disc !== d) return;
   const main = best && best.main;
   const L = main ? main.lang : wikiLang();
-  const [facts, morelike, books, papers, people] = await Promise.all([
+  const [facts, morelike, lead, books, papers, people] = await Promise.all([
     main ? wdFacts(main.qid) : null,
-    main ? wpSearch('morelike:' + main.title, L, 8) : [],
+    main ? wpSearch('morelike:' + main.title, L, 6) : [],
+    main ? wpLeadLinks(main.title, L) : [],
     booksFor(main ? main.title : q),
     papersFor(main && L === 'en' ? main.title : q),
     explicitTitle ? [] : Promise.all(d.terms.filter(x => x.on && x.name).slice(0, 3).map(async x => {
@@ -3529,7 +3551,18 @@ async function runDiscover(explicitTitle, lang){
     }))
   ]);
   if (disc !== d) return;
-  const related = [...(morelike || []).map(h => h.title), ...((best && best.hits) || []).slice(1).map(h => h.title)].filter((t, i, a) => main && t !== main.title && a.indexOf(t) === i).slice(0, 10);
+  // Rank: named in the summary or a Wikidata fact > other intro links > search hits > "more like this"
+  const ext = main ? main.extract.toLowerCase() : '';
+  const factTitles = new Set(((facts && facts.rows) || []).flatMap(r => r.vals.filter(v => v.wiki && v.wiki.lang === L).map(v => v.wiki.title)));
+  const scored = new Map();
+  const add = (t, sc) => { if (!t || (main && t === main.title)) return; scored.set(t, Math.max(scored.get(t) || 0, sc)); };
+  (lead || []).forEach((t, i) => { const base = t.toLowerCase().replace(/\s*\(.*\)$/, ''); const named = ext.includes(base) || ext.includes(base.split(' ').pop()); add(t, (named ? 6 : 3) - i * 0.02); });
+  factTitles.forEach(t => add(t, 7));
+  ((best && best.hits) || []).slice(1, 4).forEach(h => add(h.title, 2));
+  (morelike || []).forEach(h => add(h.title, 1));
+  const relTitles = [...scored.entries()].sort((a, b) => b[1] - a[1]).map(x => x[0]).slice(0, 10);
+  const descs = await wpDescriptions(relTitles, L);
+  const related = relTitles.map(t => ({title: t, desc: descs[t] || ''}));
   d.data = {q, main, facts, related, books, papers, people: (people || []).filter(Boolean), lang: L};
   d.loading = false; renderResearch();
 }
@@ -3540,7 +3573,7 @@ function factRowsHtml(f, max = 14, compact){
 function discoverHtml(){
   if (!disc) return `<div class="empty" style="padding:20px 6px">${cat('curious')}Schrijf iets (bv. <i>Caesar werd vermoord door Brutus</i>) en druk op <b>Ontdek</b>, of selecteer een paar woorden.</div><div style="text-align:center"><button class="btn" data-dgo="1">Ontdek mijn alinea</button></div>`;
   const d = disc;
-  let h = `<div class="dterms">${d.terms.map((x, i) => `<button class="${x.on ? 'on' : ''}" data-dterm="${i}">${esc(x.t)}</button>`).join('')}<button data-dgo="1" title="Opnieuw met je huidige alinea">↻</button></div>`;
+  let h = `<div class="dterms">${d.terms.map((x, i) => `<button class="${x.on ? 'on' : ''}" data-dterm="${i}">${esc(x.t)}</button>`).join('')}<button data-dgo="1" title="Opnieuw met je huidige alinea">↻</button><span class="grow"></span><span class="seg dlang"><button data-dlangset="nl" class="${wikiLang() === 'nl' ? 'on' : ''}">NL</button><button data-dlangset="en" class="${wikiLang() === 'en' ? 'on' : ''}">EN</button></span></div>`;
   if (d.trail.length) h += `<div class="dtrail"><button data-dback="1">‹ Terug</button> ${d.trail.map(t => esc(t.title)).join(' › ')}</div>`;
   if (d.empty) return h + '<p class="muted">Geen namen of kernwoorden gevonden in je alinea. Selecteer de woorden die je wilt onderzoeken.</p>';
   if (d.loading) return h + `<div class="dload">${cat('curious')}<p class="muted">Bezig met ontdekken…</p></div>`;
@@ -3552,7 +3585,7 @@ function discoverHtml(){
     <div class="rpa"><button data-dsave="main">Bewaar & lees</button><button data-dsnip="main" class="ghost">Als fragment</button>${m.url ? `<a href="${esc(m.url)}" target="_blank" rel="noopener">Openen ↗</a>` : ''}</div></div>`;
   if (D.facts && D.facts.rows.length) h += `<div class="rpk dsec">Feiten · Wikidata</div>` + factRowsHtml(D.facts);
   if (D.people.length) h += `<div class="rpk dsec">Personen & plekken uit je tekst</div>` + D.people.map(p => `<div class="rpi"><div class="rpk">${esc(p.name)} → ${esc(p.s.title)}</div><div class="rpt" style="-webkit-line-clamp:4">${esc(p.s.extract)}</div>${factRowsHtml(p.facts, 8, true)}<div class="rpa"><button data-dexp="${esc(p.s.title)}" data-dlang="${p.s.lang}">Verder ontdekken</button></div></div>`).join('');
-  if (D.related.length) h += `<div class="rpk dsec">Verwante onderwerpen</div><div class="lchips">${D.related.map(t => `<button data-dexp="${esc(t)}" data-dlang="${D.lang}">${esc(t)}</button>`).join('')}</div>`;
+  if (D.related.length) h += `<div class="rpk dsec">Verwante onderwerpen</div><div class="rel">${D.related.map(r => `<button data-dexp="${esc(r.title)}" data-dlang="${D.lang}"><b>${esc(r.title)}</b>${r.desc ? `<span>${esc(r.desc)}</span>` : ''}</button>`).join('')}</div>`;
   const lit = [...D.books.slice(0, 3), ...D.papers.slice(0, 3)];
   if (lit.length){
     window.__lit = lit;
@@ -3573,6 +3606,7 @@ function saveLit(x){
 $('#research').addEventListener('click', e => {
   const t = e.target;
   const go = t.closest('[data-dgo]'); if (go){ startDiscover(); return; }
+  const ls = t.closest('[data-dlangset]'); if (ls){ LS.set('wikiLang', ls.dataset.dlangset); if (disc){ disc.trail = []; runDiscover(); } return; }
   const tm = t.closest('[data-dterm]'); if (tm){ disc.terms[+tm.dataset.dterm].on = !disc.terms[+tm.dataset.dterm].on; disc.trail = []; runDiscover(); return; }
   const ex = t.closest('[data-dexp]');
   if (ex){ if (!disc || ex.dataset.fromtodo) disc = {terms: [], trail: [], loading: true, data: null}; rpTab = 'discover'; rpSrc = null; rpLookup = null; if (disc.data && disc.data.main) disc.trail.push({title: disc.data.main.title, lang: disc.data.main.lang}); runDiscover(ex.dataset.dexp, ex.dataset.dlang); $('#rpScroll') && ($('#rpScroll').scrollTop = 0); return; }
