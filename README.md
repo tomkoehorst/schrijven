@@ -12,7 +12,7 @@ Een rustige schrijfapp in de browser, met een indeling zoals in Ulysses: bibliot
 - Voorbeeldweergave, focusmodus, typemachinemodus en alinea uitlichten
 - Licht/donker thema, drie lettertypes, instelbare grootte en regelbreedte
 - Exporteren als Markdown, platte tekst of HTML
-- Inloggen met een code per e-mail, live synchronisatie tussen apparaten
+- Inloggen met e-mail en wachtwoord, live synchronisatie tussen apparaten
 - Te installeren op je beginscherm (eigen icoon)
 
 ## Bestanden

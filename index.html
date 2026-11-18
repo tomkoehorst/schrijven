@@ -192,9 +192,10 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .modal.open{display:grid}
 .dialog{background:var(--card);border-radius:18px;padding:22px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
 .dialog h3{margin:0 0 6px;font-size:18px}
+.dialog a{color:var(--accent);font-weight:700}
 .dialog p{margin:0 0 14px;color:var(--muted);font-size:14px;line-height:1.5}
-.dialog input[type=text],.dialog input[type=email]{width:100%;border:1px solid var(--line);background:var(--pane2);border-radius:11px;padding:11px 13px;font-size:15px;outline:none;margin-bottom:12px}
-.dialog input[type=text]:focus,.dialog input[type=email]:focus{border-color:var(--lav)}
+.dialog input[type=text],.dialog input[type=email],.dialog input[type=password]{width:100%;border:1px solid var(--line);background:var(--pane2);border-radius:11px;padding:11px 13px;font-size:15px;outline:none;margin-bottom:12px}
+.dialog input[type=text]:focus,.dialog input[type=email]:focus,.dialog input[type=password]:focus{border-color:var(--lav)}
 .swatches{display:flex;gap:8px;margin-bottom:18px}
 .swatches button{width:30px;height:30px;border-radius:50%;border:3px solid transparent}
 .swatches button.on{border-color:var(--text)}
@@ -531,6 +532,7 @@ async function connectSupabase(){
   sb.auth.onAuthStateChange((event, session) => {
     if (session && session.user && (!sbUser || sbUser.id !== session.user.id)) setTimeout(() => startSupabase(session.user), 0);
     if (event === 'SIGNED_OUT') stopSupabase();
+    if (event === 'PASSWORD_RECOVERY') setTimeout(newPasswordDialog, 300);
   });
   const { data } = await sb.auth.getSession();
   if (data && data.session) startSupabase(data.session.user);
@@ -591,38 +593,62 @@ function stopSupabase(){
   persistLocal(); syncIdle();
 }
 
-function loginDialog(){
-  openModal(`<h3>Inloggen</h3><p>Log in om je teksten te synchroniseren tussen je telefoon en computer. Je krijgt een code per e-mail — geen wachtwoord nodig.</p>
-    <div id="lstep1"><input type="email" id="lemail" placeholder="jij@voorbeeld.nl" autocomplete="email" value="${esc(LS.get('email',''))}">
-      <div class="btns"><button class="btn ghost" id="llater">Later</button><button class="btn" id="lsend">Stuur code</button></div></div>
-    <div id="lstep2" hidden><p style="margin-top:-4px">Check je mail en vul de code in.</p>
-      <input type="text" id="lcode" inputmode="numeric" autocomplete="one-time-code" placeholder="123456" maxlength="10" style="letter-spacing:.3em;font-size:20px;text-align:center">
-      <div class="btns"><button class="btn ghost" id="lback">Ander adres</button><button class="btn" id="lok">Inloggen</button></div></div>
-    <p class="muted" id="lmsg" style="margin:12px 0 0"></p>`);
+function loginDialog(mode){
+  mode = mode || (LS.get('hasAccount', false) ? 'login' : 'signup');
+  const T = {
+    login:  {h:'Inloggen', p:'Log in om je teksten te synchroniseren tussen je telefoon en computer.', btn:'Inloggen', alt:'Nog geen account? <a href="#" data-m="signup">Account aanmaken</a>'},
+    signup: {h:'Account aanmaken', p:'Eenmalig: maak een account, dan worden je teksten op al je apparaten bewaard.', btn:'Account aanmaken', alt:'Heb je al een account? <a href="#" data-m="login">Inloggen</a>'},
+    reset:  {h:'Wachtwoord vergeten', p:'Je krijgt een mail met een link om een nieuw wachtwoord in te stellen.', btn:'Stuur link', alt:'<a href="#" data-m="login">Terug naar inloggen</a>'}
+  }[mode];
+  openModal(`<h3>${T.h}</h3><p>${T.p}</p>
+    <input type="email" id="lemail" placeholder="jij@voorbeeld.nl" autocomplete="email" value="${esc(LS.get('email',''))}">
+    ${mode === 'reset' ? '' : `<input type="password" id="lpass" placeholder="Wachtwoord${mode === 'signup' ? ' (minstens 8 tekens)' : ''}" autocomplete="${mode === 'signup' ? 'new-password' : 'current-password'}">`}
+    <div class="btns"><button class="btn ghost" id="llater">Later</button><button class="btn" id="lok">${T.btn}</button></div>
+    <p class="muted" id="lmsg" style="margin:12px 0 0"></p>
+    <p class="muted" style="margin:10px 0 0">${T.alt}${mode === 'login' ? ' · <a href="#" data-m="reset">Wachtwoord vergeten?</a>' : ''}</p>`);
   const msg = t => $('#lmsg').textContent = t;
-  setTimeout(() => $('#lemail').focus(), 30);
-  const send = async () => {
-    const email = $('#lemail').value.trim(); if (!/.+@.+\..+/.test(email)) return msg('Vul een geldig e-mailadres in.');
-    LS.set('email', email); $('#lsend').disabled = true; msg('Versturen…');
-    const { error } = await sb.auth.signInWithOtp({email, options:{shouldCreateUser:true, emailRedirectTo: location.href.split('#')[0]}});
-    $('#lsend').disabled = false;
-    if (error) return msg('Dat lukte niet: ' + error.message);
-    msg(''); $('#lstep1').hidden = true; $('#lstep2').hidden = false; setTimeout(() => $('#lcode').focus(), 30);
-  };
-  const verify = async () => {
-    const token = $('#lcode').value.replace(/\s/g, ''); if (!token) return;
-    $('#lok').disabled = true; msg('Controleren…');
-    const { data, error } = await sb.auth.verifyOtp({email: LS.get('email',''), token, type:'email'});
+  setTimeout(() => (LS.get('email','') && $('#lpass') ? $('#lpass') : $('#lemail')).focus(), 30);
+  $('#dialog').addEventListener('click', e => { const a = e.target.closest('[data-m]'); if (a){ e.preventDefault(); LS.set('email', $('#lemail').value.trim()); loginDialog(a.dataset.m); } });
+  const go = async () => {
+    const email = $('#lemail').value.trim(), pass = $('#lpass') ? $('#lpass').value : '';
+    if (!/.+@.+\..+/.test(email)) return msg('Vul een geldig e-mailadres in.');
+    if (mode !== 'reset' && pass.length < (mode === 'signup' ? 8 : 1)) return msg(mode === 'signup' ? 'Kies een wachtwoord van minstens 8 tekens.' : 'Vul je wachtwoord in.');
+    LS.set('email', email); $('#lok').disabled = true; msg('Even geduld…');
+    const redirect = location.href.split('#')[0];
+    let res;
+    if (mode === 'login') res = await sb.auth.signInWithPassword({email, password: pass});
+    else if (mode === 'signup') res = await sb.auth.signUp({email, password: pass, options:{emailRedirectTo: redirect}});
+    else res = await sb.auth.resetPasswordForEmail(email, {redirectTo: redirect});
     $('#lok').disabled = false;
-    if (error) return msg('Die code klopt niet of is verlopen. Probeer het opnieuw.');
-    LS.set('loginLater', false); closeModal(); toast('Ingelogd — je teksten worden gesynchroniseerd');
-    if (data && data.user) startSupabase(data.user);
+    const { data, error } = res;
+    if (error){
+      const m = String(error.message || '');
+      if (/invalid login/i.test(m)) return msg('E-mailadres of wachtwoord klopt niet.');
+      if (/not confirmed/i.test(m)) return msg('Bevestig eerst je e-mailadres via de link in je mail.');
+      if (/already registered/i.test(m)) { LS.set('hasAccount', true); return msg('Dit adres heeft al een account — kies Inloggen.'); }
+      if (/rate limit/i.test(m)) return msg('Te veel pogingen of mails. Wacht even en probeer het opnieuw.');
+      return msg('Dat lukte niet: ' + m);
+    }
+    LS.set('hasAccount', true);
+    if (mode === 'reset') return msg('Verstuurd! Open de link in je mail; je kunt dan een nieuw wachtwoord kiezen.');
+    if (data && data.session){ LS.set('loginLater', false); closeModal(); toast('Ingelogd — je teksten worden gesynchroniseerd'); startSupabase(data.session.user); }
+    else msg('Bijna klaar: klik op de bevestigingslink in je mail. Daarna kun je hier inloggen.');
   };
-  $('#lsend').onclick = send; $('#lok').onclick = verify;
-  $('#lemail').onkeydown = e => { if (e.key === 'Enter') send(); };
-  $('#lcode').onkeydown = e => { if (e.key === 'Enter') verify(); };
-  $('#lback').onclick = () => { $('#lstep1').hidden = false; $('#lstep2').hidden = true; msg(''); };
+  $('#lok').onclick = go;
+  $('#dialog').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') go(); });
   $('#llater').onclick = () => { LS.set('loginLater', true); closeModal(); };
+}
+function newPasswordDialog(){
+  openModal(`<h3>Nieuw wachtwoord</h3><p>Kies een nieuw wachtwoord voor je account.</p>
+    <input type="password" id="npass" placeholder="Minstens 8 tekens" autocomplete="new-password">
+    <div class="btns"><button class="btn" id="nok">Opslaan</button></div><p class="muted" id="nmsg" style="margin:12px 0 0"></p>`);
+  setTimeout(() => $('#npass').focus(), 30);
+  $('#nok').onclick = async () => {
+    const p = $('#npass').value; if (p.length < 8) return $('#nmsg').textContent = 'Minstens 8 tekens.';
+    const { error } = await sb.auth.updateUser({password: p});
+    if (error) return $('#nmsg').textContent = 'Dat lukte niet: ' + error.message;
+    closeModal(); toast('Wachtwoord opgeslagen');
+  };
 }
 function accountDialog(){
   openModal(`<h3>Account</h3><p>Ingelogd als <b>${esc(sbUser.email || '')}</b>. Je teksten worden gesynchroniseerd met je andere apparaten.</p>
