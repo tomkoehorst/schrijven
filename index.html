@@ -3233,13 +3233,30 @@ const ACTIONS = [
   {id:'theme',    label:'Licht / donker',                       def:'',              run: () => $('#btnTheme').click()},
 ];
 const keyMap = () => Object.assign({}, ...ACTIONS.map(a => ({[a.id]: a.def})), settings.keys || {});
+/* Keystrokes sent by tools like Logi Options+ often carry no physical key code (e.code is empty).
+   Fall back to the virtual key code, then to the key itself. */
+function codeOf(e){
+  if (e.code && e.code !== 'Unidentified') return e.code;
+  const k = e.keyCode || e.which || 0;
+  if (k >= 65 && k <= 90) return 'Key' + String.fromCharCode(k);
+  if (k >= 48 && k <= 57) return 'Digit' + String.fromCharCode(k);
+  if (k >= 112 && k <= 135) return 'F' + (k - 111);
+  if (k === 32) return 'Space';
+  const key = String(e.key || '');
+  if (/^[a-z]$/i.test(key)) return 'Key' + key.toUpperCase();
+  if (/^\d$/.test(key)) return 'Digit' + key;
+  if (/^F\d{1,2}$/.test(key)) return key;
+  return key || '';
+}
+let lastKeyInfo = '';
 function comboOf(e){
   const parts = [];
   if (e.ctrlKey || e.metaKey) parts.push('Ctrl');
   if (e.altKey) parts.push('Alt');
   if (e.shiftKey) parts.push('Shift');
-  if (['Control','Alt','Shift','Meta','AltGraph'].includes(e.key)) return null;
-  parts.push(e.code);
+  if (['Control','Alt','Shift','Meta','AltGraph'].includes(e.key) || [16, 17, 18, 91, 92, 93, 225].includes(e.keyCode)) return null;
+  const code = codeOf(e); if (!code) return null;
+  parts.push(code);
   return parts.join('+');
 }
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
@@ -3251,7 +3268,9 @@ let capturing = null;
 document.addEventListener('keydown', e => {
   if (capturing){ e.preventDefault(); e.stopPropagation(); capturing(e); return; }
   const c = comboOf(e); if (!c) return;
-  const usable = /^F\d+$/.test(e.code) || e.ctrlKey || e.metaKey || e.altKey;
+  lastKeyInfo = `${prettyCombo(c)}   (code: ${e.code || 'leeg'}, key: ${e.key}, keyCode: ${e.keyCode})`;
+  const kt = document.getElementById('keyTest'); if (kt) kt.textContent = lastKeyInfo;
+  const usable = /^F\d+$/.test(codeOf(e)) || e.ctrlKey || e.metaKey || e.altKey;
   if (!usable) return;
   const map = keyMap(), id = Object.keys(map).find(k => map[k] === c);
   if (!id) return;
@@ -3290,6 +3309,7 @@ function keysDialog(){
     openModal(`<h3>Sneltoetsen</h3><p>Klik op <b>Wijzig</b> en druk de toetsen in die je wilt gebruiken — bijvoorbeeld de toets die je in Logi Options+ aan een muisknop hebt gegeven. Gebruik Ctrl en/of Alt, of een F-toets.</p>
       <div class="keys">${ACTIONS.map(a => `<div class="krow"><span>${esc(a.label)}</span><kbd class="${dupes.includes(map[a.id]) ? 'dupe' : ''}">${esc(prettyCombo(map[a.id]))}</kbd><button class="chip" data-kset="${a.id}">Wijzig</button>${map[a.id] ? `<button class="chip" data-kclear="${a.id}" title="Geen sneltoets">✕</button>` : ''}</div>`).join('')}</div>
       ${dupes.length ? '<p class="muted" style="color:#C9776B">Rood: dezelfde toets is aan twee acties gekoppeld.</p>' : ''}
+      <div class="tip" style="margin-top:10px"><b>Toetstest</b> — druk op een muisknop of toets; hier zie je wat de app ontvangt:<br><code id="keyTest" style="font-size:12px">${esc(lastKeyInfo || 'nog niets ontvangen')}</code></div>
       <div class="row" style="margin:12px 0"><span class="muted" style="font-weight:800">Sprintduur voor de sneltoets</span><select id="kSprint" class="psel" style="flex:none;width:auto">${[10,15,25,45].map(n => `<option ${ (settings.sprintMin || 25) === n ? 'selected' : ''}>${n}</option>`).join('')}</select><span class="muted">min</span></div>
       <div class="btns"><button class="btn ghost" id="kReset" style="margin-right:auto">Standaard</button><button class="btn ghost" id="kCopy">Kopieer lijst</button><button class="btn" data-close>Klaar</button></div>`);
     $('#dialog').classList.add('wide');
@@ -3304,7 +3324,7 @@ function keysDialog(){
       capturing = ev => {
         if (ev.key === 'Escape'){ capturing = null; draw(); return; }
         const c = comboOf(ev); if (!c) return;
-        if (!(/^F\d+$/.test(ev.code) || ev.ctrlKey || ev.metaKey || ev.altKey)){ st.textContent = 'Gebruik Ctrl/Alt of een F-toets'; return; }
+        if (!(/^F\d+$/.test(codeOf(ev)) || ev.ctrlKey || ev.metaKey || ev.altKey)){ st.textContent = 'Gebruik Ctrl/Alt of een F-toets'; return; }
         capturing = null;
         settings.keys = {...(settings.keys || {}), [st.dataset.kset]: c}; LS.set('settings', settings); draw();
       };
