@@ -3,6 +3,6 @@
 // beschermd door de Row Level Security-regels uit supabase/schema.sql.
 // Laat je deze leeg, dan bewaart de app alles alleen op het apparaat zelf.
 window.SCHRIJF_CONFIG = {
-  supabaseUrl: '',   // bv. 'https://abcdefghijkl.supabase.co'
-  supabaseKey: ''    // de anon / publishable key
+  supabaseUrl: 'https://ssnbuwuqacjaxewrmdgg.supabase.co',
+  supabaseKey: 'sb_publishable_4QtjFhDoIjPgvp0gAnPLkg_AqBLnxxz'
 };
