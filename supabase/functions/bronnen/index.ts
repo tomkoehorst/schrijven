@@ -20,9 +20,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
     if (!(await isLoggedIn(req))) return json({ error: "Niet ingelogd — log opnieuw in in de app" }, 401);
-    const { action, url, q } = await req.json();
+    const { action, url, q, lang } = await req.json();
     if (action === "fetch") return json(await fetchArticle(String(url || "")));
-    if (action === "search") return json(await search(String(q || "")));
+    if (action === "search") return json(await search(String(q || ""), String(lang || "nl")));
     if (action === "ping") return json({ ok: true, search: !!Deno.env.get("BRAVE_API_KEY") });
     return json({ error: "Onbekende actie" }, 400);
   } catch (e) {
@@ -158,15 +158,16 @@ function toMarkdown(html: string) {
 }
 
 /* ---------- Zoeken op internet (Brave Search) ---------- */
-async function search(q: string) {
+async function search(q: string, lang = "nl") {
   const key = Deno.env.get("BRAVE_API_KEY");
   if (!key) throw new Error("Zoeken op internet is nog niet ingesteld (BRAVE_API_KEY ontbreekt)");
   if (!q.trim()) return { results: [] };
   const u = new URL("https://api.search.brave.com/res/v1/web/search");
   u.searchParams.set("q", q);
   u.searchParams.set("count", "12");
-  u.searchParams.set("country", "NL");
-  u.searchParams.set("search_lang", "nl");
+  // lang: "nl" = Nederlandse pagina's, "en" = Engelse, "all" = geen taalfilter
+  if (lang === "nl") { u.searchParams.set("country", "NL"); u.searchParams.set("search_lang", "nl"); }
+  else if (lang === "en") { u.searchParams.set("search_lang", "en"); }
   u.searchParams.set("safesearch", "moderate");
   const res = await fetch(u, { headers: { "Accept": "application/json", "X-Subscription-Token": key }, signal: AbortSignal.timeout(10000) });
   if (res.status === 429) throw new Error("Zoeklimiet bereikt — probeer het later of volgende maand opnieuw");

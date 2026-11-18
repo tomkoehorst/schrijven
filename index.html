@@ -473,6 +473,7 @@ kbd.dupe{border-color:var(--coral);color:#C9776B}
 .rel button{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 10px}
 .rel button:hover{border-color:var(--sage)}
 .rel b{display:block;color:var(--link);font-size:13.5px}
+.rel .lg{font-size:10px;color:var(--muted);background:var(--pane2);border-radius:5px;padding:1px 5px;margin-left:4px;vertical-align:1px}
 .rel span{display:block;font-size:12px;color:var(--muted);margin-top:1px}
 .dterms .grow{flex:1}
 .dlang{padding:2px}.dlang button{padding:3px 9px!important;font-size:11.5px!important;text-decoration:none!important;color:var(--muted)!important;background:transparent!important}
@@ -2054,7 +2055,7 @@ function armNudge(){
   clearTimeout(idleT); hideNudge();
   if (settings.nudge === false || sprint) return;
   idleT = setTimeout(() => {
-    if (!currentId || previewOn || coachOpen || document.hidden || !typedSinceOpen) return;
+    if (!currentId || previewOn || coachOpen || document.hidden || !typedSinceOpen || document.activeElement !== ta || $('#modal').classList.contains('open')) return;
     if (Date.now() - lastNudge < 10 * 60000 || analyse(ta.value).words.length < 15) return;
     lastNudge = Date.now(); $('#nudge').classList.add('show');
   }, 75000);
@@ -2890,10 +2891,30 @@ function rpSearchHtml(){
     const all = [...sn, ...sr];
     return all.length ? all.slice(0, 40).map(rpItem).join('') : '<p class="muted">Niets gevonden in je verzameling.</p>';
   }
-  if (!rpResults.length) return `<p class="muted">${rpQ ? 'Druk op Enter om te zoeken.' : rpMode === 'web' ? 'Zoek op internet en bewaar wat je nodig hebt.' : 'Zoek in Wikipedia.'}</p>`;
-  if (rpResults.error) return `<div class="tip">${esc(rpResults.error)}</div>`;
-  return rpResults.map((r, i) => `<div class="rpi"><div class="rpk">${esc(r.site || host(r.url))}</div><div class="rpt"><b>${esc(r.title)}</b><br>${esc(r.description || '')}</div>
+  const langSeg = rpMode === 'web' ? `<div class="seg" style="display:inline-flex;margin:-4px 0 12px"><button data-weblang="all" class="${webLang === 'all' ? 'on' : ''}">Alle talen</button><button data-weblang="nl" class="${webLang === 'nl' ? 'on' : ''}">NL</button><button data-weblang="en" class="${webLang === 'en' ? 'on' : ''}">EN</button></div>` : '';
+  const wikiBlock = rpMode === 'web' && rpWiki.length ? `<div class="rpk dsec" style="margin-top:0">Op Wikipedia</div><div class="rel" style="margin-bottom:12px">${rpWiki.map(w => `<button data-dexp="${esc(w.title)}" data-dlang="${w.lang}"><b>${esc(w.title)} <small class="lg">${w.lang.toUpperCase()}</small></b>${w.desc ? `<span>${esc(w.desc)}</span>` : ''}</button>`).join('')}</div><div class="rpk dsec">Op het web${rpResults.sentQ ? ` · gezocht op “${esc(rpResults.sentQ)}”` : ''}</div>` : '';
+  if (!rpResults.length && !rpResults.error) return langSeg + (rpWiki.length && rpMode === 'web' ? wikiBlock + '<p class="muted">Geen webresultaten.</p>' : `<p class="muted">${rpQ ? 'Druk op Enter om te zoeken.' : rpMode === 'web' ? 'Zoek op internet en bewaar wat je nodig hebt. Tip: hoe specifieker, hoe beter (bv. “Brutus munt”).' : 'Zoek in Wikipedia.'}</p>`);
+  if (rpResults.error) return langSeg + wikiBlock + `<div class="tip">${esc(rpResults.error)}</div>`;
+  return langSeg + wikiBlock + rpResults.map((r, i) => `<div class="rpi"><div class="rpk">${esc(r.site || host(r.url))}</div><div class="rpt"><b>${esc(r.title)}</b><br>${esc(r.description || '')}</div>
     <div class="rpa"><button data-rpsave="${i}">Bewaar & lees</button><a href="${esc(r.url)}" target="_blank" rel="noopener">Openen ↗</a></div></div>`).join('');
+}
+/* Small Dutch → English word list for searching English sources */
+const NL2EN = {munt:'coin',munten:'coins',moord:'assassination',vermoord:'murdered',moordenaar:'assassin',slag:'battle',oorlog:'war',vrede:'peace',verdrag:'treaty',opstand:'revolt',
+  koning:'king',koningin:'queen',keizer:'emperor',keizerin:'empress',prins:'prince',paus:'pope',kerk:'church',klooster:'monastery',kasteel:'castle',stad:'city',dorp:'village',
+  dijk:'dike',overstroming:'flood',watersnood:'flood',ramp:'disaster',brand:'fire',ziekte:'disease',pest:'plague',hongersnood:'famine',schip:'ship',reis:'voyage',ontdekking:'discovery',
+  brief:'letter',brieven:'letters',dagboek:'diary',boek:'book',kaart:'map',schilderij:'painting',schilder:'painter',beeld:'statue',tempel:'temple',graf:'tomb',begraven:'buried',
+  geboren:'born',overleden:'died',dood:'death',huwelijk:'marriage',vrouw:'wife',man:'husband',zoon:'son',dochter:'daughter',vader:'father',moeder:'mother',broer:'brother',zus:'sister',
+  senaat:'senate',senator:'senator',consul:'consul',republiek:'republic',rijk:'empire',leger:'army',soldaat:'soldier',generaal:'general',wet:'law',rechtszaak:'trial',gevangenis:'prison',
+  handel:'trade',geld:'money',belasting:'tax',boer:'farmer',arbeider:'worker',fabriek:'factory',spoorweg:'railway',uitvinding:'invention',wetenschap:'science',geschiedenis:'history',
+  romeins:'roman',romeinse:'roman',grieks:'greek',griekse:'greek',middeleeuwen:'middle ages',middeleeuws:'medieval',eeuw:'century',jaar:'year',idus:'ides',maart:'march'};
+const toEnglish = q => q.split(/\s+/).map(w => NL2EN[w.toLowerCase()] || w).join(' ');
+let webLang = LS.get('webLang', 'all'), rpWiki = [];
+async function wikiHits(q){
+  const enQ = toEnglish(q);
+  const [nl, en] = await Promise.all([wpSearch(q, 'nl', 3), wpSearch(enQ, 'en', 3)]);
+  const list = [...nl.map(h => ({lang:'nl', title: h.title})), ...en.map(h => ({lang:'en', title: h.title}))];
+  const [dn, de] = await Promise.all([wpDescriptions(list.filter(x => x.lang === 'nl').map(x => x.title), 'nl'), wpDescriptions(list.filter(x => x.lang === 'en').map(x => x.title), 'en')]);
+  return list.map(x => ({...x, desc: (x.lang === 'nl' ? dn : de)[x.title] || ''}));
 }
 let rpSearchT;
 async function rpSearch(){
@@ -2911,7 +2932,11 @@ async function rpSearch(){
   if (!q) return;
   $('#rpRes').innerHTML = '<p class="muted">Zoeken…</p>';
   try {
-    if (rpMode === 'web'){ const r = await callFn({action:'search', q}); rpResults = r.results || []; }
+    if (rpMode === 'web'){
+      const sendQ = webLang === 'en' ? toEnglish(q) : q;
+      const [r, w] = await Promise.all([callFn({action:'search', q: sendQ, lang: webLang}).catch(e => ({error: e.message || 'Zoeken mislukt'})), wikiHits(q)]);
+      rpWiki = w; rpResults = r.results || []; if (r.error) rpResults.error = r.error; rpResults.sentQ = sendQ !== q ? sendQ : '';
+    }
     else {
       const lang = LS.get('wikiLang', 'nl');
       const j = await (await fetch(`https://${lang}.wikipedia.org/w/api.php?origin=*&format=json&action=query&list=search&srlimit=10&srsearch=${encodeURIComponent(q)}`)).json();
@@ -2933,6 +2958,7 @@ $('#btnResearch').onclick = () => { if (rpOpen) toggleResearch(false); else star
 $('#research').addEventListener('click', async e => {
   const t = e.target;
   const tab = t.closest('[data-rptab]'); if (tab){ e.preventDefault(); rpTab = tab.dataset.rptab; rpSrc = null; rpLookup = null; renderResearch(); if (rpTab === 'search') setTimeout(() => $('#rpQ') && $('#rpQ').focus(), 0); return; }
+  const wl = t.closest('[data-weblang]'); if (wl){ webLang = wl.dataset.weblang; LS.set('webLang', webLang); rpResults = []; rpWiki = []; if (rpQ.trim()) rpSearch(); else $('#rpRes').innerHTML = rpSearchHtml(); return; }
   const md = t.closest('[data-rpmode]'); if (md){ rpMode = md.dataset.rpmode; rpResults = []; renderResearch(); if (rpQ.trim()) rpSearch(); return; }
   const a = t.closest('[data-rpa]');
   if (a){ if (a.dataset.rpa === 'close') toggleResearch(false); if (a.dataset.rpa === 'back'){ if (rpSrc) rpSrc = null; else rpLookup = null; renderResearch(); } if (a.dataset.rpa === 'quick') quickDialog(); return; }
