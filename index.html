@@ -3439,11 +3439,17 @@ async function wpSummary(title, lang){
 }
 /* Find the best article for a query; Dutch first, English as fallback */
 async function wpBest(q){
-  for (const lang of [wikiLang(), wikiLang() === 'nl' ? 'en' : 'nl']){
-    const hits = await wpSearch(q, lang, 6);
-    if (hits.length){
-      for (const h of hits.slice(0, 3)){ const s = await wpSummary(h.title, lang); if (s && s.type !== 'disambiguation') return {main: s, hits, lang}; }
-    }
+  const langs = [wikiLang(), wikiLang() === 'nl' ? 'en' : 'nl'];
+  for (const lang of langs){
+    const qq = lang === 'en' ? toEnglish(q) : q;
+    const hits = await wpSearch(qq, lang, 8);
+    if (!hits.length) continue;
+    // Pick the hit whose title/snippet best matches the search words, not blindly the first one
+    const words = qq.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !STOP.has(w));
+    const score = (h, i) => { const t = h.title.toLowerCase(), sn = String(h.snippet || '').replace(/<[^>]+>/g, '').toLowerCase(); let sc = 0; for (const w of words){ if (t.includes(w)) sc += 2; else if (sn.includes(w)) sc += 1; } return sc - i * 0.15; };
+    const ranked = hits.map((h, i) => ({h, s: score(h, i)})).sort((a, b) => b.s - a.s);
+    if (ranked[0].s < 1 && lang === langs[0]) continue;     // nothing really matches: try the other language
+    for (const {h} of ranked.slice(0, 3)){ const s = await wpSummary(h.title, lang); if (s && s.type !== 'disambiguation') return {main: s, hits: ranked.map(x => x.h), lang}; }
   }
   return null;
 }
@@ -3572,7 +3578,8 @@ async function runDiscover(explicitTitle, lang){
     booksFor(main ? main.title : q),
     papersFor(main && L === 'en' ? main.title : q),
     explicitTitle ? [] : Promise.all(d.terms.filter(x => x.on && x.name).slice(0, 3).map(async x => {
-      const hit = (await wpSearch(x.t + ' ' + d.terms.filter(y => y.on && y !== x).map(y => y.t).join(' '), L, 1))[0] || (await wpSearch(x.t, L, 1))[0];
+      const tr = t => L === 'en' ? toEnglish(t) : t;
+      const hit = (await wpSearch(tr(x.t + ' ' + d.terms.filter(y => y.on && y !== x).map(y => y.t).join(' ')), L, 1))[0] || (await wpSearch(tr(x.t), L, 1))[0];
       if (!hit || (main && hit.title === main.title)) return null;
       const s = await wpSummary(hit.title, L); if (!s) return null;
       return {name: x.t, s, facts: await wdFacts(s.qid)};
