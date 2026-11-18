@@ -48,3 +48,32 @@ exception when duplicate_object then null; end $$;
 
 -- Schrijfcoach: dagdoel, reeks en sprints (toegevoegd later; veilig om opnieuw te draaien)
 alter table public.profiles add column if not exists stats jsonb not null default '{}'::jsonb;
+
+-- Bronnen: bewaarde artikelen, links, Wikipedia-pagina's en citaten
+create table if not exists public.sources (
+  id        text primary key,
+  user_id   uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  kind      text not null default 'article',
+  url       text not null default '',
+  title     text not null default '',
+  site      text not null default '',
+  byline    text not null default '',
+  published text not null default '',
+  excerpt   text not null default '',
+  content   text not null default '',
+  tags      jsonb not null default '[]'::jsonb,
+  note      text not null default '',
+  fav       boolean not null default false,
+  created   bigint not null,
+  updated   bigint not null
+);
+create index if not exists sources_user_idx on public.sources(user_id);
+alter table public.sources enable row level security;
+drop policy if exists "eigen bronnen" on public.sources;
+create policy "eigen bronnen" on public.sources
+  for all to authenticated
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
+grant select, insert, update, delete on public.sources to authenticated;
+do $$ begin
+  alter publication supabase_realtime add table public.sources;
+exception when duplicate_object then null; end $$;

@@ -16,6 +16,16 @@ Een rustige schrijfapp in de browser, met een indeling zoals in Ulysses: bibliot
 - Te installeren op je beginscherm (eigen icoon)
 - Focusscherm: alleen je blad, verder niets
 
+## Bronnen
+
+- Artikelen bewaren via een link: titel, samenvatting en leesbare tekst worden opgehaald
+- Zoeken op internet (Brave Search) en in Wikipedia, met één klik bewaren
+- Eigen notities en citaten, tags, favorieten en zoeken door de volledige tekst
+- Tekst selecteren in een bron → **Citeer in je tekst** (met bronvermelding)
+- Bewaren vanaf de telefoon (deelmenu op Android, Opdracht op iPhone) of met een bladwijzer
+
+Hiervoor is de Edge Function `supabase/functions/bronnen` nodig (en voor webzoeken een `BRAVE_API_KEY`).
+
 ## Schrijfcoach (zonder AI)
 
 - **Vandaag:** dagdoel, reeks (dagen op rij), weekoverzicht en beste dag — gesynchroniseerd tussen apparaten
@@ -32,6 +42,7 @@ Een rustige schrijfapp in de browser, met een indeling zoals in Ulysses: bibliot
 | `index.html` | De hele app |
 | `config.js` | Supabase-URL en publieke sleutel |
 | `supabase/schema.sql` | Tabellen en beveiligingsregels voor Supabase |
+| `supabase/functions/bronnen/index.ts` | Edge Function: artikelen ophalen en zoeken op internet |
 | `manifest.json`, `icon*` | Beginscherm-icoon |
 
 ## Hoe opslag werkt
