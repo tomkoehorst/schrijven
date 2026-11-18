@@ -33,6 +33,11 @@ create policy "eigen profiel" on public.profiles
   for all to authenticated
   using (user_id = auth.uid()) with check (user_id = auth.uid());
 
+-- Toegang voor ingelogde gebruikers (nodig in nieuwere Supabase-projecten)
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on public.sheets   to authenticated;
+grant select, insert, update, delete on public.profiles to authenticated;
+
 -- Live synchroniseren tussen apparaten
 do $$ begin
   alter publication supabase_realtime add table public.sheets;

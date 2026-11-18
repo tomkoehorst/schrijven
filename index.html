@@ -436,8 +436,10 @@ function handleDbError(e){
   if (code === 'quota_exceeded') toast('Opslag in de cloud is vol — verwijder oude teksten uit de prullenbak.');
   else if (code === 'revoked' || code === 'not_granted') { cloud = 'off'; }
   else if (/jwt|auth|401/i.test(msg) || code === 'PGRST301'){ cloud = 'login'; syncIdle(); return; }
-  setSync('err', 'Opslaan mislukt — lokaal bewaard');
+  lastError = [code, msg].filter(Boolean).join(' · ') || 'onbekende fout';
+  setSync('err', 'Opslaan mislukt — tik voor details');
 }
+let lastError = '';
 let profileBusy = false, profileAgain = false;
 async function saveProfile(){
   persistLocalSoon();
@@ -573,7 +575,7 @@ async function sbPull(){
       sb.from('profiles').select('groups').eq('user_id', sbUser.id).maybeSingle()
     ]);
     if (res.error) throw res.error;
-    cloud = 'on';
+    cloud = 'on'; lastError = '';
     let changed = false;
     for (const r of res.data) changed = applyRemote(r.id, rowToSheet(r)) || changed;
     changed = reconcile(new Set(res.data.map(r => r.id))) || changed;
@@ -652,7 +654,9 @@ function newPasswordDialog(){
 }
 function accountDialog(){
   openModal(`<h3>Account</h3><p>Ingelogd als <b>${esc(sbUser.email || '')}</b>. Je teksten worden gesynchroniseerd met je andere apparaten.</p>
+    ${lastError ? `<p class="muted" style="background:var(--pane2);padding:10px 12px;border-radius:10px;word-break:break-word"><b>Laatste fout:</b> ${esc(lastError)}</p><div class="btns" style="margin-bottom:12px"><button class="btn ghost" id="lretry">Opnieuw proberen</button></div>` : ''}
     <div class="btns"><button class="btn ghost" id="lout" style="margin-right:auto">Uitloggen</button><button class="btn" data-close>Sluiten</button></div>`);
+  if ($('#lretry')) $('#lretry').onclick = () => { lastError = ''; closeModal(); cloud = 'on'; sbPull(); };
   $('#lout').onclick = async () => { closeModal(); await sb.auth.signOut(); toast('Uitgelogd — je teksten blijven op dit apparaat staan'); };
 }
 $('#sync').addEventListener('click', () => {
