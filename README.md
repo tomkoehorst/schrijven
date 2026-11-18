@@ -43,6 +43,14 @@ Selecteer tekst op een website (ook in Claude, ChatGPT of Perplexity) en kies me
 AI-gesprekken worden bewaard als bron "AI-gesprek" met tag *#ai*; links in je selectie kun je met één vinkje ook als bron bewaren.
 Installeren: `chrome://extensions` (of `edge://extensions`) → Ontwikkelaarsmodus aan → *Uitgepakte extensie laden* → kies de map `extension`. Sneltoetsen aanpassen: `chrome://extensions/shortcuts`.
 
+## Claude Desktop-koppeling
+
+Download [schrijfkamer-claude.mcpb](https://github.com/tomkoehorst/schrijven/raw/main/schrijfkamer-claude.mcpb) en dubbelklik (of Claude Desktop → Instellingen → Extensies → installeren). Vul je Schrijfkamer-e-mail en -wachtwoord in. Daarna kun je Claude vragen:
+- "Zet dit op mijn tijdlijn" · "Bewaar dit als fragment in project Roman" · "Bewaar deze bronnen"
+- "Wat heb ik al verzameld over Brutus?" · "Laat mijn tijdlijn zien"
+
+Broncode in `mcp/`.
+
 ## Ontdek
 
 Druk op de onderzoeksknop (of Ctrl+Alt+O) en de app onderzoekt je alinea of selectie:

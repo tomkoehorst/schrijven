@@ -1,0 +1,52 @@
+{
+  "manifest_version": "0.2",
+  "name": "schrijfkamer",
+  "display_name": "Schrijfkamer",
+  "version": "1.0.0",
+  "description": "Laat Claude fragmenten, tijdlijnmomenten en bronnen bewaren in je Schrijfkamer, en je verzameling doorzoeken.",
+  "long_description": "Koppelt Claude aan je Schrijfkamer (tomkoehorst.github.io/schrijven). Zeg bijvoorbeeld: \"zet dit op mijn tijdlijn\", \"bewaar deze bronnen in project Roman\" of \"wat heb ik al verzameld over Brutus?\". Alles verschijnt direct in je app. De extensie praat rechtstreeks met je eigen Supabase-database en ziet alleen jouw gegevens.",
+  "author": { "name": "Tom" },
+  "icon": "icon.png",
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"],
+      "env": {
+        "SCHRIJF_EMAIL": "${user_config.email}",
+        "SCHRIJF_PASSWORD": "${user_config.password}"
+      }
+    }
+  },
+  "tools": [
+    { "name": "save_fragment", "description": "Fragment bewaren op de braindump (met bron)" },
+    { "name": "add_to_timeline", "description": "Gebeurtenis met datum op de tijdlijn zetten" },
+    { "name": "save_source", "description": "Webpagina bewaren als bron (artikel wordt opgehaald)" },
+    { "name": "search_collection", "description": "Fragmenten en bronnen doorzoeken" },
+    { "name": "get_timeline", "description": "Tijdlijn bekijken" },
+    { "name": "read_source", "description": "Bewaarde bron lezen" },
+    { "name": "list_projects", "description": "Projecten opvragen" }
+  ],
+  "user_config": {
+    "email": {
+      "type": "string",
+      "title": "E-mailadres",
+      "description": "Het e-mailadres waarmee je inlogt in de Schrijfkamer.",
+      "required": true
+    },
+    "password": {
+      "type": "string",
+      "title": "Wachtwoord",
+      "description": "Je wachtwoord van de Schrijfkamer. Wordt veilig opgeslagen door Claude.",
+      "sensitive": true,
+      "required": true
+    }
+  },
+  "keywords": ["schrijven", "onderzoek", "tijdlijn", "notities"],
+  "license": "MIT",
+  "compatibility": {
+    "platforms": ["win32", "darwin"],
+    "runtimes": { "node": ">=18.0.0" }
+  }
+}
