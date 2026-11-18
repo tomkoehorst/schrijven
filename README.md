@@ -47,6 +47,11 @@ Naast je tekst (Ctrl+Alt+R):
 - **`[[Links]]`:** typ `[[` voor suggesties uit je teksten, bronnen en fragmenten; Ctrl/⌘+klik of de knop opent de link; terugverwijzingen en "gebruikt in"
 - Markeringen en links verdwijnen netjes bij export en in het voorbeeld
 
+## Sneltoetsen & MX-muis
+
+Alle acties hebben een sneltoets (aan te passen via Instellingen → Sneltoetsen) en staan in het opdrachtenmenu (Ctrl+Alt+A). Ideaal om in Logi Options+ aan muisknoppen of F-toetsen te koppelen:
+Ctrl+Alt+K markeer ??, J/H volgende/vorige uitzoekpunt, L opzoeken, B fragment, Q citeren, R onderzoekspaneel, S snel bewaren, F focus, T sprint.
+
 ## Snel bewaren & projecten
 
 - Plak een link in Bronnen of op de Braindump → wordt een bron; plak tekst → wordt een fragment
