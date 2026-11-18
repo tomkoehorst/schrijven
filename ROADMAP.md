@@ -4,7 +4,7 @@ Ideeën die bewaard zijn voor later. Bovenaan staat wat Tom als volgende wil.
 
 ## Volgende (gekozen)
 
-### 6. Personen & plekken (verhaalbijbel)
+### 6. Personen & plekken (verhaalbijbel) — *personages gebouwd (character sheets); plekken en automatisch herkennen nog open*
 - Namen die vaak terugkomen (woorden met een hoofdletter die niet aan het begin van een zin staan, bv. *Opa Kees*, *Ouwerkerk*) automatisch herkennen.
 - Per naam een kaartje met eigen notities, eerste vermelding, aantal keer genoemd en gekoppelde fragmenten/bronnen.
 - Bij hover (of tik) op de naam in de editor het kaartje tonen; overzicht als tabblad in het onderzoekspaneel.
@@ -15,7 +15,7 @@ Ideeën die bewaard zijn voor later. Bovenaan staat wat Tom als volgende wil.
 - Zichtbaar maken of de volgorde klopt, en welke periodes nog geen fragmenten hebben.
 - Waarschijnlijk als tabblad "Tijdlijn" in het onderzoekspaneel, gefilterd op het project van de tekst.
 
-### 8. Gesplitst scherm
+### 8. Gesplitst scherm — *gebouwd*
 - Twee teksten naast elkaar (bv. hoofdstuk + aantekeningen), beide bewerkbaar en synchroon.
 - Op de telefoon: wisselen tussen de twee met een tab.
 

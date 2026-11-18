@@ -66,6 +66,9 @@ svg{display:block}
 .nav.on .ic{color:var(--accent)}
 .nav .cnt{margin-left:auto;font-size:12px;color:var(--muted);font-weight:700}
 .nav .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav.sub{padding:6px 10px 6px 30px;font-size:13.5px;font-weight:600}
+.nav.sub .ic{width:16px;height:16px}
+.nav.dropon{background:var(--accent-soft);outline:2px dashed var(--sage);outline-offset:-2px}
 .dot{width:10px;height:10px;border-radius:50%;flex:none;margin:0 4px}
 .lib-foot{padding:10px 14px calc(12px + var(--sab));border-top:1px solid var(--line);display:flex;align-items:center;gap:6px}
 .sync{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -536,6 +539,13 @@ body.capture .dialog{box-shadow:none;border:1px solid var(--line)}
 .prow:hover{background:var(--pane2)}
 .prow b{display:block;font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .prow span{display:block;font-size:12px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pfolders{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.pfold{background:var(--pane2);border-radius:12px;padding:6px;min-height:60px}
+.pfold.dropon{outline:2px dashed var(--sage);background:var(--accent-soft)}
+.pfh{display:flex;align-items:center;justify-content:space-between}
+.pfh button{font-size:13.5px;padding:4px 8px;border-radius:8px;text-align:left}
+.pfh small{color:var(--muted);font-weight:800}
+.pfold .prow{background:var(--card);margin-top:4px}
 .pmore{font-size:12.5px;font-weight:800;color:var(--accent);padding:6px 8px;margin-top:2px}
 .ptl{position:relative;padding-left:14px;border-left:2px solid var(--line);margin:4px 0 4px 6px}
 .ptli{position:relative;padding:4px 0 8px}
@@ -544,6 +554,61 @@ body.capture .dialog{box-shadow:none;border:1px solid var(--line)}
 .ptli p{margin:1px 0 0;font-size:13.5px;line-height:1.4}
 .ptli.gap::before{display:none}.ptli.gap span{color:var(--faint)}
 @media (max-width:820px){ .phead{padding:12px 14px 4px}.phead h1{font-size:21px}.phead .btn{padding:7px 10px;font-size:12.5px}.pstats{padding:8px 14px 12px;gap:6px}.pstat{min-width:0;flex:1 1 30%;padding:7px 10px}.pstat b{font-size:17px}.pgrid{padding:0 12px;grid-template-columns:1fr}.pwelcome{margin:0 12px 12px} }
+/* ---------- Gesplitst scherm ---------- */
+.splitpane{position:absolute;top:calc(56px + var(--sat));right:0;bottom:0;width:46%;max-width:620px;min-width:340px;background:var(--pane2);border-left:1px solid var(--line);display:none;flex-direction:column;z-index:9}
+.app.split .splitpane{display:flex}
+.app.srcmode .splitpane,.app.boardmode .splitpane,.app.focus .splitpane,.app.projmode .splitpane,.app.charmode .splitpane{display:none!important}
+@media (min-width:821px){ .app.split:not(.srcmode):not(.boardmode):not(.focus):not(.projmode):not(.charmode) #scroll{padding-right:min(46%,620px)} }
+.sphead{display:flex;align-items:center;gap:6px;padding:10px 10px 8px 14px;border-bottom:1px solid var(--line)}
+.sptitle{font-size:15px}
+.spback{font-weight:800;color:var(--accent);font-size:13.5px;padding:4px 0;text-align:left}
+.spscroll{flex:1;min-height:0;overflow:auto;padding:12px 18px 40px}
+.spview{font-size:16px}
+.sptext{width:100%;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:12px 14px;font:inherit;font-family:var(--ed-font);font-size:16px;line-height:1.65;color:var(--text);outline:none;resize:none}
+.sptext:focus{border-color:var(--sage)}
+.sprow{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:9px 12px;margin-bottom:6px}
+.sprow:hover{border-color:var(--sage)}
+.sprow b{display:block;font-size:14px}.sprow span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+.spfold{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:10px 12px;border-radius:11px;background:var(--card);border:1px solid var(--line);margin-bottom:6px;font-size:14px}
+.spfold small{margin-left:auto;color:var(--muted);font-weight:800}
+@media (max-width:820px){ .splitpane{top:0;width:100%;max-width:none;min-width:0;z-index:26;padding-top:var(--sat)} }
+/* ---------- Personages ---------- */
+.chars{display:none;flex:1;min-height:0;overflow:auto;flex-direction:column;padding-bottom:60px}
+.app.charmode .chars{display:flex}
+.app.charmode #topbar,.app.charmode #fmtMob,.app.charmode #scroll,.app.charmode #nosheet,.app.charmode #nudge,.app.charmode .focus-exit,.app.charmode #reader,.app.charmode #board,.app.charmode #project,.app.charmode .research{display:none!important}
+@media (min-width:821px){ .app.charmode,.app.charmode.show-lib{grid-template-columns:230px 0 1fr}.app.charmode .list{opacity:0;pointer-events:none}.app.charmode .lib{opacity:1;pointer-events:auto} }
+.chead{display:flex;align-items:center;gap:10px;padding:16px 28px 10px;position:sticky;top:0;background:var(--bg);z-index:2}
+.chead h1{margin:0;font-size:26px}
+.chead .btn{padding:8px 14px;font-size:13.5px}
+.avatar{display:inline-grid;place-items:center;border-radius:50%;font-weight:800;color:#34322F;flex:none;letter-spacing:.02em}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;padding:6px 28px}
+.ccard{display:flex;gap:14px;align-items:flex-start;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:var(--shadow)}
+.ccard:hover{border-color:var(--sage)}
+.ccard b{display:block;font-size:16px}.crol{display:inline-block;font-size:11.5px;font-weight:800;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 8px;margin:4px 0}
+.ccard p{margin:4px 0 0;font-size:13px;color:var(--muted);line-height:1.45}
+.csheet{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;padding:4px 28px;align-items:start}
+.ctop{grid-column:1/-1;display:flex;gap:18px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px;box-shadow:var(--shadow)}
+.ctopf{flex:1;min-width:0}
+.cname{width:100%;font:inherit;font-size:26px;font-weight:800;border:0;background:transparent;outline:none;color:var(--text);padding:2px 0}
+.cmetaf{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px}
+.cmetaf label{display:flex;gap:6px;align-items:center;font-size:12px;font-weight:800;color:var(--muted)}
+.cmetaf input{border:1px solid var(--line);background:var(--pane2);border-radius:9px;padding:6px 9px;font:inherit;font-size:14px;color:var(--text);outline:none;width:160px}
+.cmetaf input:focus,.cfield textarea:focus{border-color:var(--sage)}
+.cfields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cfield{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.cfield.wide,.cfield.extra{grid-column:1/-1}
+.cfield label{display:block;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);font-weight:800;margin-bottom:4px}
+.cfield textarea{width:100%;border:1px solid transparent;border-radius:8px;background:transparent;font:inherit;font-size:15px;line-height:1.55;color:var(--text);outline:none;resize:none;padding:2px 4px;overflow:hidden}
+.cextra{border:0;background:transparent;font:inherit;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);font-weight:800;outline:none;width:100%}
+.cside{grid-column:2;grid-row:2 / span 3;display:flex;flex-direction:column;gap:12px}
+.csheet > .pmore{grid-column:1;justify-self:start}
+.pchars{display:flex;flex-wrap:wrap;gap:8px}
+.pchar{display:flex;flex-direction:column;align-items:center;gap:4px;width:84px;text-align:center;padding:6px 2px;border-radius:12px}
+.pchar:hover{background:var(--pane2)}
+.pchar b{font-size:12.5px;line-height:1.2}.pchar span{font-size:11px;color:var(--muted)}
+.spchar{display:flex;gap:10px;align-items:center}.spc{display:block;min-width:0}.spc span{display:block;font-size:12.5px;color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+@media (max-width:1100px){ .csheet{grid-template-columns:1fr}.cside{grid-column:1;grid-row:auto} }
+@media (max-width:820px){ .chead{padding:10px 12px}.chead h1{font-size:21px}.cgrid,.csheet{padding:4px 12px}.cfields{grid-template-columns:1fr}.ctop{gap:12px;padding:12px}.cname{font-size:21px} }
 /* ---------- Mobile ---------- */
 @media (max-width:820px){
   .app,.app.hide-lib,.app.focus{display:block;position:relative}
@@ -617,6 +682,7 @@ body.capture .dialog{box-shadow:none;border:1px solid var(--line)}
       <button class="ib" id="btnPreview" title="Voorbeeld (Ctrl+Alt+P)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
       <button class="ib" id="btnFocus" title="Focusscherm (Ctrl+Alt+F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
       <button class="sprint-badge" id="sprintBadge" title="Schrijfsprint"></button>
+      <button class="ib" id="btnSplit" title="Gesplitst scherm (Ctrl+Alt+G)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/></svg></button>
       <button class="ib" id="btnResearch" title="Onderzoekspaneel (Ctrl+Alt+R)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H11"/><path d="M6.5 2H20v8"/><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2"/><circle cx="17" cy="16" r="3"/><path d="m21 20-1.8-1.8"/></svg></button>
       <button class="ib" id="btnCoach" title="Schrijfcoach (Ctrl+Alt+C)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2Z"/></svg></button>
       <button class="ib" id="btnInfo" title="Info & doelen (Ctrl+Alt+I)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></button>
@@ -647,7 +713,9 @@ body.capture .dialog{box-shadow:none;border:1px solid var(--line)}
     </div>
     <div class="board" id="board"></div>
     <div class="project" id="project"></div>
+    <div class="chars" id="chars"></div>
     <aside class="research" id="research"></aside>
+    <aside class="splitpane" id="split"></aside>
     <div class="panel" id="panel"></div>
     <div class="panel" id="coach"></div>
     <div class="nudge" id="nudge"><span id="nudgeCat"></span><span>Even vast? Ik heb ideeën.</span><span class="x" title="Sluiten">×</span></div>
@@ -757,7 +825,7 @@ function persistLocal(){ LS.set('sheets', sheets); LS.set('groups', groups); }
 const CFG = window.SCHRIJF_CONFIG || {};
 const useSupabase = !!(CFG.supabaseUrl && CFG.supabaseKey);
 let backend = null;          // {write(id, sheet), remove(id), saveGroups(groups)}
-let sb = null, sbUser = null, sbChannel = null, noStatsCol = false;
+let sb = null, sbUser = null, sbChannel = null, noStatsCol = false, noFolderCol = false;
 
 function setSync(state, text){
   const el = $('#sync'); el.className = 'sync ' + state; el.querySelector('span').textContent = text;
@@ -769,7 +837,7 @@ function syncIdle(){
   else if (cloud === 'login') setSync('err', 'Inloggen');
   else setSync('', 'Alleen op dit apparaat');
 }
-function cleanSheet(s){ return {body:s.body||'', group:s.group||'inbox', fav:!!s.fav, trashed:!!s.trashed, goal:s.goal||0, created:s.created||Date.now(), updated:s.updated||Date.now()}; }
+function cleanSheet(s){ return {body:s.body||'', group:s.group||'inbox', folder:s.folder||'', fav:!!s.fav, trashed:!!s.trashed, goal:s.goal||0, created:s.created||Date.now(), updated:s.updated||Date.now()}; }
 
 let pendingDel = new Set(LS.get('pendingDel', []));
 function saveSheet(id, immediate){
@@ -899,7 +967,7 @@ async function connect(){
 }
 
 /* ----- Supabase ----- */
-const rowToSheet = r => ({body:r.body, group:r.grp, fav:r.fav, trashed:r.trashed, goal:r.goal, created:Number(r.created), updated:Number(r.updated)});
+const rowToSheet = r => ({body:r.body, group:r.grp, folder:r.folder||'', fav:r.fav, trashed:r.trashed, goal:r.goal, created:Number(r.created), updated:Number(r.updated)});
 async function connectSupabase(){
   if (!window.supabase){ cloud = 'off'; setSync('err', 'Kan Supabase niet laden — lokaal'); return; }
   sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey, {auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:true}});
@@ -917,7 +985,10 @@ async function startSupabase(user){
   sbUser = user; cloud = 'pending'; syncIdle();
   backend = {
     async write(id, s){
-      const { error } = await sb.from('sheets').upsert({id, user_id:user.id, body:s.body, grp:s.group, fav:s.fav, trashed:s.trashed, goal:s.goal, created:s.created, updated:s.updated});
+      const row = {id, user_id:user.id, body:s.body, grp:s.group, folder:s.folder||'', fav:s.fav, trashed:s.trashed, goal:s.goal, created:s.created, updated:s.updated};
+      if (noFolderCol) delete row.folder;
+      let { error } = await sb.from('sheets').upsert(row);
+      if (error && /folder/.test(error.message || '') && !noFolderCol){ noFolderCol = true; delete row.folder; ({ error } = await sb.from('sheets').upsert(row)); }
       if (error) throw error;
     },
     async remove(id){ const { error } = await sb.from('sheets').delete().eq('id', id); if (error) throw error; },
@@ -1048,6 +1119,63 @@ $('#sync').addEventListener('click', () => {
 });
 addEventListener('online', () => sbPull());
 
+/* ---------------- Folders (submappen in een project) ---------------- */
+const fview = (gid, folder) => 'f:' + gid + ':' + encodeURIComponent(folder);
+function parseFview(v){ const m = /^f:([^:]+):(.*)$/.exec(v || ''); return m ? {gid: m[1], folder: decodeURIComponent(m[2])} : null; }
+function foldersOf(gid){
+  const g = groups.find(x => x.id === gid); const list = [...((g && g.folders) || [])];
+  for (const s of Object.values(sheets)) if (!s.trashed && s.group === gid && s.folder && !list.includes(s.folder)) list.push(s.folder);
+  return list;
+}
+const natural = (a, b) => titleOf(a).localeCompare(titleOf(b), 'nl', {numeric: true, sensitivity: 'base'});
+function addFolder(gid, name){
+  const g = groups.find(x => x.id === gid); if (!g || !name) return;
+  g.folders = [...new Set([...(g.folders || []), name])]; saveProfile(); renderLib();
+}
+function moveToFolder(id, gid, folder){
+  const s = sheets[id]; if (!s) return;
+  s.group = gid; s.folder = folder || ''; s.updated = Math.max(s.updated || 0, Date.now()); saveSheet(id, true);
+  renderLib(); renderList(); if (projOpen()) renderProject(); if (panelOpen) renderPanel();
+  toast(folder ? 'Verplaatst naar map “' + folder + '”' : 'Verplaatst naar ' + (grpName(gid) || 'Inbox'));
+}
+function folderDialog(gid, folder){
+  const isNew = folder == null;
+  openModal(`<h3>${isNew ? 'Nieuwe map' : 'Map bewerken'}</h3><p>${isNew ? 'Mappen ordenen je project, bv. “Hoofdstukken”, “Personages” of “Onderzoek”.' : 'Hernoem de map, of verwijder hem — de teksten blijven dan los in het project staan.'}</p>
+    <input type="text" id="fname" maxlength="40" placeholder="Naam van de map" value="${esc(folder || '')}">
+    <div class="btns">${isNew ? '' : '<button class="btn ghost" id="fdel" style="margin-right:auto">Verwijderen</button>'}<button class="btn ghost" data-close>Annuleren</button><button class="btn" id="fok">${isNew ? 'Maken' : 'Opslaan'}</button></div>`);
+  const ok = () => {
+    const name = $('#fname').value.trim().replace(/[\/]/g, '-'); if (!name) return $('#fname').focus();
+    const g = groups.find(x => x.id === gid);
+    if (isNew) addFolder(gid, name);
+    else if (name !== folder){
+      g.folders = (g.folders || []).map(f => f === folder ? name : f);
+      for (const [id, s] of Object.entries(sheets)) if (s.group === gid && s.folder === folder){ s.folder = name; s.updated = Date.now(); saveSheet(id, true); }
+      saveProfile(); if (parseFview(view) && parseFview(view).folder === folder) view = fview(gid, name);
+    }
+    closeModal(); renderLib(); renderList(); if (projOpen()) renderProject();
+  };
+  $('#fok').onclick = ok; $('#fname').onkeydown = e => { if (e.key === 'Enter') ok(); };
+  if (!isNew) $('#fdel').onclick = () => {
+    const g = groups.find(x => x.id === gid); g.folders = (g.folders || []).filter(f => f !== folder);
+    for (const [id, s] of Object.entries(sheets)) if (s.group === gid && s.folder === folder){ s.folder = ''; s.updated = Date.now(); saveSheet(id, true); }
+    saveProfile(); closeModal(); if (parseFview(view)) setView('g:' + gid); else { renderLib(); renderList(); if (projOpen()) renderProject(); }
+    toast('Map verwijderd — de teksten staan nu los in het project');
+  };
+}
+/* One click: Hoofdstukken / Personages / Onderzoek, and sort existing texts by their title */
+function suggestFolders(gid){
+  for (const f of ['Hoofdstukken', 'Personages', 'Onderzoek']) addFolder(gid, f);
+  let moved = 0;
+  for (const [id, s] of Object.entries(sheets)){
+    if (s.trashed || s.group !== gid || s.folder) continue;
+    const t = titleOf(s).toLowerCase();
+    const f = /personage|karakter|personen|figuur/.test(t) ? 'Personages' : /onderzoek|dossier|bronnen|research|achtergrond|tijdlijn|notities/.test(t) ? 'Onderzoek' : /hoofdstuk|^\d+\s*[-–.:]|deel\s*\d|scène|scene|proloog|epiloog/.test(t) ? 'Hoofdstukken' : '';
+    if (f){ s.folder = f; s.updated = Date.now(); saveSheet(id, true); moved++; }
+  }
+  renderLib(); renderList(); if (projOpen()) renderProject();
+  toast(`Mappen gemaakt${moved ? ' — ' + moved + ' tekst' + (moved === 1 ? '' : 'en') + ' verplaatst' : ''}`);
+}
+
 /* ---------------- Library ---------------- */
 function counts(){
   const c = {inbox:0, all:0, recent:0, fav:0, trash:0};
@@ -1057,10 +1185,14 @@ function counts(){
     c.all++; if ((s.group||'inbox') === 'inbox') c.inbox++;
     if (s.fav) c.fav++; if ((s.updated||0) > wk) c.recent++;
     if (s.group && s.group !== 'inbox') c['g:'+s.group] = (c['g:'+s.group]||0) + 1;
+    if (s.group && s.folder){ const k = fview(s.group, s.folder); c[k] = (c[k]||0) + 1; }
+    if (s.group && isCharSheet(s)) c['c:'+s.group] = (c['c:'+s.group]||0) + 1;
   }
   return c;
 }
 function viewName(v){
+  const fv = parseFview(v); if (fv) return fv.folder;
+  if (/^c:/.test(v)) return 'Personages';
   return {board:'Braindump', timeline:'Tijdlijn', sources:'Bronnen', inbox:'Inbox', all:'Alle teksten', recent:'Laatste 7 dagen', fav:'Favorieten', trash:'Prullenbak'}[v]
     || (groups.find(g => 'g:'+g.id === v) || {}).name || 'Inbox';
 }
@@ -1080,18 +1212,31 @@ function renderLib(){
   }
   h += `<div class="sec">Groepen <button id="addGroup" title="Nieuwe groep">${icon('plus','',16)}</button></div>`;
   if (!groups.length) h += `<div class="muted" style="padding:2px 10px 6px">Maak groepen voor projecten, zoals “Roman” of “Blog”.</div>`;
-  for (const g of groups) h += item('g:'+g.id, `<span class="dot" style="background:${esc(g.color)}"></span>`, g.name);
+  for (const g of groups){
+    h += item('g:'+g.id, `<span class="dot" style="background:${esc(g.color)}"></span>`, g.name).replace('<button class="nav', `<button data-drop="${g.id}|" class="nav`);
+    const nChars = charsOf(g.id).length;
+    if (nChars || foldersOf(g.id).includes(CHAR_FOLDER)) h += item('c:' + g.id, `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14a6 6 0 0 1 3 6"/></svg>`, 'Personages').replace('<button class="nav', '<button class="nav sub');
+    for (const f of foldersOf(g.id).filter(f => f !== CHAR_FOLDER)) h += item(fview(g.id, f), `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg>`, f).replace('<button class="nav', `<button data-drop="${g.id}|${esc(f)}" data-folder="${esc(f)}" data-fgid="${g.id}" class="nav sub`);
+  }
   h += '<div style="height:10px"></div>' + item('trash', icon('trash'), 'Prullenbak');
   $('#libNav').innerHTML = h;
   if (typeof projOpen === 'function' && projOpen()) renderProject();
+  if ($('#app').classList.contains('charmode') && !(document.activeElement && document.activeElement.closest && document.activeElement.closest('#chars'))) renderChars();
 }
 $('#libNav').addEventListener('click', e => {
   if (e.target.closest('#addGroup')) return groupDialog();
   if (e.target.closest('#quickSave')) return quickDialog();
   const b = e.target.closest('[data-view]'); if (!b) return;
   setView(b.dataset.view);
-  setMobile(isBoard() || view.startsWith('g:') ? 'editor' : 'list');
+  setMobile(isBoard() || view.startsWith('g:') || view.startsWith('c:') ? 'editor' : 'list');
 });
+$('#libNav').addEventListener('contextmenu', e => { const f = e.target.closest('[data-folder]'); if (f){ e.preventDefault(); e.stopImmediatePropagation(); folderDialog(f.dataset.fgid, f.dataset.folder); } }, true);
+$('#libNav').addEventListener('dblclick', e => { const f = e.target.closest('[data-folder]'); if (f){ e.stopImmediatePropagation(); folderDialog(f.dataset.fgid, f.dataset.folder); } }, true);
+/* drag a text from the list onto a project or folder */
+$('#sheets').addEventListener('dragstart', e => { const b = e.target.closest('.sheet'); if (b) e.dataTransfer.setData('text/x-sheet', b.dataset.id); });
+$('#libNav').addEventListener('dragover', e => { const d = e.target.closest('[data-drop]'); if (d && e.dataTransfer.types.includes('text/x-sheet')){ e.preventDefault(); d.classList.add('dropon'); } });
+$('#libNav').addEventListener('dragleave', e => { const d = e.target.closest('[data-drop]'); if (d) d.classList.remove('dropon'); });
+$('#libNav').addEventListener('drop', e => { const d = e.target.closest('[data-drop]'); const id = e.dataTransfer.getData('text/x-sheet'); if (!d || !id) return; e.preventDefault(); d.classList.remove('dropon'); const [gid, ...f] = d.dataset.drop.split('|'); moveToFolder(id, gid, f.join('|')); });
 $('#libNav').addEventListener('dblclick', e => {
   const b = e.target.closest('[data-view^="g:"]'); if (b) groupDialog(groups.find(g => 'g:'+g.id === b.dataset.view));
 });
@@ -1111,6 +1256,7 @@ function setView(v){
   else if (wasSrc || wasBoard) openSheet(currentId);
   renderLib(); renderList();
   showProject(v.startsWith('g:'));
+  showChars(v.startsWith('c:'));
 }
 
 /* ---------------- Sheet list ---------------- */
@@ -1128,14 +1274,16 @@ function visibleSheets(){
       if (view === 'recent') return (s.updated||0) > wk;
       if (view === 'fav') return s.fav;
       if (view === 'inbox') return (s.group||'inbox') === 'inbox';
+      const fv = parseFview(view); if (fv) return s.group === fv.gid && (s.folder || '') === fv.folder;
       return 'g:' + s.group === view;
     });
   }
+  if (!q && parseFview(view)) return arr.sort(natural);
   return arr.sort((a, b) => (b.updated||0) - (a.updated||0));
 }
 function renderList(){
   if (view === 'sources') return renderSources();
-  if (view === 'board' || view === 'timeline') return;
+  if (view === 'board' || view === 'timeline' || /^c:/.test(view)) return;
   $('#listTitle').textContent = query.trim() ? 'Zoekresultaten' : viewName(view);
   const arr = visibleSheets();
   const el = $('#sheets');
@@ -1147,12 +1295,12 @@ function renderList(){
   el.innerHTML = arr.map(s => {
     const g = groups.find(x => x.id === s.group);
     const words = countWords(s.body||'');
-    return `<button class="sheet ${s.id===currentId?'on':''}" data-id="${s.id}">
+    return `<button class="sheet ${s.id===currentId?'on':''}" data-id="${s.id}" draggable="true">
       <span class="del" role="button" data-del="${s.id}" title="${s.trashed ? 'Definitief verwijderen' : 'Naar prullenbak'}" aria-label="Verwijderen">${icon('trash','')}</span>
       ${g ? `<span class="bar" style="background:${esc(g.color)}"></span>` : ''}
       <div class="t">${s.fav ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9Z"/></svg>' : ''}<span>${esc(titleOf(s))}</span></div>
       <div class="x">${esc(excerptOf(s))}</div>
-      <div class="m"><span>${fmtDate(s.updated||s.created)}</span><span>${words} ${words===1?'woord':'woorden'}</span>${(view==='all'||query.trim()) && g ? `<span>${esc(g.name)}</span>` : ''}</div>
+      <div class="m"><span>${fmtDate(s.updated||s.created)}</span><span>${words} ${words===1?'woord':'woorden'}</span>${(view==='all'||query.trim()) && g ? `<span>${esc(g.name)}</span>` : ''}${view.startsWith('g:') && s.folder ? `<span>📁 ${esc(s.folder)}</span>` : ''}</div>
     </button>`;
   }).join('');
 }
@@ -1182,9 +1330,11 @@ function newSheet(){
   if (typeof projOpen === 'function' && projOpen()) showProject(false);
   const id = uid();
   let group = 'inbox';
+  let folder = '';
   if (view.startsWith('g:')) group = view.slice(2);
   else if (view === 'trash' || view === 'recent' || view === 'all') { if (view === 'trash') setView('inbox'); }
-  sheets[id] = {body:'', group, fav: view === 'fav', trashed:false, goal:0, created:Date.now(), updated:Date.now()};
+  { const fv = parseFview(view); if (fv){ group = fv.gid; folder = fv.folder; } }
+  sheets[id] = {body:'', group, folder, fav: view === 'fav', trashed:false, goal:0, created:Date.now(), updated:Date.now()};
   if (query){ query = ''; $('#q').value = ''; }
   saveSheet(id, true);
   openSheet(id); renderLib(); setMobile('editor');
@@ -1270,6 +1420,7 @@ function openSheet(id){
   renderMirror(); updateCounts(); renderList();
   curWords = countWords(ta.value); typedSinceOpen = false; renderChecks(); hideNudge();
   if (rpOpen && !rpSrc) rpRefresh();
+  if (typeof splitOpen !== 'undefined' && splitOpen && !splitEdit) renderSplit();
   scroller.scrollTop = 0;
   if (panelOpen) renderPanel();
 }
@@ -1498,6 +1649,7 @@ function renderPanel(){
     <h4>Groep</h4>
     <div class="row" style="margin-top:0"><select id="grpSel"><option value="inbox">Inbox</option>${groups.map(g => `<option value="${g.id}" ${s.group===g.id?'selected':''}>${esc(g.name)}</option>`).join('')}</select>
       <button class="chip ${s.fav?'on':''}" id="favBtn">${s.fav ? '★ Favoriet' : '☆ Favoriet'}</button></div>
+    ${s.group && s.group !== 'inbox' ? `<div class="row"><span class="muted" style="font-weight:800">Map</span><select id="fldSel"><option value="">(geen map)</option>${foldersOf(s.group).map(f => `<option ${s.folder === f ? 'selected' : ''}>${esc(f)}</option>`).join('')}<option value="__new">＋ Nieuwe map…</option></select></div>` : ''}
     ${heads.length ? `<h4>Inhoud</h4><div class="outline">${heads.map((h, i) => `<button data-h="${i}" class="o${h.match(/^#+/)[0].length}">${esc(h.replace(/^#+\s+/, ''))}</button>`).join('')}</div>` : ''}
     <h4>Exporteren</h4>
     <div class="actions">
@@ -1522,7 +1674,8 @@ document.addEventListener('mousedown', e => { if (panelOpen && !e.target.closest
 $('#panel').addEventListener('change', e => {
   const s = sheets[currentId]; if (!s) return;
   if (e.target.id === 'goalIn'){ s.goal = Math.max(0, parseInt(e.target.value) || 0); touch(s, false); renderPanel(); updateCounts(); }
-  if (e.target.id === 'grpSel'){ s.group = e.target.value; touch(s, false); renderLib(); renderList(); toast('Verplaatst naar ' + (e.target.selectedOptions[0].textContent)); }
+  if (e.target.id === 'fldSel'){ if (e.target.value === '__new'){ folderDialog(s.group); return; } moveToFolder(currentId, s.group, e.target.value); return; }
+  if (e.target.id === 'grpSel'){ s.folder = ''; s.group = e.target.value; touch(s, false); renderLib(); renderList(); toast('Verplaatst naar ' + (e.target.selectedOptions[0].textContent)); }
 });
 $('#panel').addEventListener('click', async e => {
   const s = sheets[currentId]; if (!s) return;
@@ -3009,6 +3162,7 @@ async function rpSearch(){
 }
 function toggleResearch(force){
   rpOpen = force ?? !rpOpen; LS.set('rpOpen', rpOpen);
+  if (rpOpen && typeof splitOpen !== 'undefined' && splitOpen) toggleSplit(false);
   $('#app').classList.toggle('rp', rpOpen); $('#btnResearch').classList.toggle('on', rpOpen);
   if (rpOpen){ closePanel(); closeCoach(); renderResearch(); }
 }
@@ -3051,7 +3205,7 @@ function todosIn(id){
     // start of the sentence; abbreviations like "v.Chr." or "bv." are not sentence ends
     let start = Math.max(0, v.lastIndexOf('\n', i - 1) + 1);
     const ABBR = /(?:v\.\s?chr|n\.\s?chr|v\.\s?c|bv|o\.a|ca|dr|mr|st|nr|blz|jr|vs|etc|ibid|e\.a|resp|zgn|evt|incl|d\.w\.z|i\.p\.v)\.$/i;
-    for (let j = i - 1; j > start; j--){ if (/[.!?]/.test(v[j]) && /\s/.test(v[j + 1] || '') && !ABBR.test(v.slice(Math.max(start, j - 10), j + 1))){ start = j + 1; break; } }
+    for (let j = i - 1; j > start; j--){ if (/[.!?]/.test(v[j]) && /\s/.test(v[j + 1] || '') && v.slice(j + 1, i).trim() && !ABBR.test(v.slice(Math.max(start, j - 10), j + 1))){ start = j + 1; break; } }
     const sentence = v.slice(start, i).replace(/^[\s.!?#>*-]+/, '').replace(/\+\+/g, '').trim();
     const q = (m[1] || '').trim();
     let pa = v.lastIndexOf('\n\n', i); pa = pa < 0 ? 0 : pa + 2; let pb = v.indexOf('\n\n', i); if (pb < 0) pb = v.length;
@@ -3361,6 +3515,7 @@ const ACTIONS = [
   {id:'lookup',   label:'Woord opzoeken',                       def:'Ctrl+Alt+KeyL', run: lookupAtCaret},
   {id:'fragment', label:'Selectie bewaren als fragment',        def:'Ctrl+Alt+KeyB', run: fragmentFromSelection},
   {id:'cite',     label:'Selectie uit bron citeren in je tekst',def:'Ctrl+Alt+KeyQ', run: citeFromSelection},
+  {id:'split', label:'Gesplitst scherm', def:'Ctrl+Alt+KeyG', run: () => toggleSplit()},
   {id:'discover', label:'Ontdek: onderzoek je alinea of selectie', def:'Ctrl+Alt+KeyO', run: () => startDiscover()},
   {id:'research', label:'Onderzoekspaneel open/dicht',           def:'Ctrl+Alt+KeyR', run: () => toggleResearch()},
   {id:'quick',    label:'Snel bewaren (link of tekst)',         def:'Ctrl+Alt+KeyS', run: () => quickDialog()},
@@ -3882,7 +4037,7 @@ function processCapture(){
 function projOpen(){ return $('#app').classList.contains('projmode'); }
 function showProject(on){
   $('#app').classList.toggle('projmode', !!on);
-  $('#btnProj').style.display = view.startsWith('g:') ? '' : 'none';
+  $('#btnProj').style.display = view.startsWith('g:') || view.startsWith('f:') ? '' : 'none';
   $('#btnProj').classList.toggle('on', !!on);
   if (on){ closePanel(); closeCoach(); if ($('#app').classList.contains('focus')) toggleFocus(); renderProject(); }
 }
@@ -3919,8 +4074,16 @@ function renderProject(){
   <div class="pstats">${stat(D.texts.length, D.texts.length === 1 ? 'tekst' : 'teksten')}${stat(D.words, 'woorden')}${stat(D.srcs.length, D.srcs.length === 1 ? 'bron' : 'bronnen')}${stat(D.snips.length, D.snips.length === 1 ? 'fragment' : 'fragmenten')}${stat(D.dated.length, 'op de tijdlijn')}${stat(D.todos.length, 'nog uitzoeken')}</div>
   ${!D.texts.length && !D.srcs.length && !D.snips.length ? `<div class="pwelcome">${cat('happy')}<div><h3>Welkom bij ${esc(g.name)}!</h3><p>Begin met een <b>nieuwe tekst</b>, bewaar bronnen met de browser-extensie of vraag Claude om iets “in project ${esc(g.name)}” te zetten. Alles van dit project komt hier samen.</p></div></div>` : ''}
   <div class="pgrid">
-    <section class="pcard pwide"><h4>Teksten</h4>
-      ${D.texts.length ? D.texts.slice(0, 8).map(t => `<button class="prow" data-popen="${t.id}"><b>${esc(titleOf(t))}</b><span>${countWords(t.body || '').toLocaleString('nl-NL')} woorden · ${fmtDate(t.updated)}</span></button>`).join('') + (D.texts.length > 8 ? empty(`en nog ${D.texts.length - 8} — zie de lijst links`) : '') : empty('Nog geen teksten. Klik op “Nieuwe tekst”.')}
+    <section class="pcard pwide"><h4 style="display:flex;align-items:center;gap:8px">Teksten <span class="grow"></span>${!foldersOf(gid).length && D.texts.length ? '<button class="pmore" data-pact="suggest">✨ Mappen voorstellen</button>' : ''}<button class="pmore" data-pact="folder">＋ Map</button></h4>
+      ${(() => {
+        const row = t => `<button class="prow" data-popen="${t.id}" draggable="true" data-dragsheet="${t.id}"><b>${esc(titleOf(t))}</b><span>${countWords(t.body || '').toLocaleString('nl-NL')} woorden · ${fmtDate(t.updated)}</span></button>`;
+        const fl = foldersOf(gid); if (!D.texts.length && !fl.length) return empty('Nog geen teksten. Klik op “Nieuwe tekst”.');
+        const loose = D.texts.filter(t => !t.folder);
+        return `<div class="pfolders">${fl.map(f => { const ts = D.texts.filter(t => t.folder === f).sort(natural); return `<div class="pfold" data-drop="${gid}|${esc(f)}"><div class="pfh"><button data-pfolder="${esc(f)}">📁 <b>${esc(f)}</b> <small>${ts.length}</small></button><button class="pmore" data-pnewin="${esc(f)}" title="Nieuwe tekst in deze map">＋</button></div>${ts.slice(0, 12).map(row).join('') || '<p class="muted" style="margin:4px 8px;font-size:12.5px">Leeg — sleep een tekst hierheen of klik op ＋</p>'}</div>`; }).join('')}${loose.length ? `<div class="pfold" data-drop="${gid}|"><div class="pfh"><span class="muted" style="font-weight:800;font-size:12.5px;padding:4px 8px">${fl.length ? 'Zonder map' : ''}</span></div>${loose.slice(0, 12).map(row).join('')}</div>` : ''}</div>`;
+      })()}
+    </section>
+    <section class="pcard"><h4 style="display:flex;align-items:center">Personages<span class="grow"></span><button class="pmore" data-pact="newchar">＋ Personage</button></h4>
+      ${(() => { const cl = charsOf(gid); return cl.length ? `<div class="pchars">${cl.slice(0, 10).map(x => `<button class="pchar" data-pchar="${x.id}">${avatar(charName(x), 40)}<b>${esc(charName(x))}</b><span>${esc(parseChar(x.body).rol || '')}</span></button>`).join('')}</div>` + more('Alle personages', 'chars') : empty('Nog geen personages. Maak een character sheet met “＋ Personage”.'); })()}
     </section>
     <section class="pcard"><h4>Nog uitzoeken${D.todos.length ? ' · ' + D.todos.length : ''}</h4>
       ${D.todos.length ? D.todos.slice(0, 6).map((t, i) => `<button class="prow" data-ptodo="${i}"><b>${esc(t.text.slice(0, 90))}</b><span>${esc(titleOf(sheets[t.sheet]))}</span></button>`).join('') + (D.todos.length > 6 ? more('Alle uitzoekpunten', 'todos') : '') : empty('Niets open. Typ <b>??</b> in je tekst bij iets wat je nog moet nakijken.')}
@@ -3945,18 +4108,250 @@ $('#project').addEventListener('click', e => {
     if (act === 'new'){ showProject(false); newSheet(); }
     if (act === 'quick') quickDialog();
     if (act === 'edit') groupDialog(groups.find(g => g.id === gid));
+    if (act === 'folder') folderDialog(gid);
+    if (act === 'chars'){ charId = null; setView('c:' + gid); }
+    if (act === 'newchar'){ setView('c:' + gid); newCharacter(gid); }
+    if (act === 'suggest') suggestFolders(gid);
     if (act === 'lib') setMobile('lib');
     if (['timeline', 'board', 'sources'].includes(act)){ projFilter = gid; LS.set('projFilter', gid); boardTag = ''; setView(act); setMobile(act === 'sources' ? 'list' : 'editor'); }
     if (act === 'todos'){ showProject(false); openSheet(todoList[0] && todoList[0].sheet); todoScope = 'project'; LS.set('todoScope', 'project'); rpTab = 'todo'; toggleResearch(true); renderResearch(); setMobile('editor'); }
     return;
   }
+  const pc = t.closest('[data-pchar]'); if (pc){ charId = pc.dataset.pchar; setView('c:' + gid); return; }
+  const pf = t.closest('[data-pfolder]'); if (pf){ if (pf.dataset.pfolder === CHAR_FOLDER){ charId = null; setView('c:' + gid); return; } setView(fview(gid, pf.dataset.pfolder)); setMobile('list'); return; }
+  const pn = t.closest('[data-pnewin]'); if (pn){ setView(fview(gid, pn.dataset.pnewin)); newSheet(); return; }
   const op = t.closest('[data-popen]'); if (op){ showProject(false); openSheet(op.dataset.popen); setMobile('editor'); if (!isMobile()) ta.focus(); return; }
   const td = t.closest('[data-ptodo]'); if (td){ const x = todoList[+td.dataset.ptodo]; showProject(false); openSheet(x.sheet); setMobile('editor'); setTimeout(() => { ta.focus(); ta.setSelectionRange(x.index, x.index + x.len); typewriter(); }, isMobile() ? 320 : 0); return; }
   const sn = t.closest('[data-psnip]'); if (sn){ snippetDialog({id: sn.dataset.psnip}); return; }
   const sr = t.closest('[data-psrc]'); if (sr){ setView('sources'); openSource(sr.dataset.psrc); return; }
   const tg = t.closest('[data-ptag]'); if (tg){ projFilter = gid; LS.set('projFilter', gid); boardTag = tg.dataset.ptag; setView('board'); setMobile('editor'); return; }
 });
-$('#btnProj').onclick = () => { showProject(true); setMobile('editor'); };
+$('#btnProj').onclick = () => { const fv = parseFview(view); if (fv) setView('g:' + fv.gid); else showProject(true); setMobile('editor'); };
+/* drag texts between folders on the project page */
+$('#project').addEventListener('dragstart', e => { const b = e.target.closest('[data-dragsheet]'); if (b) e.dataTransfer.setData('text/x-sheet', b.dataset.dragsheet); });
+$('#project').addEventListener('dragover', e => { const d = e.target.closest('[data-drop]'); if (d && e.dataTransfer.types.includes('text/x-sheet')){ e.preventDefault(); d.classList.add('dropon'); } });
+$('#project').addEventListener('dragleave', e => { const d = e.target.closest('[data-drop]'); if (d) d.classList.remove('dropon'); });
+$('#project').addEventListener('drop', e => { const d = e.target.closest('[data-drop]'); const id = e.dataTransfer.getData('text/x-sheet'); if (!d || !id) return; e.preventDefault(); const [g2, ...f] = d.dataset.drop.split('|'); moveToFolder(id, g2, f.join('|')); });
+
+/* ================= Gesplitst scherm ================= */
+let splitOpen = LS.get('splitOpen', false), splitId = LS.get('splitId', null), splitEdit = false, splitFolder = LS.get('splitFolder', null);
+function toggleSplit(force){
+  splitOpen = force ?? !splitOpen; LS.set('splitOpen', splitOpen);
+  if (splitOpen && rpOpen) toggleResearch(false);
+  $('#app').classList.toggle('split', splitOpen); $('#btnSplit').classList.toggle('on', splitOpen);
+  if (splitOpen){ closePanel(); closeCoach(); renderSplit(); }
+}
+function splitGroup(){ const s = sheets[currentId]; return s && s.group && s.group !== 'inbox' ? s.group : (parseFview(view) || {}).gid || (view.startsWith('g:') ? view.slice(2) : ''); }
+function renderSplit(){
+  const el = $('#split'); if (!el || !splitOpen) return;
+  const gid = splitGroup();
+  const s = sheets[splitId];
+  const head = (title, extra = '') => `<div class="sphead">${title}<div class="grow"></div>${extra}<button class="ib" data-sp="close" title="Sluiten">✕</button></div>`;
+  if (s && !s.trashed){
+    const same = splitId === currentId;
+    el.innerHTML = head(`<button class="spback" data-sp="list" title="Terug naar de lijst">‹ ${esc(s.folder || grpName(s.group) || 'Teksten')}</button>`,
+      `<button class="chip ${splitEdit ? 'on' : ''}" data-sp="edit">${splitEdit ? 'Klaar' : 'Bewerken'}</button><button class="ib" data-sp="swap" title="Maak dit je hoofdtekst">⇄</button>`) +
+      `<div class="spscroll">${same ? '<p class="muted">Deze tekst staat al links open.</p>' : splitEdit
+        ? `<textarea id="spText" class="sptext" spellcheck="true">${esc(s.body || '')}</textarea>`
+        : `<div class="preview spview">${mdToHtml(s.body || '') || '<p class="muted">Nog leeg.</p>'}</div>`}</div>`;
+    const t = $('#spText');
+    if (t){
+      const fit = () => { t.style.height = 'auto'; t.style.height = Math.max(t.scrollHeight, 300) + 'px'; }; fit();
+      t.addEventListener('input', () => { s.body = t.value; s.updated = Date.now(); saveSheet(splitId); fit(); clearTimeout(t._r); t._r = setTimeout(renderList, 1200); });
+    }
+    return;
+  }
+  // list mode: folders of the project (or all texts), Personages etc.
+  const pool = Object.entries(sheets).filter(([id, x]) => !x.trashed && id !== currentId && (gid ? x.group === gid : true)).map(([id, x]) => ({id, ...x}));
+  const fl = gid ? foldersOf(gid) : [];
+  const row = x => `<button class="sprow" data-spopen="${x.id}"><b>${esc(titleOf(x))}</b><span>${esc(excerptOf(x).slice(0, 90))}</span></button>`;
+  let body = '';
+  if (!pool.length) body = `<div class="empty">${cat('sleepy')}Nog geen andere teksten${gid ? ' in dit project' : ''}.</div>`;
+  else if (splitFolder !== null && fl.includes(splitFolder)){
+    body = `<button class="spback" data-spfolder="" style="margin-bottom:8px">‹ Alle mappen</button>` + (pool.filter(x => x.folder === splitFolder).sort(natural).map(row).join('') || '<p class="muted">Deze map is leeg.</p>');
+  } else {
+    const ch = gid ? charsOf(gid).filter(x => x.id !== currentId) : [];
+    body = ch.length ? `<div class="rpk" style="margin:0 0 6px">Personages</div>` + ch.map(x => `<button class="sprow spchar" data-spopen="${x.id}">${avatar(charName(x), 34)}<span class="spc"><b>${esc(charName(x))}</b><span>${esc([parseChar(x.body).rol, (parseChar(x.body).fields.kort || '').replace(/\s+/g, ' ').slice(0, 70)].filter(Boolean).join(' · '))}</span></span></button>`).join('') + '<div style="height:10px"></div>' : '';
+    body += fl.filter(f => f !== CHAR_FOLDER).map(f => { const n = pool.filter(x => x.folder === f).length; return `<button class="spfold" data-spfolder="${esc(f)}">📁 <b>${esc(f)}</b><small>${n}</small></button>`; }).join('');
+    const loose = pool.filter(x => (!x.folder || !fl.includes(x.folder)) && !isCharSheet(x)).sort((a, b) => b.updated - a.updated);
+    if (loose.length) body += `${fl.length ? '<div class="rpk" style="margin:12px 0 6px">Overige teksten</div>' : ''}` + loose.slice(0, 40).map(row).join('');
+  }
+  el.innerHTML = head(`<b class="sptitle">${esc(splitFolder && fl.includes(splitFolder) ? splitFolder : gid ? grpName(gid) : 'Alle teksten')}</b>`) + `<div class="spscroll">${body}</div>`;
+}
+$('#split').addEventListener('click', e => {
+  const a = e.target.closest('[data-sp]');
+  if (a){
+    const k = a.dataset.sp;
+    if (k === 'close') toggleSplit(false);
+    if (k === 'list'){ splitId = null; LS.set('splitId', null); splitEdit = false; renderSplit(); }
+    if (k === 'edit'){ splitEdit = !splitEdit; renderSplit(); if (splitEdit) setTimeout(() => $('#spText') && $('#spText').focus(), 0); }
+    if (k === 'swap'){ const other = currentId; const id = splitId; splitId = other; LS.set('splitId', other); splitEdit = false; if (view.startsWith('g:')) showProject(false); openSheet(id); renderSplit(); }
+    return;
+  }
+  const f = e.target.closest('[data-spfolder]'); if (f){ splitFolder = f.dataset.spfolder || null; LS.set('splitFolder', splitFolder); renderSplit(); return; }
+  const o = e.target.closest('[data-spopen]'); if (o){ splitId = o.dataset.spopen; LS.set('splitId', splitId); splitEdit = false; renderSplit(); return; }
+});
+$('#btnSplit').onclick = () => toggleSplit();
+/* keep the right pane fresh when the left text changes or data syncs */
+
+/* ================= Personages: character sheets ================= */
+/* A character is a text in the project folder "Personages", stored as Markdown with fixed headings,
+   so it also works in the normal editor, the split screen, exports and for Claude. */
+const CHAR_FOLDER = 'Personages';
+const CHAR_FIELDS = [
+  ['kort', 'In één zin', 'Wie is dit, in één zin?'],
+  ['uiterlijk', 'Uiterlijk', 'Hoe ziet hij of zij eruit? Kleding, houding, opvallende details.'],
+  ['karakter', 'Karakter', 'Eigenschappen, gewoontes, goede en slechte kanten.'],
+  ['verlangen', 'Wat wil hij/zij?', 'Het grote verlangen of doel in het verhaal.'],
+  ['angst', 'Waar is hij/zij bang voor?', 'Angst, geheim of zwakke plek.'],
+  ['achtergrond', 'Achtergrond', 'Afkomst, familie, verleden.'],
+  ['relaties', 'Relaties', 'Met wie heeft hij/zij te maken? Typ [[Naam]] om naar een ander personage te linken.'],
+  ['stem', 'Stem en taal', 'Hoe praat hij/zij? Typische woorden, zinnen, toon.'],
+  ['ontwikkeling', 'Ontwikkeling', 'Hoe verandert hij/zij in de loop van het verhaal?'],
+  ['notities', 'Notities', 'Overige ideeën. Typ ?? achter wat je nog moet uitzoeken.']
+];
+const CHAR_ALIASES = {kort:/^(in één zin|kort|samenvatting|wie is)/i, uiterlijk:/^(uiterlijk|voorkomen)/i, karakter:/^(karakter|persoonlijkheid|eigenschappen)/i, verlangen:/^(wat wil|verlangen|doel|motivatie)/i, angst:/^(waar is|angst|geheim|zwakte)/i, achtergrond:/^(achtergrond|afkomst|verleden|biografie)/i, relaties:/^(relaties|familie en vrienden)/i, stem:/^(stem|taal|manier van praten)/i, ontwikkeling:/^(ontwikkeling|arc|verandering)/i, notities:/^(notities|overig)/i};
+const ROLES = ['Hoofdpersoon', 'Tegenspeler', 'Bijfiguur', 'Verteller', 'Figurant'];
+const charName = s => titleOf(s).replace(/^(personage|karakter|character)\s*[-–—:]\s*/i, '').trim() || 'Naamloos';
+function parseChar(body){
+  const lines = String(body || '').split('\n');
+  const c = {name: '', rol: '', leeftijd: '', fields: {}, extra: []};
+  let i = lines.findIndex(l => l.trim()); if (i < 0) return c;
+  c.name = lines[i].replace(/^#{1,6}\s+/, '').replace(/^(personage|karakter|character)\s*[-–—:]\s*/i, '').trim(); i++;
+  let cur = null, buf = [], intro = [];
+  const flush = () => {
+    const text = buf.join('\n').trim();
+    if (cur === null){ intro.push(text); }
+    else { const key = Object.keys(CHAR_ALIASES).find(k => CHAR_ALIASES[k].test(cur)); if (key && !(key in c.fields)) c.fields[key] = text; else c.extra.push({title: cur, text}); }
+    buf = [];
+  };
+  for (; i < lines.length; i++){
+    const l = lines[i], h = l.match(/^##\s+(.+?)\s*$/);
+    if (h){ flush(); cur = h[1]; continue; }
+    if (cur === null){
+      const r = l.match(/\*\*Rol:\*\*\s*([^·\n*]*)/i), a = l.match(/\*\*Leeftijd:\*\*\s*([^·\n*]*)/i);
+      if (r || a){ if (r) c.rol = r[1].trim(); if (a) c.leeftijd = a[1].trim(); continue; }
+    }
+    buf.push(l);
+  }
+  flush();
+  const introText = intro.filter(Boolean).join('\n\n').trim();
+  if (introText && !c.fields.kort) c.fields.kort = introText;
+  else if (introText) c.extra.unshift({title: 'Inleiding', text: introText});
+  return c;
+}
+function buildChar(c){
+  const meta = [c.rol && `**Rol:** ${c.rol}`, c.leeftijd && `**Leeftijd:** ${c.leeftijd}`].filter(Boolean).join(' · ');
+  let md = `# ${c.name || 'Naamloos'}\n\n${meta ? meta + '\n\n' : ''}`;
+  for (const [k, label] of CHAR_FIELDS){ const v = (c.fields[k] || '').trim(); if (v) md += `## ${label}\n\n${v}\n\n`; }
+  for (const x of c.extra) if ((x.text || '').trim() || x.title) md += `## ${x.title}\n\n${(x.text || '').trim()}\n\n`;
+  return md.trimEnd() + '\n';
+}
+const isCharSheet = s => s && !s.trashed && (s.folder === CHAR_FOLDER || /^(personage|karakter|character)\s*[-–—:]/i.test(titleOf(s)));
+function charsOf(gid){ return Object.entries(sheets).filter(([, s]) => s.group === gid && isCharSheet(s)).map(([id, s]) => ({id, ...s})).sort((a, b) => charName(a).localeCompare(charName(b), 'nl')); }
+const AV_COLORS = ['#B8D8C8', '#CFC6EA', '#F6D2BE', '#C4DCEF', '#F4E6B0', '#E9A9A0'];
+function avatar(name, size = 44){
+  const ini = name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
+  let h = 0; for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return `<span class="avatar" style="width:${size}px;height:${size}px;font-size:${Math.round(size * .38)}px;background:${AV_COLORS[h % AV_COLORS.length]}">${esc(ini)}</span>`;
+}
+/* where does this character appear? */
+function charMentions(id, gid){
+  const s = sheets[id], name = charName(s), first = name.split(/\s+/)[0];
+  const keys = [...new Set([name, first].filter(k => k && k.length >= 3))];
+  const re = new RegExp('(?<![\\p{L}])(' + keys.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')(?![\\p{L}])', 'giu');
+  const texts = Object.entries(sheets).filter(([oid, x]) => oid !== id && !x.trashed && x.group === gid && !isCharSheet(x)).map(([oid, x]) => ({id: oid, s: x, n: ((x.body || '').match(re) || []).length})).filter(x => x.n).sort(natural ? (a, b) => natural(a.s, b.s) : undefined);
+  const frags = Object.values(snippets).filter(n => re.test(n.text + ' ' + n.note) && (re.lastIndex = 0, true));
+  return {texts, frags};
+}
+
+let charId = null;
+const charView = v => /^c:/.test(v || '') ? v.slice(2) : null;
+function renderChars(){
+  const el = $('#chars'); const gid = charView(view); if (!el || !gid) return;
+  const g = groups.find(x => x.id === gid); if (!g){ el.innerHTML = ''; return; }
+  if (charId && sheets[charId] && !sheets[charId].trashed) return renderCharSheet(el, gid);
+  charId = null;
+  const list = charsOf(gid);
+  el.innerHTML = `<div class="chead"><button class="ib back" data-ch="lib" title="Bibliotheek"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div><div class="rpk">${esc(g.name)}</div><h1>Personages</h1></div><div class="grow"></div>
+      <button class="btn ghost" data-ch="proj">Projectoverzicht</button><button class="btn" data-ch="new">＋ Personage</button></div>
+    ${list.length ? `<div class="cgrid">${list.map(x => { const c = parseChar(x.body); const nm = charName(x);
+      return `<button class="ccard" data-chopen="${x.id}">${avatar(nm, 52)}<div class="cc"><b>${esc(nm)}</b>${c.rol || c.leeftijd ? `<span class="crol">${esc([c.rol, c.leeftijd && c.leeftijd + (/^\d+$/.test(c.leeftijd) ? ' jaar' : '')].filter(Boolean).join(' · '))}</span>` : ''}<p>${esc((c.fields.kort || c.fields.karakter || '').replace(/\s+/g, ' ').slice(0, 140))}</p></div></button>`; }).join('')}</div>`
+      : `<div class="empty">${cat('curious')}Nog geen personages in ${esc(g.name)}.<br>Klik op <b>＋ Personage</b> om je eerste character sheet te maken.</div>`}`;
+}
+function renderCharSheet(el, gid){
+  const s = sheets[charId], c = parseChar(s.body), nm = charName(s);
+  const m = charMentions(charId, gid);
+  const others = charsOf(gid).filter(x => x.id !== charId);
+  el.innerHTML = `<div class="chead"><button class="spback" data-ch="list">‹ Personages</button><div class="grow"></div>
+      <button class="ib" data-ch="split" title="Naast je tekst openen">⇥</button><button class="ib" data-ch="text" title="Als gewone tekst openen">${icon('edit','')}</button><button class="ib" data-ch="del" title="Personage verwijderen">${icon('trash','')}</button></div>
+    <div class="csheet">
+      <div class="ctop">${avatar(nm, 76)}<div class="ctopf">
+        <input class="cname" data-cf="name" value="${esc(c.name)}" placeholder="Naam">
+        <div class="cmetaf"><label>Rol<input list="roleList" data-cf="rol" value="${esc(c.rol)}" placeholder="bv. Hoofdpersoon"></label><datalist id="roleList">${ROLES.map(r => `<option value="${r}">`).join('')}</datalist>
+        <label>Leeftijd<input data-cf="leeftijd" value="${esc(c.leeftijd)}" placeholder="bv. 40"></label></div></div></div>
+      <div class="cfields">
+        ${CHAR_FIELDS.map(([k, label, ph]) => `<div class="cfield ${k === 'kort' ? 'wide' : ''}"><label>${esc(label)}</label><textarea data-cf="${k}" rows="${k === 'kort' ? 2 : 3}" placeholder="${esc(ph)}">${esc(c.fields[k] || '')}</textarea></div>`).join('')}
+        ${c.extra.map((x, i) => `<div class="cfield extra"><label><input class="cextra" data-cx="${i}" value="${esc(x.title)}"></label><textarea data-cxt="${i}" rows="3">${esc(x.text)}</textarea></div>`).join('')}
+      </div>
+      <button class="pmore" data-ch="addsec">＋ Eigen onderdeel</button>
+      <div class="cside">
+        <div class="pcard"><h4>Komt voor in${m.texts.length ? ' · ' + m.texts.length : ''}</h4>${m.texts.length ? m.texts.map(x => `<button class="prow" data-chtext="${x.id}"><b>${esc(titleOf(x.s))}</b><span>${x.n}× genoemd</span></button>`).join('') : '<p class="muted" style="margin:4px 0">Nog in geen enkele tekst van dit project genoemd.</p>'}</div>
+        <div class="pcard"><h4>Fragmenten over ${esc(nm.split(' ')[0])}${m.frags.length ? ' · ' + m.frags.length : ''}</h4>${m.frags.length ? m.frags.slice(0, 6).map(n => `<button class="prow" data-chfrag="${n.id}"><b>${esc(n.text.replace(/\s+/g, ' ').slice(0, 110))}</b><span>${esc((sources[n.source_id] || {}).title || fmtDate(n.created))}</span></button>`).join('') : '<p class="muted" style="margin:4px 0">Nog geen fragmenten waarin deze naam voorkomt.</p>'}</div>
+        ${others.length ? `<div class="pcard"><h4>Andere personages</h4><div class="chips">${others.map(o => `<button class="chip" data-chopen="${o.id}">${esc(charName(o))}</button>`).join('')}</div><p class="muted" style="margin:8px 0 0;font-size:12.5px">Tip: typ <b>[[${esc(charName(others[0]))}]]</b> bij Relaties om te linken.</p></div>` : ''}
+      </div>
+    </div>`;
+  // live save
+  let t;
+  const collect = () => {
+    const cc = {name: el.querySelector('[data-cf="name"]').value.trim(), rol: el.querySelector('[data-cf="rol"]').value.trim(), leeftijd: el.querySelector('[data-cf="leeftijd"]').value.trim(), fields: {}, extra: []};
+    for (const [k] of CHAR_FIELDS) cc.fields[k] = el.querySelector(`[data-cf="${k}"]`).value;
+    el.querySelectorAll('[data-cx]').forEach(inp => cc.extra.push({title: inp.value.trim() || 'Onderdeel', text: el.querySelector(`[data-cxt="${inp.dataset.cx}"]`).value}));
+    return cc;
+  };
+  const fitAll = () => el.querySelectorAll('.cfield textarea').forEach(a => { a.style.height = 'auto'; a.style.height = a.scrollHeight + 2 + 'px'; });
+  fitAll();
+  el.querySelector('.csheet').addEventListener('input', e => {
+    if (e.target.tagName === 'TEXTAREA'){ e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 2 + 'px'; }
+    clearTimeout(t); t = setTimeout(() => {
+      const sh = sheets[charId]; if (!sh) return;
+      sh.body = buildChar(collect()); sh.updated = Date.now(); if (!sh.folder){ sh.folder = CHAR_FOLDER; addFolder(sh.group, CHAR_FOLDER); } saveSheet(charId);
+      if (e.target.dataset.cf === 'name'){ const a = el.querySelector('.ctop .avatar'); if (a) a.outerHTML = avatar(e.target.value || '?', 76); renderLib(); }
+    }, 500);
+  });
+}
+function newCharacter(gid){
+  const g = groups.find(x => x.id === gid); if (!g) return;
+  if (!(g.folders || []).includes(CHAR_FOLDER)) addFolder(gid, CHAR_FOLDER);
+  const id = uid();
+  sheets[id] = {body: buildChar({name: 'Nieuw personage', rol: '', leeftijd: '', fields: {}, extra: []}), group: gid, folder: CHAR_FOLDER, fav: false, trashed: false, goal: 0, created: Date.now(), updated: Date.now()};
+  saveSheet(id, true); charId = id; renderChars(); renderLib();
+  setTimeout(() => { const n = $('#chars [data-cf="name"]'); if (n){ n.focus(); n.select(); } }, 30);
+}
+function showChars(on){
+  $('#app').classList.toggle('charmode', !!on);
+  if (on){ closePanel(); closeCoach(); if ($('#app').classList.contains('focus')) toggleFocus(); renderChars(); }
+}
+$('#chars').addEventListener('click', e => {
+  const t = e.target, gid = charView(view);
+  const a = t.closest('[data-ch]');
+  if (a){
+    const k = a.dataset.ch;
+    if (k === 'lib') setMobile('lib');
+    if (k === 'proj') setView('g:' + gid);
+    if (k === 'new') newCharacter(gid);
+    if (k === 'list'){ charId = null; renderChars(); renderLib(); }
+    if (k === 'text'){ const id = charId; setView(fview(gid, sheets[id].folder || CHAR_FOLDER)); openSheet(id); setMobile('editor'); }
+    if (k === 'split'){ const id = charId; splitId = id; LS.set('splitId', id); splitEdit = false; const back = Object.entries(sheets).filter(([oid, x]) => x.group === gid && !x.trashed && !isCharSheet(x)).sort((a, b) => b[1].updated - a[1].updated)[0]; setView(back ? fview(gid, back[1].folder || '') : 'g:' + gid); if (back){ showProject(false); openSheet(back[0]); } toggleSplit(true); setMobile('editor'); }
+    if (k === 'del'){ const id = charId; confirmDialog('Personage verwijderen?', `“${esc(charName(sheets[id]))}” gaat naar de prullenbak.`, 'Verwijderen', () => { sheets[id].trashed = true; sheets[id].updated = Date.now(); saveSheet(id, true); charId = null; renderChars(); renderLib(); }); }
+    if (k === 'addsec'){ const sh = sheets[charId]; const c = parseChar(sh.body); c.extra.push({title: 'Nieuw onderdeel', text: ''}); sh.body = buildChar(c); saveSheet(charId, true); renderChars(); const ins = $('#chars [data-cx]:last-of-type'); const all = document.querySelectorAll('#chars [data-cx]'); if (all.length){ all[all.length - 1].focus(); all[all.length - 1].select(); } }
+    return;
+  }
+  const o = t.closest('[data-chopen]'); if (o){ charId = o.dataset.chopen; renderChars(); $('#chars').scrollTop = 0; renderLib(); return; }
+  const tx = t.closest('[data-chtext]'); if (tx){ const s = sheets[tx.dataset.chtext]; setView(s.folder ? fview(gid, s.folder) : 'g:' + gid); showProject(false); openSheet(tx.dataset.chtext); setMobile('editor'); return; }
+  const fr = t.closest('[data-chfrag]'); if (fr){ snippetDialog({id: fr.dataset.chfrag}); return; }
+});
 
 /* ---------------- Boot ---------------- */
 applySettings();
@@ -3965,11 +4360,13 @@ for (const [id, s] of Object.entries(sheets)) if (id !== currentId && !s.trashed
 if (!sheets[currentId]) currentId = null;
 openSheet(currentId);
 if (!isMobile() && currentId) $('#app').dataset.view = 'editor';
-if (view.startsWith('g:')) $('#btnProj').style.display = '';
+if (view.startsWith('g:') || view.startsWith('f:')) $('#btnProj').style.display = '';
+if (splitOpen){ $('#app').classList.add('split'); $('#btnSplit').classList.add('on'); renderSplit(); }
 if (rpOpen){ $('#app').classList.add('rp'); $('#btnResearch').classList.add('on'); renderResearch(); }
 syncIdle();
 $('#nudgeCat').innerHTML = cat('curious');
 $('#rdCite').innerHTML = icon('quote',''); $('#rdOpen').innerHTML = icon('ext',''); $('#rdFav').innerHTML = icon('star',''); $('#rdDel').innerHTML = icon('trash','');
+if (/^c:/.test(view)){ $('#app').classList.add('charmode'); renderChars(); if (isMobile()) $('#app').dataset.view = 'editor'; }
 if ((view === 'board' || view === 'timeline') && useSupabase){ $('#app').classList.add('boardmode'); renderBoard(); if (isMobile()) $('#app').dataset.view = 'editor'; }
 else if (view === 'board' || view === 'timeline') view = 'inbox';
 if (view === 'sources'){ if (!useSupabase) view = 'inbox'; else { $('#app').classList.add('srcmode'); $('#q').placeholder = 'Zoeken in bronnen…'; renderList(); renderReader(); } }

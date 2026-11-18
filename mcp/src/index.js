@@ -134,7 +134,7 @@ const fail = e => ({ content: [{ type: 'text', text: 'Dat lukte niet: ' + (e.mes
 const like = q => `*${String(q).replace(/[,()*%\\]/g, ' ').trim()}*`;
 
 /* ---------------- Server & tools ---------------- */
-const server = new McpServer({ name: 'schrijfkamer', version: '1.1.1' });
+const server = new McpServer({ name: 'schrijfkamer', version: '1.2.0' });
 
 server.tool('save_fragment',
   'Bewaar een fragment (citaat, feit, idee of samenvatting) op de braindump in de Schrijfkamer van de gebruiker. Geef bij voorkeur de bron-URL mee als de informatie van een webpagina komt. Krijgt automatisch de tag "ai". Gebruik dit wanneer de gebruiker vraagt iets te bewaren, op te slaan of te noteren.',
@@ -256,6 +256,17 @@ async function saveGroups(gs) {
   if (have && have.length) return rest('PATCH', `profiles?user_id=eq.${session.user_id}`, { groups: gs }, 'return=minimal');
   return rest('POST', 'profiles', { user_id: session.user_id, groups: gs }, 'resolution=merge-duplicates,return=minimal');
 }
+async function ensureFolder(gid, folder) {
+  const gs = await groups(); const g = gs.find(x => x.id === gid); if (!g) return;
+  if (!(g.folders || []).includes(folder)) { g.folders = [...(g.folders || []), folder]; await saveGroups(gs); }
+}
+async function insertSheet({ body, grp, folder }) {
+  const now = Date.now();
+  const row = { id: uid(), user_id: session.user_id, body, grp, folder: folder || '', fav: false, trashed: false, goal: 0, created: now, updated: now };
+  try { await rest('POST', 'sheets', row, 'return=minimal'); }
+  catch (e) { if (/folder/.test(e.message)) { delete row.folder; await rest('POST', 'sheets', row, 'return=minimal'); } else throw e; }
+  return row.id;
+}
 const titleOf = body => (String(body || '').split('\n').find(l => l.trim()) || '').replace(/^#{1,6}\s+/, '').trim();
 
 server.tool('create_project',
@@ -281,7 +292,7 @@ server.tool('project_overview',
       await token();
       const gid = await projectId(project);
       const [texts, sn, src] = await Promise.all([
-        rest('GET', `sheets?select=id,body,updated&grp=eq.${gid}&trashed=eq.false&order=updated.desc`),
+        rest('GET', `sheets?select=id,body,updated,folder&grp=eq.${gid}&trashed=eq.false&order=updated.desc`).catch(() => rest('GET', `sheets?select=id,body,updated&grp=eq.${gid}&trashed=eq.false&order=updated.desc`)),
         rest('GET', `snippets?select=text,date,tags&grp=eq.${gid}&order=created.desc&limit=500`),
         rest('GET', `sources?select=title,url,site&grp=eq.${gid}&order=created.desc&limit=200`)
       ]);
@@ -290,7 +301,7 @@ server.tool('project_overview',
       const tags = {}; for (const x of sn) for (const t of (x.tags || [])) tags[t] = (tags[t] || 0) + 1;
       return ok([
         `Project “${project}”: ${texts.length} teksten, ${sn.length} fragmenten (${dated.length} op de tijdlijn), ${src.length} bronnen.`,
-        texts.length ? 'Teksten:\n' + texts.map(t => `- ${titleOf(t.body) || '(naamloos)'} (${String(t.body).split(/\s+/).length} woorden)`).join('\n') : '',
+        texts.length ? 'Teksten:\n' + texts.map(t => `- ${t.folder ? '[' + t.folder + '] ' : ''}${titleOf(t.body) || '(naamloos)'} (${String(t.body).split(/\s+/).length} woorden)`).join('\n') : '',
         dated.length ? 'Tijdlijn:\n' + dated.map(y => `- ${y.d.label}: ${y.x.text.replace(/\s+/g, ' ').slice(0, 120)}`).join('\n') : '',
         src.length ? 'Bronnen:\n' + src.slice(0, 60).map(s => `- ${s.title} ${s.url || ''}`).join('\n') : '',
         Object.keys(tags).length ? 'Tags: ' + Object.entries(tags).sort((a, b) => b[1] - a[1]).map(([t, n]) => `#${t} (${n})`).join(' ') : '',
@@ -301,14 +312,41 @@ server.tool('project_overview',
 
 server.tool('create_text',
   'Maak een nieuwe tekst (document) in de Schrijfkamer, bijvoorbeeld een onderzoeksdossier, personenoverzicht of hoofdstukopzet. De inhoud is Markdown: ## kopjes, - lijsten, > citaten, **vet**. Zet ?? achter feiten die nog gecontroleerd moeten worden; gebruik [[Titel]] om naar andere teksten of bronnen te linken.',
-  { title: z.string(), body: z.string().describe('De inhoud in Markdown (zonder de titel).'), project: z.string().optional() },
-  async ({ title, body, project }) => {
+  { title: z.string(), body: z.string().describe('De inhoud in Markdown (zonder de titel).'), project: z.string().optional(), folder: z.string().optional().describe('Map binnen het project, bv. "Hoofdstukken" of "Onderzoek". Gebruik voor personages liever create_character.') },
+  async ({ title, body, project, folder }) => {
     try {
       await token();
       const gid = project ? await projectId(project) : 'inbox';
-      const now = Date.now();
-      await rest('POST', 'sheets', { id: uid(), user_id: session.user_id, body: `# ${title}\n\n${body.trim()}\n`, grp: gid, fav: false, trashed: false, goal: 0, created: now, updated: now }, 'return=minimal');
-      return ok(`Tekst “${title}” aangemaakt${project ? ' in project ' + project : ''}. De gebruiker ziet hem direct in de app.`);
+      if (folder && gid !== 'inbox') await ensureFolder(gid, folder);
+      await insertSheet({ body: `# ${title}\n\n${body.trim()}\n`, grp: gid, folder: gid !== 'inbox' ? (folder || '') : '' });
+      return ok(`Tekst “${title}” aangemaakt${project ? ' in project ' + project : ''}${folder ? ', map ' + folder : ''}. De gebruiker ziet hem direct in de app.`);
+    } catch (e) { return fail(e); }
+  });
+
+const CHAR_FIELDS = [['kort', 'In één zin'], ['uiterlijk', 'Uiterlijk'], ['karakter', 'Karakter'], ['verlangen', 'Wat wil hij/zij?'], ['angst', 'Waar is hij/zij bang voor?'], ['achtergrond', 'Achtergrond'], ['relaties', 'Relaties'], ['stem', 'Stem en taal'], ['ontwikkeling', 'Ontwikkeling'], ['notities', 'Notities']];
+server.tool('create_character',
+  'Maak een personage (character sheet) in een project van de Schrijfkamer. Verschijnt in het onderdeel Personages van de app. Vul alleen in wat je weet; zet ?? achter onzekere of verzonnen details die de schrijver nog moet beslissen. Gebruik [[Naam]] bij relaties om naar andere personages te linken.',
+  {
+    project: z.string(), name: z.string(),
+    role: z.string().optional().describe('bv. Hoofdpersoon, Tegenspeler, Bijfiguur, Verteller'), age: z.string().optional(),
+    in_one_sentence: z.string().optional(), appearance: z.string().optional(), personality: z.string().optional(),
+    wants: z.string().optional().describe('Wat wil het personage?'), fears: z.string().optional().describe('Angst, geheim of zwakke plek'),
+    background: z.string().optional(), relationships: z.string().optional(), voice: z.string().optional().describe('Stem en manier van praten'),
+    development: z.string().optional().describe('Ontwikkeling in het verhaal'), notes: z.string().optional(), historical: z.boolean().optional().describe('true als het een historisch persoon is')
+  },
+  async (a) => {
+    try {
+      await token();
+      const gid = await projectId(a.project);
+      const existing = await rest('GET', `sheets?select=id,body&grp=eq.${gid}&trashed=eq.false`);
+      if (existing.some(r => titleOf(r.body).replace(/^(personage|karakter)\s*[-–—:]\s*/i, '').toLowerCase() === a.name.toLowerCase())) return ok(`Personage “${a.name}” bestaat al in ${a.project}. Gebruik append_to_text met titel “${a.name}” om aan te vullen.`);
+      const vals = { kort: a.in_one_sentence, uiterlijk: a.appearance, karakter: a.personality, verlangen: a.wants, angst: a.fears, achtergrond: a.background, relaties: a.relationships, stem: a.voice, ontwikkeling: a.development, notities: [a.historical ? 'Historisch persoon.' : '', a.notes || ''].filter(Boolean).join(' ') };
+      const meta = [a.role && `**Rol:** ${a.role}`, a.age && `**Leeftijd:** ${a.age}`].filter(Boolean).join(' · ');
+      let md = `# ${a.name}\n\n${meta ? meta + '\n\n' : ''}`;
+      for (const [k, label] of CHAR_FIELDS) if ((vals[k] || '').trim()) md += `## ${label}\n\n${vals[k].trim()}\n\n`;
+      await ensureFolder(gid, 'Personages');
+      await insertSheet({ body: md.trimEnd() + '\n', grp: gid, folder: 'Personages' });
+      return ok(`Personage “${a.name}” aangemaakt in ${a.project} (onderdeel Personages).`);
     } catch (e) { return fail(e); }
   });
 
@@ -351,7 +389,7 @@ server.tool('add_timeline_events',
     } catch (e) { return fail(e); }
   });
 
-const PROMPT_ONDERZOEK = "Je bent mijn onderzoeksassistent voor mijn schrijfproject “${arguments.project}”. Ik concentreer me op het creatieve schrijven; jij doet het feitenwerk en zet alles in mijn Schrijfkamer.\n\nOnderwerp: ${arguments.onderwerp}\n\nWerkwijze:\n1. Roep eerst project_overview aan (bestaat het project niet, maak het dan met create_project) zodat je niets dubbel doet.\n2. Zoek op het web naar betrouwbare bronnen (encyclopedieën, musea, wetenschappelijke en historische bronnen). Bewaar de belangrijkste met save_source.\n3. Zet elke gebeurtenis met een datum op de tijdlijn (add_timeline_events), steeds met de bron-URL.\n4. Bewaar losse feiten, citaten en details die bruikbaar zijn voor een verhaal (zintuiglijke details, gebruiken, voorwerpen, plaatsen) als fragmenten met save_fragment, met tags en bron.\n5. Maak met create_text een tekst “Onderzoeksdossier: ${arguments.onderwerp}” in het project met: korte samenvatting, belangrijkste personen en plekken (met [[links]] waar zinnig), chronologie in het kort, en een lijst “Open vragen”. Zet ?? achter alles wat onzeker of tegenstrijdig is.\n6. Werk in het Nederlands. Verzin niets: geen bron, dan markeren met ??.\n7. Sluit af met een korte samenvatting in de chat van wat je hebt toegevoegd en welke vragen nog open staan.";
+const PROMPT_ONDERZOEK = "Je bent mijn onderzoeksassistent voor mijn schrijfproject “${arguments.project}”. Ik concentreer me op het creatieve schrijven; jij doet het feitenwerk en zet alles in mijn Schrijfkamer.\n\nOnderwerp: ${arguments.onderwerp}\n\nWerkwijze:\n1. Roep eerst project_overview aan (bestaat het project niet, maak het dan met create_project) zodat je niets dubbel doet.\n2. Zoek op het web naar betrouwbare bronnen (encyclopedieën, musea, wetenschappelijke en historische bronnen). Bewaar de belangrijkste met save_source.\n3. Zet elke gebeurtenis met een datum op de tijdlijn (add_timeline_events), steeds met de bron-URL.\n4. Bewaar losse feiten, citaten en details die bruikbaar zijn voor een verhaal (zintuiglijke details, gebruiken, voorwerpen, plaatsen) als fragmenten met save_fragment, met tags en bron.\n5. Maak met create_text (map “Onderzoek”) een tekst “Onderzoeksdossier: ${arguments.onderwerp}” in het project met: korte samenvatting, belangrijkste personen en plekken (met [[links]] waar zinnig), chronologie in het kort, en een lijst “Open vragen”. Zet ?? achter alles wat onzeker of tegenstrijdig is. Maak voor belangrijke (historische) personen een character sheet met create_character.\n6. Werk in het Nederlands. Verzin niets: geen bron, dan markeren met ??.\n7. Sluit af met een korte samenvatting in de chat van wat je hebt toegevoegd en welke vragen nog open staan.";
 server.prompt('onderzoek_project',
   'Laat Claude onderzoek doen en het researchkader van een project in de Schrijfkamer vullen.',
   { project: z.string().describe('Naam van het project, bv. De muntenmaker'), onderwerp: z.string().describe('Waar gaat het onderzoek over?') },

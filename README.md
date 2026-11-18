@@ -83,6 +83,12 @@ Naast je tekst (Ctrl+Alt+R):
 Alle acties hebben een sneltoets (aan te passen via Instellingen → Sneltoetsen) en staan in het opdrachtenmenu (Ctrl+Alt+A). Ideaal om in Logi Options+ aan muisknoppen of F-toetsen te koppelen:
 Ctrl+Alt+K markeer ??, J/H volgende/vorige uitzoekpunt, L opzoeken, B fragment, Q citeren, R onderzoekspaneel, S snel bewaren, F focus, T sprint.
 
+## Mappen, personages en gesplitst scherm
+
+- **Mappen** binnen een project (bv. Hoofdstukken, Personages, Onderzoek); teksten in een map staan op nummer. Slepen naar een map of via Info → Map. Op de projectpagina: “Mappen voorstellen”.
+- **Personages:** per project een overzicht met character sheets (rol, leeftijd, uiterlijk, karakter, verlangen, angst, achtergrond, relaties, stem, ontwikkeling, notities + eigen onderdelen). Toont in welke teksten en fragmenten het personage voorkomt.
+- **Gesplitst scherm** (Ctrl+Alt+G): rechts een tweede tekst of personage, lezen of bewerken; met ⇄ wissel je.
+
 ## Projectpagina
 
 Klik in de bibliotheek op een groep (project) en je ziet alles bij elkaar: aantallen, teksten, open uitzoekpunten, een mini-tijdlijn, de laatste fragmenten en bronnen en de tags. Via het tegel-icoon naast de projectnaam kom je er altijd terug.
