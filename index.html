@@ -293,7 +293,9 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .nudge .x{color:var(--faint);margin-left:4px;font-size:16px}
 
 /* ---------- Bronnen ---------- */
-.reader{display:none;flex-direction:column;flex:1;min-height:0}
+.reader{display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden}
+.main{min-height:0;overflow:hidden}
+#readerScroll{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch}
 .app.srcmode .reader{display:flex}
 .app.srcmode .reader .topbar{opacity:1!important;position:static;pointer-events:auto}
 .app.srcmode #topbar,.app.srcmode #fmtMob,.app.srcmode #scroll,.app.srcmode #nosheet,.app.srcmode #nudge,.app.srcmode .focus-exit{display:none!important}

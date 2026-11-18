@@ -123,12 +123,21 @@ function toMarkdown(html: string) {
     return s;
   };
   const clean = (s: string) => s.replace(/[ \t ]+/g, " ").replace(/ *\n */g, "\n").trim();
+  const INLINE = new Set(["a", "strong", "b", "em", "i", "span", "code", "sup", "sub", "small", "mark", "abbr", "time", "u", "s", "q", "cite", "br", "font", "label"]);
+  const SKIP = new Set(["figure", "img", "picture", "script", "style", "nav", "aside", "svg", "button", "form", "iframe", "noscript", "video", "audio"]);
   const walk = (el: any) => {
-    for (const n of el.children) {
+    let buf = "";
+    const flush = () => { const s = clean(buf); if (s) out.push(s); buf = ""; };
+    for (const n of el.childNodes) {
+      if (n.nodeType === 3) { buf += n.textContent; continue; }
+      if (n.nodeType !== 1) continue;
       const t = n.tagName.toLowerCase();
+      if (INLINE.has(t)) { buf += t === "br" ? "\n" : inline({ childNodes: [n] }); continue; }
+      flush();
+      if (SKIP.has(t)) continue;
       if (/^h[1-6]$/.test(t)) { const s = clean(n.textContent || ""); if (s) out.push("#".repeat(Math.min(3, Math.max(2, +t[1]))) + " " + s); }
       else if (t === "p") { const s = clean(inline(n)); if (s) out.push(s); }
-      else if (t === "blockquote") { const s = clean(n.textContent || ""); if (s) out.push(s.split("\n").map((l) => "> " + l).join("\n")); }
+      else if (t === "blockquote") { const s = clean(n.textContent || ""); if (s) out.push(s.split("\n").filter((l: string) => l.trim()).map((l: string) => "> " + l.trim()).join("\n")); }
       else if (t === "ul" || t === "ol") {
         let i = 1;
         const items = [...n.children].filter((li: any) => li.tagName.toLowerCase() === "li").map((li: any) => (t === "ol" ? `${i++}. ` : "- ") + clean(inline(li)).replace(/\n/g, " ")).filter((x: string) => x.length > 3);
@@ -136,10 +145,13 @@ function toMarkdown(html: string) {
       }
       else if (t === "pre") { const s = (n.textContent || "").trim(); if (s) out.push("```\n" + s + "\n```"); }
       else if (t === "hr") out.push("---");
-      else if (t === "figure" || t === "img" || t === "picture" || t === "script" || t === "style" || t === "table" || t === "nav" || t === "aside") continue;
-      else if (n.children.length) walk(n);
-      else { const s = clean(n.textContent || ""); if (s) out.push(s); }
+      else if (t === "table") {
+        const rows = [...n.querySelectorAll("tr")].map((tr: any) => [...tr.children].map((c: any) => clean(c.textContent || "")).filter(Boolean).join(" · ")).filter(Boolean);
+        if (rows.length) out.push(rows.join("\n"));
+      }
+      else walk(n);
     }
+    flush();
   };
   walk(document.body);
   return out.join("\n\n");
