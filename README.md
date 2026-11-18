@@ -14,6 +14,16 @@ Een rustige schrijfapp in de browser, met een indeling zoals in Ulysses: bibliot
 - Exporteren als Markdown, platte tekst of HTML
 - Inloggen met e-mail en wachtwoord, live synchronisatie tussen apparaten
 - Te installeren op je beginscherm (eigen icoon)
+- Focusscherm: alleen je blad, verder niets
+
+## Schrijfcoach (zonder AI)
+
+- **Vandaag:** dagdoel, reeks (dagen op rij), weekoverzicht en beste dag — gesynchroniseerd tussen apparaten
+- **Schrijfsprint:** timer van 10–45 minuten in het focusscherm, met resultaat en tempo
+- **Ik zit vast:** ideeën op basis van je eigen tekst (kernwoorden, laatste zin, ontbrekende zintuigen, dialoog) plus schrijftechnieken; in te voegen als notitie
+- **Stijl:** markeert lange zinnen, vulwoorden, lijdende vorm, herhaalde woorden en gelijke zinsbeginnen
+- **Analyse:** leesbaarheid (Flesch-Douma), ritme, woordenrijkdom, perspectief, tijd, dialoog en zintuigen
+- **Stilval-hulp:** na een minuut stilte biedt de coach ideeën aan (uit te zetten)
 
 ## Bestanden
 

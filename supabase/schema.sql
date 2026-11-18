@@ -45,3 +45,6 @@ exception when duplicate_object then null; end $$;
 do $$ begin
   alter publication supabase_realtime add table public.profiles;
 exception when duplicate_object then null; end $$;
+
+-- Schrijfcoach: dagdoel, reeks en sprints (toegevoegd later; veilig om opnieuw te draaien)
+alter table public.profiles add column if not exists stats jsonb not null default '{}'::jsonb;

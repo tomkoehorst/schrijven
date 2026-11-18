@@ -127,7 +127,9 @@ svg{display:block}
 .ed{position:relative}
 .ed .mirror,.ed textarea{font-family:var(--ed-font);font-size:var(--ed-size);line-height:1.72;letter-spacing:.003em;white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;tab-size:4;padding:0;margin:0;border:0;font-weight:400;font-variant-ligatures:none}
 .ed .mirror{color:var(--text);min-height:60vh;pointer-events:none}
-.ed textarea{position:absolute;inset:0;width:100%;height:100%;resize:none;outline:none;background:transparent;color:transparent;caret-color:var(--accent);overflow:hidden;-webkit-text-fill-color:transparent}
+.ed .mirror:not(.measure){position:relative;z-index:1}
+.ed .checks{z-index:0}
+.ed textarea{position:absolute;inset:0;z-index:2;width:100%;height:100%;resize:none;outline:none;background:transparent;color:transparent;caret-color:var(--accent);overflow:hidden;-webkit-text-fill-color:transparent}
 .ed textarea::selection{background:var(--sel);color:transparent}
 .ed textarea::placeholder{color:var(--faint);-webkit-text-fill-color:var(--faint)}
 .mk{color:var(--mk)}
@@ -157,6 +159,7 @@ svg{display:block}
 
 /* ---------- Info panel ---------- */
 .panel{position:absolute;top:calc(56px + var(--sat));right:14px;width:310px;max-height:calc(100% - 76px - var(--sat));overflow:auto;background:var(--card);border-radius:16px;box-shadow:0 10px 40px rgba(61,58,68,.16);border:1px solid var(--line);padding:6px 18px 18px;z-index:20;display:none}
+.panel{color:var(--text)}
 .panel.open{display:block;animation:pop .16s ease}
 @keyframes pop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
 .panel h4{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:16px 0 10px;font-weight:800}
@@ -217,6 +220,68 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .help{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13.5px;margin-bottom:16px}
 .help code{background:var(--code);padding:1px 6px;border-radius:5px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;white-space:nowrap}
 
+/* ---------- Coach ---------- */
+.today{margin:4px 2px 6px;background:var(--card);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow);width:calc(100% - 4px);text-align:left;display:block}
+.today .tl{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.today .tw{font-size:15px;font-weight:800;color:var(--text);margin:4px 0 8px;text-transform:none;letter-spacing:0}
+.today .tw span{color:var(--muted);font-weight:700;font-size:13px}
+.bar2{height:6px;border-radius:6px;background:var(--line);overflow:hidden}
+.bar2 i{display:block;height:100%;border-radius:6px;background:var(--accent);transition:width .4s}
+.bar2.done i{background:#8FC4A8}
+.streak{display:inline-flex;align-items:center;gap:4px;color:#D9894E;font-weight:800;font-size:12.5px;text-transform:none;letter-spacing:0}
+.streak.off{color:var(--faint)}
+.streak svg{width:14px;height:14px}
+.tabs{display:flex;gap:4px;background:var(--pane2);border-radius:11px;padding:3px;margin:12px 0 4px;position:sticky;top:0;z-index:2}
+.tabs button{flex:1;padding:7px 4px;border-radius:9px;font-size:13px;font-weight:800;color:var(--muted)}
+.tabs button.on{background:var(--card);color:var(--text);box-shadow:var(--shadow)}
+.week{display:flex;gap:6px;align-items:flex-end;height:74px;margin:6px 0 2px}
+.week div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.week b{width:100%;border-radius:5px 5px 3px 3px;background:var(--sage);min-height:3px}
+.week b.ok{background:#8FC4A8}.week b.today{outline:2px solid var(--accent);outline-offset:1px}
+.week span{font-size:10.5px;color:var(--muted);font-weight:800}
+.idea{background:var(--pane2);border-radius:13px;padding:13px 14px;margin-bottom:9px}
+.idea .k{font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
+.idea .q{font-size:14.5px;line-height:1.45;font-weight:700;color:var(--text)}
+.idea .w{font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.45}
+.idea .ia{display:flex;gap:6px;margin-top:9px}
+.idea .ia button{font-size:12px;font-weight:800;padding:5px 10px;border-radius:8px;background:var(--card);color:var(--text);border:1px solid var(--line)}
+.idea .ia button:hover{border-color:var(--sage)}
+.ctx{font-size:12.5px;color:var(--muted);line-height:1.5;margin:4px 0 10px;font-style:italic}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;background:var(--pane2);border-radius:12px;font-weight:700;font-size:14px;width:100%;text-align:left}
+.sw{width:38px;height:22px;border-radius:22px;background:var(--line);position:relative;flex:none;transition:.2s}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:.2s}
+.toggle.on .sw{background:var(--accent)}.toggle.on .sw::after{left:19px}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:9px 2px;border-bottom:1px solid var(--line);font-size:13.5px;line-height:1.45}
+.chk:last-child{border-bottom:0}
+.chk .sm{width:26px;flex:none;text-align:center;font-weight:800;border-radius:7px;padding:1px 0;font-size:12.5px}
+.chk small{display:block;color:var(--muted);font-size:12px}
+.meter{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.meter:last-child{border-bottom:0}
+.meter b{font-weight:800}
+.tip{background:var(--accent-soft);border-radius:11px;padding:10px 12px;font-size:13px;line-height:1.5;margin:6px 0}
+.senses{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.senses span{font-size:12px;font-weight:800;padding:4px 9px;border-radius:999px;background:var(--pane2);color:var(--faint)}
+.senses span.on{background:var(--accent-soft);color:var(--accent)}
+/* style check layer: same metrics as the mirror, sits behind it */
+.ed .checks{position:absolute;inset:0;color:transparent;pointer-events:none;font-family:var(--ed-font);font-size:var(--ed-size);line-height:1.72;letter-spacing:.003em;white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;tab-size:4;font-weight:400;font-variant-ligatures:none}
+.c-long{background:rgba(246,210,190,.42);border-radius:3px}
+.c-xlong{background:rgba(233,169,160,.38);border-radius:3px}
+.c-fill{text-decoration:underline wavy #E0A48F;text-decoration-thickness:1.5px;text-underline-offset:5px}
+.c-pass{text-decoration:underline dashed #7DA7CF;text-decoration-thickness:1.5px;text-underline-offset:5px}
+.c-rep{text-decoration:underline dotted #5E9C80;text-decoration-thickness:2.5px;text-underline-offset:5px}
+.c-start{text-decoration:underline solid #D9B44A;text-decoration-thickness:2px;text-underline-offset:5px}
+[data-theme="dark"] .c-long{background:rgba(201,168,151,.18)}[data-theme="dark"] .c-xlong{background:rgba(201,142,134,.22)}
+/* sprint */
+.sprint-badge{font-size:12.5px;font-weight:800;color:var(--accent);background:var(--accent-soft);border-radius:9px;padding:6px 10px;display:none;font-variant-numeric:tabular-nums}
+.sprint-badge.on{display:inline-block}
+.sprint-line{position:fixed;top:0;left:0;height:3px;background:var(--accent);opacity:.45;z-index:30;display:none;transition:width 1s linear}
+.sprint-line.on{display:block}
+/* nudge */
+.nudge{position:absolute;right:18px;bottom:calc(18px + var(--sab));display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:16px;padding:8px 14px 8px 8px;font-size:13.5px;font-weight:700;z-index:15;opacity:0;transform:translateY(8px);pointer-events:none;transition:.35s}
+.nudge.show{opacity:1;transform:none;pointer-events:auto}
+.nudge .cat{width:40px;height:40px}
+.nudge .x{color:var(--faint);margin-left:4px;font-size:16px}
+
 /* ---------- Mobile ---------- */
 @media (max-width:820px){
   .app,.app.hide-lib,.app.focus{display:block;position:relative}
@@ -255,6 +320,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="logo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#3D3A44" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
       <h1>Schrijfkamer</h1>
     </div>
+    <div style="padding:0 10px 2px"><button class="today" id="todayCard" title="Dagdoel, sprint en coach"></button></div>
     <div class="lib-scroll" id="libNav"></div>
     <div class="lib-foot">
       <div class="sync" id="sync"><i></i><span>Laden…</span></div>
@@ -287,12 +353,15 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <span class="wc" id="wc"></span>
       <button class="ib" id="btnPreview" title="Voorbeeld (Ctrl+Alt+P)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
       <button class="ib" id="btnFocus" title="Focusscherm (Ctrl+Alt+F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+      <button class="sprint-badge" id="sprintBadge" title="Schrijfsprint"></button>
+      <button class="ib" id="btnCoach" title="Schrijfcoach (Ctrl+Alt+C)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2Z"/></svg></button>
       <button class="ib" id="btnInfo" title="Info & doelen (Ctrl+Alt+I)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></button>
     </div>
     <div class="fmtbar" id="fmtMob"><div class="fmt"></div></div>
     <div class="scroll" id="scroll">
       <div class="paper" id="paper">
         <div class="ed" id="ed">
+          <div class="checks" id="checks" aria-hidden="true"></div>
           <div class="mirror" id="mirror"></div>
           <textarea id="ta" spellcheck="true" autocapitalize="sentences" placeholder="Begin met schrijven…"></textarea>
           <div class="mirror measure" id="measure" aria-hidden="true"></div>
@@ -302,10 +371,13 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     </div>
     <div class="nosheet" id="nosheet" hidden></div>
     <div class="panel" id="panel"></div>
+    <div class="panel" id="coach"></div>
+    <div class="nudge" id="nudge"><span id="nudgeCat"></span><span>Even vast? Ik heb ideeën.</span><span class="x" title="Sluiten">×</span></div>
     <button class="focus-exit" id="focusExit" title="Focusscherm verlaten (Esc)" aria-label="Focusscherm verlaten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg></button>
   </main>
 </div>
 
+<div class="sprint-line" id="sprintLine"></div>
 <div class="modal" id="modal"><div class="dialog" id="dialog"></div></div>
 <div class="toast" id="toast"></div>
 
@@ -368,7 +440,7 @@ function cat(mood){
 }
 
 /* ---------------- State ---------------- */
-let settings = Object.assign({theme:'light', font:'sans', size:19, width:680, typewriter:false, dim:false}, LS.get('settings', {}));
+let settings = Object.assign({theme:'light', font:'sans', size:19, width:680, typewriter:false, dim:false, check:false, nudge:true}, LS.get('settings', {}));
 if (!LS.get('v2', false)){ settings.theme = 'light'; LS.set('v2', true); }
 let sheets = LS.get('sheets', {});     // id -> sheet
 let groups = LS.get('groups', []);     // [{id,name,color}]
@@ -404,7 +476,7 @@ function persistLocal(){ LS.set('sheets', sheets); LS.set('groups', groups); }
 const CFG = window.SCHRIJF_CONFIG || {};
 const useSupabase = !!(CFG.supabaseUrl && CFG.supabaseKey);
 let backend = null;          // {write(id, sheet), remove(id), saveGroups(groups)}
-let sb = null, sbUser = null, sbChannel = null;
+let sb = null, sbUser = null, sbChannel = null, noStatsCol = false;
 
 function setSync(state, text){
   const el = $('#sync'); el.className = 'sync ' + state; el.querySelector('span').textContent = text;
@@ -461,7 +533,7 @@ async function saveProfile(){
   if (cloud !== 'on' || !backend) return;
   if (profileBusy){ profileAgain = true; return; }
   profileBusy = true;
-  do { profileAgain = false; try { await backend.saveGroups(groups); } catch(e){ handleDbError(e); } } while (profileAgain);
+  do { profileAgain = false; try { await backend.saveProfile({groups, stats}); } catch(e){ handleDbError(e); } } while (profileAgain);
   profileBusy = false;
 }
 
@@ -476,7 +548,7 @@ function applyRemote(sid, d){
   if (sid === currentId && ta.value !== sheets[sid].body){
     const pos = ta.selectionStart; ta.value = sheets[sid].body;
     if (document.activeElement === ta) ta.setSelectionRange(Math.min(pos, ta.value.length), Math.min(pos, ta.value.length));
-    renderMirror(); updateCounts();
+    renderMirror(); updateCounts(); curWords = countWords(ta.value); renderChecks();
   }
   return true;
 }
@@ -518,13 +590,13 @@ async function connect(){
   backend = {
     write: (sid, s) => sheetsCol.doc(sid).set(s),
     remove: sid => sheetsCol.doc(sid).delete(),
-    saveGroups: g => profileRef.set({groups: g})
+    saveProfile: d => profileRef.set(d)
   };
   let firstServer = false;
   const timeout = setTimeout(() => { if (!firstServer) setSync('err', 'Cloud niet bereikbaar — lokaal'); }, 10000);
   profileRef.onSnapshot(snap => {
     if (snap.metadata.hasPendingWrites || profileBusy) return;
-    if (snap.exists){ const d = snap.data(); if (Array.isArray(d.groups)){ groups = d.groups.map(g => ({...g})); afterRemoteChange(); } }
+    if (snap.exists){ const d = snap.data(); mergeStats(d.stats); if (Array.isArray(d.groups)){ groups = d.groups.map(g => ({...g})); afterRemoteChange(); } }
   }, e => handleDbError(e));
   sheetsCol.onSnapshot(snap => {
     let changed = false;
@@ -564,7 +636,11 @@ async function startSupabase(user){
       if (error) throw error;
     },
     async remove(id){ const { error } = await sb.from('sheets').delete().eq('id', id); if (error) throw error; },
-    async saveGroups(g){ const { error } = await sb.from('profiles').upsert({user_id:user.id, groups:g}); if (error) throw error; }
+    async saveProfile(d){
+      let { error } = await sb.from('profiles').upsert(noStatsCol ? {user_id:user.id, groups:d.groups} : {user_id:user.id, groups:d.groups, stats:d.stats});
+      if (error && /stats/i.test(error.message || '') && !noStatsCol){ noStatsCol = true; ({ error } = await sb.from('profiles').upsert({user_id:user.id, groups:d.groups})); }
+      if (error) throw error;
+    }
   };
   await sbPull();
   sbChannel = sb.channel('sync-' + user.id)
@@ -575,8 +651,9 @@ async function startSupabase(user){
       if (changed) afterRemoteChange();
     })
     .on('postgres_changes', {event:'*', schema:'public', table:'profiles'}, p => {
-      if (profileBusy || !p.new || p.new.user_id !== user.id || !Array.isArray(p.new.groups)) return;
-      groups = p.new.groups; afterRemoteChange();
+      if (profileBusy || !p.new || p.new.user_id !== user.id) return;
+      mergeStats(p.new.stats);
+      if (Array.isArray(p.new.groups)){ groups = p.new.groups; afterRemoteChange(); }
     })
     .subscribe();
 }
@@ -587,7 +664,7 @@ async function sbPull(){
   try {
     const [res, prof] = await Promise.all([
       sb.from('sheets').select('*'),
-      sb.from('profiles').select('groups').eq('user_id', sbUser.id).maybeSingle()
+      sb.from('profiles').select('*').eq('user_id', sbUser.id).maybeSingle()
     ]);
     if (res.error) throw res.error;
     cloud = 'on'; lastError = '';
@@ -597,7 +674,9 @@ async function sbPull(){
     const remoteGroups = prof && prof.data && Array.isArray(prof.data.groups) ? prof.data.groups : [];
     const before = JSON.stringify(groups);
     const extra = mergeGroups(remoteGroups);
-    if (extra || !prof.data) saveProfile();
+    const statsChanged = prof.data ? mergeStats(prof.data.stats) : false;
+    if (prof.data && !('stats' in prof.data)) noStatsCol = true;
+    if (extra || !prof.data || (prof.data.stats && JSON.stringify(prof.data.stats) !== JSON.stringify(stats))) saveProfile();
     if (changed || before !== JSON.stringify(groups)) afterRemoteChange();
     if (!Object.keys(timers).length) syncIdle();
   } catch(e){ handleDbError(e); }
@@ -783,7 +862,7 @@ function newSheet(){
   if (query){ query = ''; $('#q').value = ''; }
   saveSheet(id, true);
   openSheet(id); renderLib(); setMobile('editor');
-  setTimeout(() => ta.focus(), isMobile() ? 320 : 0);
+  if (isMobile()) setTimeout(() => ta.focus(), 320); else ta.focus();
 }
 $('#btnNew').onclick = newSheet;
 
@@ -854,6 +933,7 @@ function openSheet(id){
   ta.readOnly = !!s.trashed;
   if (previewOn) renderPreview();
   renderMirror(); updateCounts(); renderList();
+  curWords = countWords(ta.value); typedSinceOpen = false; renderChecks(); hideNudge();
   scroller.scrollTop = 0;
   if (panelOpen) renderPanel();
 }
@@ -971,7 +1051,7 @@ function buildFmt(el){
 }
 buildFmt($('#fmtDesk')); buildFmt($('#fmtMob .fmt'));
 
-function stats(text){
+function textStats(text){
   const words = countWords(text);
   const chars = text.length;
   const charsNoSp = text.replace(/\s/g, '').length;
@@ -982,7 +1062,7 @@ function stats(text){
 }
 function updateCounts(){
   const s = sheets[currentId]; if (!s) return;
-  const st = stats(ta.value);
+  const st = textStats(ta.value);
   let t = st.words + (st.words === 1 ? ' woord' : ' woorden');
   if (s.goal) t += ' / ' + s.goal;
   $('#wc').textContent = t;
@@ -1056,7 +1136,7 @@ function ring(pct, done){
 }
 function renderPanel(){
   const s = sheets[currentId]; if (!s){ closePanel(); return; }
-  const st = stats(ta.value);
+  const st = textStats(ta.value);
   const goal = s.goal || 0, pct = goal ? st.words / goal : 0, done = goal && st.words >= goal;
   const heads = (ta.value.match(/^#{1,3}\s+.+$/gm) || []);
   const p = $('#panel');
@@ -1096,7 +1176,7 @@ function renderPanel(){
     </div>
     <p class="muted" style="margin-top:14px">Aangemaakt ${fmtDate(s.created)} · bewerkt ${fmtDate(s.updated)}</p>`;
 }
-function openPanel(){ panelOpen = true; renderPanel(); $('#panel').classList.add('open'); $('#btnInfo').classList.add('on'); }
+function openPanel(){ closeCoach(); panelOpen = true; renderPanel(); $('#panel').classList.add('open'); $('#btnInfo').classList.add('on'); }
 function closePanel(){ panelOpen = false; $('#panel').classList.remove('open'); $('#btnInfo').classList.remove('on'); }
 $('#btnInfo').onclick = () => panelOpen ? closePanel() : openPanel();
 document.addEventListener('mousedown', e => { if (panelOpen && !e.target.closest('#panel') && !e.target.closest('#btnInfo') && !e.target.closest('.modal')) closePanel(); });
@@ -1288,6 +1368,7 @@ function helpDialog(){
     <code>Ctrl Alt F</code><span>Focusscherm: alleen je blad (Esc om te sluiten)</span>
     <code>Ctrl Alt P</code><span>Voorbeeld</span>
     <code>Ctrl Alt I</code><span>Info & doelen</span>
+    <code>Ctrl Alt C</code><span>Schrijfcoach</span>
   </div>
   <div class="btns"><button class="btn" data-close>Begrepen</button></div>`);
 }
@@ -1307,6 +1388,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape'){
     if ($('#modal').classList.contains('open')) return closeModal();
     if (panelOpen) return closePanel();
+    if (coachOpen) return closeCoach();
     if ($('#app').classList.contains('focus')) return toggleFocus();
   }
   if ((e.ctrlKey || e.metaKey) && e.altKey){
@@ -1314,10 +1396,415 @@ document.addEventListener('keydown', e => {
     if (k === 'KeyN'){ e.preventDefault(); newSheet(); }
     else if (k === 'KeyF' && currentId){ e.preventDefault(); toggleFocus(); }
     else if (k === 'KeyP' && currentId){ e.preventDefault(); togglePreview(); }
+    else if (k === 'KeyC'){ e.preventDefault(); coachOpen ? closeCoach() : openCoach(); }
     else if (k === 'KeyI' && currentId){ e.preventDefault(); panelOpen ? closePanel() : openPanel(); }
   }
 });
 document.addEventListener('visibilitychange', () => { if (document.hidden){ persistLocal(); for (const id of Object.keys(timers)){ clearTimeout(timers[id]); flush(id); } } else if (sbUser) sbPull(); });
+
+/* ================= Schrijfcoach (zonder AI) ================= */
+const DEV = LS.get('dev', null) || (() => { const d = uid(); LS.set('dev', d); return d; })();
+let stats = Object.assign({goal:500, goalAt:0, days:{}, sprints:[]}, LS.get('stats', {}));
+let curWords = 0;
+const dayKey = (d = new Date()) => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+const dayTotal = k => Object.values(stats.days[k] || {}).reduce((a, b) => a + b, 0);
+function streak(){
+  if (!stats.goal) return 0;
+  let n = 0; const d = new Date();
+  if (dayTotal(dayKey(d)) >= stats.goal) n++;
+  for (;;){ d.setDate(d.getDate() - 1); if (dayTotal(dayKey(d)) >= stats.goal) n++; else break; }
+  return n;
+}
+let statsT;
+function saveStatsSoon(){ LS.set('stats', stats); clearTimeout(statsT); statsT = setTimeout(() => saveProfile(), 4000); }
+function addWords(delta){
+  if (!delta) return;
+  const k = dayKey(), before = dayTotal(k);
+  const day = stats.days[k] = stats.days[k] || {};
+  day[DEV] = Math.max(0, (day[DEV] || 0) + delta);
+  const after = dayTotal(k);
+  if (stats.goal && before < stats.goal && after >= stats.goal){
+    toast('Dagdoel gehaald — ' + streak() + (streak() === 1 ? ' dag' : ' dagen') + ' op rij!');
+  }
+  saveStatsSoon(); renderToday();
+  if (coachOpen && coachTab === 'today') renderCoach();
+}
+function mergeStats(r){
+  if (!r || typeof r !== 'object') return false;
+  const before = JSON.stringify(stats);
+  if ((r.goalAt || 0) > (stats.goalAt || 0)){ stats.goal = r.goal; stats.goalAt = r.goalAt; }
+  for (const [k, devs] of Object.entries(r.days || {})){
+    const day = stats.days[k] = stats.days[k] || {};
+    for (const [dev, n] of Object.entries(devs || {})) day[dev] = dev === DEV ? Math.max(day[dev] || 0, n) : n;
+  }
+  const ids = new Set(stats.sprints.map(s => s.id));
+  for (const s of (r.sprints || [])) if (!ids.has(s.id)) stats.sprints.push(s);
+  stats.sprints = stats.sprints.sort((a, b) => a.at - b.at).slice(-60);
+  const cutoff = dayKey(new Date(Date.now() - 400 * 864e5));
+  for (const k of Object.keys(stats.days)) if (k < cutoff) delete stats.days[k];
+  const changed = before !== JSON.stringify(stats);
+  if (changed){ LS.set('stats', stats); renderToday(); if (coachOpen) renderCoach(); }
+  return changed;
+}
+
+/* ----- "Vandaag" card in the library ----- */
+const flame = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 3.5 5 5.5 5 11a5 5 0 0 1-10 0c0-2.4 1-4 2.3-5.3.2 1.6 1 2.8 2.2 3.3C11 8.5 11 5 12 2Z"/></svg>';
+function renderToday(){
+  const el = $('#todayCard'); if (!el) return;
+  const t = dayTotal(dayKey()), g = stats.goal, s = streak();
+  el.innerHTML = `<div class="tl"><span>Vandaag</span><span class="streak ${s ? '' : 'off'}">${flame}${s} ${s === 1 ? 'dag' : 'dagen'}</span></div>
+    <div class="tw">${t.toLocaleString('nl-NL')} <span>${g ? '/ ' + g.toLocaleString('nl-NL') + ' woorden' : 'woorden'}</span></div>
+    ${g ? `<div class="bar2 ${t >= g ? 'done' : ''}"><i style="width:${Math.min(100, t / g * 100)}%"></i></div>` : ''}`;
+}
+
+/* ----- Coach panel ----- */
+let coachOpen = false, coachTab = 'today', ideaSeed = 0;
+function openCoach(tab){
+  if (tab) coachTab = tab;
+  closePanel(); coachOpen = true; renderCoach();
+  $('#coach').classList.add('open'); $('#btnCoach').classList.add('on'); hideNudge();
+}
+function closeCoach(){ coachOpen = false; $('#coach').classList.remove('open'); $('#btnCoach').classList.remove('on'); }
+function renderCoach(){
+  const tabs = [['today','Vandaag'],['stuck','Ik zit vast'],['style','Stijl'],['analysis','Analyse']];
+  const body = {today: coachToday, stuck: coachStuck, style: coachStyle, analysis: coachAnalysis}[coachTab]();
+  const st = $('#coach').scrollTop;
+  $('#coach').innerHTML = `<div class="tabs">${tabs.map(([k, l]) => `<button data-tab="${k}" class="${coachTab === k ? 'on' : ''}">${l}</button>`).join('')}</div>${body}`;
+  $('#coach').scrollTop = st;
+}
+
+function coachToday(){
+  const t = dayTotal(dayKey()), g = stats.goal, s = streak();
+  const days = [];
+  for (let i = 6; i >= 0; i--){ const d = new Date(); d.setDate(d.getDate() - i); days.push(d); }
+  const max = Math.max(g || 1, ...days.map(d => dayTotal(dayKey(d))));
+  const best = Math.max(0, ...Object.keys(stats.days).map(dayTotal));
+  const sprints = stats.sprints.slice(-3).reverse();
+  return `
+    <h4>Dagdoel</h4>
+    <div class="goal"><div class="ring">${g ? ring(t / g, t >= g) : ring(0, false)}</div>
+      <div class="gt">${g ? (t >= g ? `<b>Gehaald!</b><br>${t} woorden vandaag.` : `<b>Nog ${g - t} woorden</b><br>${t} van ${g} vandaag`) : '<b>Geen dagdoel</b><br>Kies hieronder een doel.'}</div></div>
+    <div class="chips" style="margin-top:8px">${[250, 500, 750, 1000, 1500].map(n => `<button class="chip ${g === n ? 'on' : ''}" data-dgoal="${n}">${n}</button>`).join('')}</div>
+    <h4>Deze week</h4>
+    <div class="week">${days.map((d, i) => { const v = dayTotal(dayKey(d)); return `<div title="${v} woorden"><b class="${g && v >= g ? 'ok' : ''} ${i === 6 ? 'today' : ''}" style="height:${Math.max(3, v / max * 56)}px"></b><span>${d.toLocaleDateString('nl-NL', {weekday:'short'}).slice(0, 2)}</span></div>`; }).join('')}</div>
+    <div class="meter"><span>Reeks</span><b class="streak ${s ? '' : 'off'}">${flame}${s} ${s === 1 ? 'dag' : 'dagen'} op rij</b></div>
+    <div class="meter"><span>Beste dag ooit</span><b>${best.toLocaleString('nl-NL')} woorden</b></div>
+    <h4>Schrijfsprint</h4>
+    ${sprint ? `<div class="tip">Sprint loopt nog — <b id="sprintLeft">${fmtLeft()}</b> te gaan. <a href="#" data-a="stopsprint" style="color:var(--accent);font-weight:800">Stoppen</a></div>`
+      : `<p class="muted" style="margin:0 0 8px">Zet een timer en schrijf zonder te stoppen of te verbeteren. Het focusscherm gaat vanzelf aan.</p>
+         <div class="chips">${[10, 15, 25, 45].map(n => `<button class="chip" data-sprint="${n}">${n} min</button>`).join('')}</div>`}
+    ${sprints.length ? `<div style="margin-top:10px">${sprints.map(x => `<div class="meter"><span>${fmtDate(x.at)} · ${x.min} min</span><b>${x.words} woorden</b></div>`).join('')}</div>` : ''}
+    <h4>Coach</h4>
+    <button class="toggle ${settings.nudge !== false ? 'on' : ''}" data-a="nudge"><span>Help me als ik stilval<br><small class="muted" style="font-weight:600">Na een minuut stilte bied ik ideeën aan</small></span><span class="sw"></span></button>`;
+}
+
+/* ----- Sprint ----- */
+let sprint = LS.get('sprint', null), sprintTick = null;
+function fmtLeft(){ if (!sprint) return ''; const s = Math.max(0, Math.round((sprint.end - Date.now()) / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+function startSprint(min){
+  sprint = {end: Date.now() + min * 60000, min, startWords: dayTotal(dayKey()), start: Date.now()};
+  LS.set('sprint', sprint); runSprint();
+  closeCoach();
+  if (!currentId) newSheet();
+  if (!$('#app').classList.contains('focus')) toggleFocus();
+  setTimeout(() => ta.focus(), 80);
+}
+function runSprint(){
+  clearInterval(sprintTick);
+  const badge = $('#sprintBadge'), line = $('#sprintLine');
+  if (!sprint){ badge.classList.remove('on'); line.classList.remove('on'); return; }
+  badge.classList.add('on'); line.classList.add('on');
+  const tick = () => {
+    if (!sprint) return;
+    const left = sprint.end - Date.now();
+    badge.textContent = fmtLeft();
+    line.style.width = Math.min(100, (1 - left / (sprint.min * 60000)) * 100) + '%';
+    const l = $('#sprintLeft'); if (l) l.textContent = fmtLeft();
+    if (left <= 0) endSprint();
+  };
+  tick(); sprintTick = setInterval(tick, 1000);
+}
+function endSprint(stopped){
+  if (!sprint) return;
+  const s = sprint; sprint = null; LS.set('sprint', null); runSprint();
+  const words = Math.max(0, dayTotal(dayKey()) - s.startWords);
+  const mins = Math.max(1, Math.round((Math.min(Date.now(), s.end) - s.start) / 60000));
+  stats.sprints.push({id: uid(), at: Date.now(), min: mins, words}); stats.sprints = stats.sprints.slice(-60); saveStatsSoon();
+  if ($('#app').classList.contains('focus')) toggleFocus();
+  const prev = stats.sprints.slice(0, -1).map(x => x.words / x.min);
+  const pace = words / mins, better = prev.length && pace > Math.max(...prev);
+  openModal(`<div style="text-align:center"><div style="width:96px;height:96px;margin:0 auto 10px">${cat(words ? 'happy' : 'sleepy')}</div>
+    <h3>${stopped ? 'Sprint gestopt' : 'Sprint klaar!'}</h3>
+    <p><b style="font-size:28px;color:var(--text)">${words}</b> woorden in ${mins} min<br>${Math.round(pace)} woorden per minuut${better ? ' — <b>je snelste sprint tot nu toe</b>' : ''}</p>
+    <p class="muted">Lees nu nog niet terug. Neem even pauze, of ga meteen door.</p>
+    <div class="btns" style="justify-content:center"><button class="btn ghost" data-close>Klaar</button><button class="btn" id="again">Nog een sprint</button></div></div>`);
+  $('#again').onclick = () => { closeModal(); startSprint(s.min); };
+}
+
+/* ----- Text analysis (shared by style check, analysis and ideas) ----- */
+const STOP = new Set(('de het een en van in op te dat die is was zijn er aan met voor als om niet maar ook dan bij of door naar uit over tot nog zo wat wie hoe waar wel al ze zij hij ik je jij u we wij jullie hun hen hem haar mijn jouw zijn ons onze mij me deze dit daar hier toen nu want omdat dus heb heeft had hebben hadden ben bent wordt werd worden werden zal zou kan kon kunnen moet moest mag wil wilde zich men iets niets alles iemand niemand meer veel weer even toch wel nog geen naar tegen zonder onder tussen achter boven sinds tijdens welke welk zoals waar waarom wanneer elk elke ieder alle andere ander zelf eens ging gaat komt kwam zei zegt was waren').split(' '));
+const FILLERS = ['eigenlijk','gewoon','best wel','best','heel erg','heel','erg','echt','natuurlijk','misschien','enigszins','nogal','vrij','behoorlijk','ontzettend','enorm','helemaal','uiteraard','sowieso','inderdaad','simpelweg','feitelijk','als het ware','in principe','op zich','een beetje','redelijk','vrijwel','zeg maar','ergens','wellicht','dus eigenlijk','toch wel'];
+const FILL_RE = new RegExp('(?<![\\p{L}])(' + FILLERS.sort((a, b) => b.length - a.length).map(f => f.replace(/ /g, '\\s+')).join('|') + ')(?![\\p{L}])', 'giu');
+const PASS_RE = /(?<![\p{L}])(wordt|worden|werd|werden)(?![\p{L}])((?:\s+[\p{L}’'-]+){0,6}?)\s+(ge[\p{L}]+?(?:d|t|en))(?![\p{L}])/giu;
+const SENSES = {
+  zien:   /\b(zag|zie|ziet|zagen|keek|kijk|kijkt|licht|donker|kleur|glans|glinster\w*|schaduw\w*|rood|blauw|groen|geel|wit|zwart|grijs|fel|schitter\w*)\b/gi,
+  horen:  /\b(hoor|hoort|hoorde|geluid\w*|stil|stilte|klonk|klinkt|fluister\w*|ruis\w*|kraak\w*|bonk\w*|zoem\w*|piep\w*|lawaai|zacht\s+gezongen|zong|zingt|schreeuw\w*|galm\w*)\b/gi,
+  ruiken:  /\b(ruik|ruikt|rook|geur\w*|stank|stonk|parfum|muf|fris\w*\s+lucht|lucht\s+van)\b/gi,
+  proeven: /\b(proef|proeft|proefde|smaak|smaakte|zoet|zuur|bitter|zout|hartig|op\s+mijn\s+tong)\b/gi,
+  voelen:  /\b(voel|voelt|voelde|koud|kou|warm|warmte|zacht|ruw|glad|pijn|tinteling|kriebel\w*|huiver\w*|ril\w*|nat|droog|plakkerig)\b/gi
+};
+const syll = w => Math.max(1, (w.toLowerCase().replace(/ij/g, 'i').match(/[aeiouyáéíóúàèëïöü]+/g) || []).length);
+
+function analyse(text){
+  const clean = text.replace(/\+\+[\s\S]*?\+\+/g, m => ' '.repeat(m.length)).replace(/^#{1,6}\s/gm, m => ' '.repeat(m.length));
+  const words = [...clean.matchAll(/[\p{L}\p{N}][\p{L}\p{N}’'-]*/gu)].map(m => ({w: m[0], lw: m[0].toLowerCase(), i: m.index}));
+  const sentences = [];
+  for (const m of clean.matchAll(/[^.!?\n]+(?:[.!?]+["”’']?|\n|$)/g)){
+    const raw = m[0]; const lead = raw.length - raw.trimStart().length;
+    const ws = [...raw.matchAll(/[\p{L}\p{N}][\p{L}\p{N}’'-]*/gu)];
+    if (ws.length) sentences.push({start: m.index + lead, end: m.index + raw.trimEnd().length, n: ws.length, first: ws[0][0].toLowerCase(), text: raw.trim()});
+  }
+  const content = words.filter(x => x.lw.length >= 4 && !STOP.has(x.lw) && !/^\d+$/.test(x.lw));
+  const freq = {}; for (const x of content) freq[x.lw] = (freq[x.lw] || 0) + 1;
+  return {clean, words, sentences, content, freq};
+}
+
+function checkRanges(text){
+  const A = analyse(text), R = [];
+  for (const s of A.sentences){ if (s.n > 35) R.push([s.start, s.end, 'c-xlong', 'xlong']); else if (s.n > 25) R.push([s.start, s.end, 'c-long', 'long']); }
+  for (const m of A.clean.matchAll(FILL_RE)) R.push([m.index, m.index + m[0].length, 'c-fill', 'fill', m[0].toLowerCase()]);
+  for (const m of A.clean.matchAll(PASS_RE)) R.push([m.index, m.index + m[0].length, 'c-pass', 'pass', m[0]]);
+  // repeated content words close together (within 60 words)
+  const last = {};
+  A.content.forEach((x, idx) => {
+    const k = x.lw.length > 6 ? x.lw.slice(0, -2) : x.lw;   // crude stem: lopen/loopt don't match, huizen/huis mostly do
+    if (last[k] !== undefined && idx - last[k].idx <= 60 && x.lw.length >= 5){
+      R.push([last[k].i, last[k].i + last[k].len, 'c-rep', 'rep', x.lw]); R.push([x.i, x.i + x.w.length, 'c-rep', 'rep', x.lw]);
+    }
+    last[k] = {idx, i: x.i, len: x.w.length};
+  });
+  // three sentences in a row starting with the same word
+  for (let i = 2; i < A.sentences.length; i++){
+    const a = A.sentences[i-2], b = A.sentences[i-1], c = A.sentences[i];
+    if (a.first === b.first && b.first === c.first) for (const s of [a, b, c]) R.push([s.start, s.start + s.first.length, 'c-start', 'start', s.first]);
+  }
+  return {ranges: R, A};
+}
+function renderChecks(){
+  const el = $('#checks'); if (!el) return;
+  if (!settings.check || !currentId || previewOn){ el.innerHTML = ''; return; }
+  const text = ta.value, {ranges} = checkRanges(text);
+  if (!ranges.length){ el.textContent = text + '\n​'; return; }
+  const marks = new Array(text.length + 1).fill('');
+  for (const [s, e, cls] of ranges) for (let i = s; i < e && i < text.length; i++) if (!marks[i].includes(cls)) marks[i] += ' ' + cls;
+  let out = '', run = '', cur = null;
+  for (let i = 0; i <= text.length; i++){
+    const m = i < text.length ? marks[i] : '\0';
+    if (m !== cur){ if (run) out += cur ? `<span class="${cur.trim()}">${esc(run)}</span>` : esc(run); run = ''; cur = m; }
+    if (i < text.length) run += text[i];
+  }
+  el.innerHTML = out + '\n​';
+}
+let checkT;
+function scheduleChecks(){ clearTimeout(checkT); checkT = setTimeout(() => { renderChecks(); if (coachOpen && (coachTab === 'style' || coachTab === 'analysis')) renderCoach(); }, 350); }
+
+function coachStyle(){
+  if (!currentId) return '<p class="muted" style="margin-top:14px">Open een tekst om de stijlcheck te gebruiken.</p>';
+  const {ranges} = checkRanges(ta.value);
+  const by = t => ranges.filter(r => r[3] === t);
+  const uniq = (arr, i) => [...new Set(arr.map(r => r[i]))];
+  const longs = by('long').length + by('xlong').length;
+  const fills = by('fill'), pass = by('pass'), reps = uniq(by('rep'), 4), starts = uniq(by('start'), 4);
+  const row = (cls, n, title, sub) => `<div class="chk"><span class="sm ${cls}" style="${cls === 'c-long' ? '' : 'background:var(--pane2)'}">${n}</span><div><b>${title}</b><small>${sub}</small></div></div>`;
+  const total = longs + fills.length + pass.length + reps.length + starts.length;
+  return `<div style="height:8px"></div>
+    <button class="toggle ${settings.check ? 'on' : ''}" data-a="check"><span>Markeringen in de tekst</span><span class="sw"></span></button>
+    <h4>${total ? 'Wat opvalt' : 'Ziet er strak uit'}</h4>
+    ${total === 0 ? `<div style="display:flex;gap:12px;align-items:center"><div style="width:64px;height:64px;flex:none">${cat('happy')}</div><p class="muted" style="margin:0">Geen lange zinnen, vulwoorden of herhalingen gevonden. Mooi werk.</p></div>` : ''}
+    ${longs ? row('c-long', longs, 'Lange zinnen', 'Meer dan 25 woorden (roze = meer dan 35). Knip ze op, of zet er bewust een korte zin naast.') : ''}
+    ${fills.length ? row('c-fill', fills.length, 'Vulwoorden', uniq(fills, 4).slice(0, 8).map(w => '“' + esc(w) + '”').join(', ') + '. Schrap ze en lees of de zin sterker wordt.') : ''}
+    ${pass.length ? row('c-pass', pass.length, 'Lijdende vorm', 'Bijvoorbeeld “' + esc(pass[0][4].slice(0, 50)) + '”. Wie doet het? Maak die persoon het onderwerp.') : ''}
+    ${reps.length ? row('c-rep', reps.length, 'Herhaalde woorden', reps.slice(0, 8).map(w => '“' + esc(w) + '”').join(', ') + ' — dicht bij elkaar gebruikt.') : ''}
+    ${starts.length ? row('c-start', starts.length, 'Zelfde zinsbegin', 'Drie zinnen op rij beginnen met ' + starts.map(w => '“' + esc(w) + '”').join(', ') + '.') : ''}
+    <p class="muted" style="margin-top:12px">Tip: schrijf eerst, check later. Zet de markeringen uit tijdens een sprint.</p>`;
+}
+
+function coachAnalysis(){
+  if (!currentId) return '<p class="muted" style="margin-top:14px">Open een tekst om hem te analyseren.</p>';
+  const A = analyse(ta.value);
+  const nW = A.words.length, nS = A.sentences.length;
+  if (nW < 30) return `<div style="display:flex;gap:12px;align-items:center;margin-top:14px"><div style="width:64px;height:64px;flex:none">${cat('curious')}</div><p class="muted" style="margin:0">Schrijf eerst wat meer (minstens 30 woorden), dan kan ik iets zinnigs over je tekst zeggen.</p></div>`;
+  const avg = nW / Math.max(1, nS);
+  const sd = Math.sqrt(A.sentences.reduce((a, s) => a + (s.n - avg) ** 2, 0) / Math.max(1, nS));
+  const syl = A.words.reduce((a, x) => a + syll(x.w), 0) / nW;
+  const flesch = Math.round(206.835 - 0.93 * avg - 77 * syl);
+  const level = flesch >= 80 ? 'Heel makkelijk' : flesch >= 65 ? 'Makkelijk' : flesch >= 50 ? 'Gemiddeld' : flesch >= 35 ? 'Moeilijk' : 'Zeer moeilijk';
+  const uniq = new Set(A.words.map(x => x.lw)).size / nW;
+  const dialogChars = (ta.value.match(/[“"„«‘][^”"»’\n]{2,}[”"»’]/g) || []).join('').length;
+  const dialog = Math.round(dialogChars / Math.max(1, ta.value.length) * 100);
+  const past = (A.clean.match(/\b(was|waren|had|hadden|zei|ging|kwam|liep|keek|stond|zat|wist|dacht|werd)\b/gi) || []).length;
+  const pres = (A.clean.match(/\b(is|zijn|heeft|hebben|zegt|gaat|komt|loopt|kijkt|staat|zit|weet|denkt|wordt)\b/gi) || []).length;
+  const ik = (A.clean.match(/\b(ik|mij|me|mijn)\b/gi) || []).length, hij = (A.clean.match(/\b(hij|zij|ze|hem|haar)\b/gi) || []).length, je = (A.clean.match(/\b(je|jij|jou|jouw|u|uw)\b/gi) || []).length;
+  const persp = ik > hij && ik > je ? 'Ik-perspectief' : je > ik && je > hij ? 'Je spreekt de lezer aan' : hij > 0 ? 'Hij/zij-perspectief' : '—';
+  const senses = Object.entries(SENSES).map(([k, re]) => [k, (A.clean.match(re) || []).length]);
+  const top = Object.entries(A.freq).sort((a, b) => b[1] - a[1]).slice(0, 6).filter(x => x[1] > 1);
+  const tips = [];
+  if (sd < 4 && nS > 5) tips.push('Je zinnen zijn ongeveer even lang. Wissel af: een korte zin na een lange geeft ritme en nadruk.');
+  if (avg > 20) tips.push('Gemiddeld zijn je zinnen vrij lang. Probeer er een paar op te knippen.');
+  if (avg < 8 && nS > 5) tips.push('Veel korte zinnen geeft tempo. Mooi voor spanning — voor rust kun je zinnen verbinden.');
+  if (past > 4 && pres > 4 && Math.min(past, pres) / Math.max(past, pres) > 0.45) tips.push('Je wisselt tussen verleden en tegenwoordige tijd. Is dat bewust?');
+  const missing = senses.filter(s => !s[1]).map(s => s[0]);
+  if (missing.length >= 3) tips.push('Je gebruikt vooral ' + (senses.filter(s => s[1]).map(s => s[0]).join(' en ') || 'weinig zintuigen') + '. Een geur of geluid maakt een scène direct tastbaarder.');
+  if (uniq < 0.42 && nW > 200) tips.push('Je woordkeus is vrij herhalend. Kijk bij "Stijl" welke woorden vaak terugkomen.');
+  return `
+    <h4>Leesbaarheid</h4>
+    <div class="meter"><span>Niveau (Flesch-Douma)</span><b>${level} · ${flesch}</b></div>
+    <div class="meter"><span>Gemiddelde zinslengte</span><b>${avg.toFixed(1)} woorden</b></div>
+    <div class="meter"><span>Ritme (variatie zinslengte)</span><b>${sd < 4 ? 'Eentonig' : sd < 8 ? 'Gevarieerd' : 'Heel wisselend'}</b></div>
+    <div class="meter"><span>Woordenrijkdom</span><b>${Math.round(uniq * 100)}% unieke woorden</b></div>
+    <h4>Verteller</h4>
+    <div class="meter"><span>Perspectief</span><b>${persp}</b></div>
+    <div class="meter"><span>Tijd</span><b>${past > pres * 1.5 ? 'Verleden tijd' : pres > past * 1.5 ? 'Tegenwoordige tijd' : 'Gemengd'}</b></div>
+    <div class="meter"><span>Dialoog</span><b>${dialog}% van de tekst</b></div>
+    <h4>Zintuigen</h4>
+    <div class="senses">${senses.map(([k, n]) => `<span class="${n ? 'on' : ''}">${k}${n ? ' · ' + n : ''}</span>`).join('')}</div>
+    ${top.length ? `<h4>Kernwoorden</h4><div class="senses">${top.map(([w, n]) => `<span class="on">${esc(w)} · ${n}</span>`).join('')}</div>` : ''}
+    ${tips.length ? `<h4>Tips</h4>${tips.map(t => `<div class="tip">${t}</div>`).join('')}` : ''}`;
+}
+
+/* ----- "Ik zit vast": ideas from rules + your own text ----- */
+function pick(arr, n, seed){
+  const a = arr.slice(); let s = seed * 9301 + 49297;
+  for (let i = a.length - 1; i > 0; i--){ s = (s * 9301 + 49297) % 233280; const j = Math.floor(s / 233280 * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a.slice(0, n);
+}
+function ideas(){
+  const text = currentId ? ta.value : '';
+  const A = analyse(text), nW = A.words.length;
+  const pool = [];
+  const add = (k, q, w, opts = {}) => pool.push({k, q, w, ...opts});
+  if (nW < 15){
+    const starters = [
+      ['Begin klein', 'Beschrijf wat je nu ziet, alsof je het voor iemand opschrijft die blind is.', 'Concreet beginnen haalt de druk eraf.'],
+      ['Herinnering', 'Schrijf over een geur uit je jeugd. Waar was je? Wie was er bij?', 'Geuren openen herinneringen als geen ander zintuig.'],
+      ['Eerste zin', 'Begin met: “Niemand wist dat ik…” en schrijf vijf minuten door.', 'Een geheim is een sterke motor voor een tekst.'],
+      ['Brief', 'Schrijf een brief aan iemand die je nooit meer gesproken hebt.', 'Een lezer in gedachten maakt schrijven persoonlijker.'],
+      ['Lijstje', 'Maak een lijst van tien dingen die je deze week opvielen. Kies er één en schrijf verder.', 'Lijsten zijn een makkelijke opwarmer.'],
+      ['Dialoog', 'Twee mensen wachten op een perron. De trein heeft vertraging. Schrijf alleen wat ze zeggen.', 'Dialoog schrijft vaak sneller dan beschrijving.'],
+      ['Ochtendpagina', 'Schrijf drie pagina’s wat er in je opkomt, zonder te stoppen. Kwaliteit doet er niet toe.', 'De klassieke oefening van Julia Cameron.'],
+      ['Object', 'Pak het dichtstbijzijnde voorwerp. Wie had het hiervoor? Wat heeft het meegemaakt?', 'Een voorwerp met een verleden is een verhaal.']
+    ];
+    for (const s of starters) add(...s);
+    add('Sprint', 'Zet een sprint van 10 minuten en schrijf zonder één keer te stoppen.', 'Je innerlijke criticus kan niet bijhouden.', {sprint: 10});
+    return pick(pool, 3, ideaSeed);
+  }
+  const fiction = /[“"„«]/.test(text) || (A.clean.match(/\b(zei|vroeg|keek|liep|hij|zij)\b/gi) || []).length > nW * 0.025;
+  const lastSentence = A.sentences.length ? A.sentences[A.sentences.length - 1].text : '';
+  const firstSentence = A.sentences.length ? A.sentences[0].text : '';
+  const kw = Object.entries(A.freq).filter(x => x[1] >= 2).sort((a, b) => b[1] - a[1]).map(x => x[0]).slice(0, 5);
+  const recent = A.content.slice(-80).map(x => x.lw).filter(w => w.length >= 5 && !kw.includes(w));
+  const fresh = [...new Set(recent)].slice(-6);
+  const senses = Object.entries(SENSES).filter(([k, re]) => !(A.clean.match(re) || []).length).map(x => x[0]);
+  const hasDialog = /[“"„«‘][^”"»’\n]{2,}[”"»’]/.test(text);
+  const q = w => '«' + esc(w) + '»';
+
+  if (fiction){
+    if (!hasDialog) add('Dialoog', 'Laat iemand iets zeggen wat hij of zij eigenlijk niet wil zeggen.', 'Er staat nog geen dialoog in je tekst. Een uitspraak brengt leven en spanning.');
+    if (senses.length) { const s = senses[(ideaSeed) % senses.length]; add('Zintuig', {zien:'Wat valt je personage op als het nu om zich heen kijkt? Eén detail is genoeg.', horen:'Welk geluid is er op dit moment? Iets ver weg, of juist heel dichtbij?', ruiken:'Wat ruikt je personage hier? Laat de geur iets oproepen.', proeven:'Laat je personage iets eten of drinken. Hoe smaakt het — en waar doet het aan denken?', voelen:'Wat voelt je personage lichamelijk? Kou, een stoel die knelt, een hand op een schouder.'}[s], 'Je gebruikt “' + s + '” nog niet in deze tekst.'); }
+    add('Wending', 'Laat iets misgaan. Wat is het ergste dat er nu zou kunnen gebeuren?', 'Problemen zijn brandstof voor een verhaal.');
+    add('Verlangen', 'Wat wil je hoofdpersoon op dit moment het allerliefst — en wat houdt dat tegen?', 'Verlangen + obstakel = beweging.');
+    add('Tijdsprong', 'Begin de volgende alinea met “Een uur later…” of “Die nacht…”.', 'Niet alles hoeft beschreven; een sprong houdt tempo.');
+    add('Perspectief', 'Schrijf dezelfde scène een paar zinnen lang vanuit iemand anders die erbij is.', 'Een ander perspectief laat zien wat je nog mist.');
+    add('Geheim', 'Wat weet je hoofdpersoon dat de anderen niet weten? Laat het bijna uitlekken.', 'Geheimen geven elke zin een onderstroom.');
+    add('Lichaam', 'Laat een emotie zien via het lichaam in plaats van haar te benoemen.', 'Show, don’t tell: trillende handen zeggen meer dan “ze was bang”.');
+  } else {
+    add('Voorbeeld', 'Geef een concreet voorbeeld of een korte anekdote bij je laatste punt.', 'Voorbeelden maken een betoog geloofwaardig en onthoudbaar.');
+    add('Tegenwerping', 'Wat zou een criticus zeggen van je laatste alinea? Schrijf die tegenwerping op en reageer erop.', 'Een tegengeluid maakt je tekst sterker.');
+    add('Kern', 'Vat in één zin samen wat je lezer moet onthouden. Is je tekst daar al naartoe aan het werken?', 'Een heldere kern geeft richting aan de rest.');
+    add('Lezersvraag', 'Welke vraag heeft je lezer nu? Beantwoord die in de volgende alinea.', 'Schrijven is een gesprek met iemand die niet terug kan praten.');
+    add('Persoonlijk', 'Vertel een moment uit je eigen leven dat dit onderwerp raakt.', 'Persoonlijke ervaring maakt een tekst warm.');
+    add('Structuur', 'Zet je volgende punten eerst als kopjes (##) neer. Vul ze daarna één voor één in.', 'Een skelet maakt een lege pagina minder eng.');
+    add('Waarom', 'Vraag drie keer “waarom?” bij je laatste bewering en schrijf de antwoorden op.', 'Zo kom je bij de echte reden onder je argument.');
+  }
+  for (const w of kw.slice(0, 3)){
+    add('Uit je tekst', `Wat weet je lezer nog niet over ${q(w)}?`, `${q(w)} komt ${A.freq[w]}× voor — het is duidelijk belangrijk. Graaf dieper.`);
+    add('Uit je tekst', fiction ? `Wat als ${q(w)} ineens verdwijnt, kapotgaat of verandert?` : `Wat zou er gebeuren als ${q(w)} er niet was?`, 'Iets wegnemen laat zien waarom het ertoe doet.');
+  }
+  if (fresh.length){ const w = fresh[ideaSeed % fresh.length]; add('Uit je tekst', `Beschrijf ${q(w)} alsof je het voor het eerst ziet.`, 'Je noemde het net. Zoom erop in met één verrassend detail.'); }
+  if (lastSentence){
+    add('Doorschrijven', `Je laatste zin: “${esc(lastSentence.slice(0, 120))}${lastSentence.length > 120 ? '…' : ''}” — stel jezelf de vraag “En toen?” en schrijf het eerste antwoord op.`, 'Het eerste antwoord is vaak goed genoeg om op door te gaan.');
+    const startWord = fiction ? ['Maar', 'Toen', 'Plotseling', 'Niemand'][ideaSeed % 4] : ['Maar', 'Bijvoorbeeld', 'Toch', 'Stel je voor'][ideaSeed % 4];
+    add('Zinsbegin', `Begin je volgende zin met “${startWord}…”`, 'Een vast beginwoord duwt je een richting op.');
+  }
+  if (firstSentence && A.sentences.length > 8) add('Terug naar het begin', `Je begon met: “${esc(firstSentence.slice(0, 110))}${firstSentence.length > 110 ? '…' : ''}” — wat beloofde die zin, en heb je dat al waargemaakt?`, 'Het begin wijst vaak de weg naar het vervolg.');
+  add('Slechtste versie', 'Schrijf het slechtst denkbare vervolg. Overdrijf. Vaak zit er iets bruikbaars in.', 'Perfectionisme is de grootste blokkade.');
+  add('Sprint', 'Zet een sprint van 10 minuten. Niet stoppen, niet verbeteren, niet teruglezen.', 'Snelheid verslaat twijfel.', {sprint: 10});
+  add('Overslaan', 'Sla dit stuk over: zet ++hier nog iets++ neer en schrijf de scène of het punt dat je wél voor je ziet.', 'Je hoeft niet op volgorde te schrijven.');
+  // keep variety: one from the text, one craft technique, one wildcard
+  const fromText = pool.filter(p => /Uit je tekst|Doorschrijven|Terug|Zintuig|Dialoog/.test(p.k));
+  const rest = pool.filter(p => !fromText.includes(p));
+  const a = pick(fromText, 1, ideaSeed), b = pick(rest, 2, ideaSeed + 7);
+  return [...a, ...b];
+}
+let lastIdeas = [];
+function coachStuck(){
+  const list = lastIdeas = ideas();
+  const nW = currentId ? analyse(ta.value).words.length : 0;
+  return `<p class="ctx" style="margin-top:12px">${nW < 15 ? 'Een leeg blad? Kies een opwarmer.' : 'Ideeën op basis van wat je tot nu toe schreef.'}</p>
+    ${list.map((d, i) => `<div class="idea"><div class="k">${esc(d.k)}</div><div class="q">${d.q}</div><div class="w">${d.w}</div>
+      <div class="ia">${d.sprint ? `<button data-sprint="${d.sprint}">Start sprint</button>` : ''}<button data-use="${i}">Als notitie in tekst</button></div></div>`).join('')}
+    <div class="btns" style="display:flex;justify-content:center;margin-top:6px"><button class="btn ghost" data-a="more">Andere ideeën</button></div>`;
+}
+
+/* ----- Nudge when you stall ----- */
+let idleT, typedSinceOpen = false, lastNudge = 0;
+function armNudge(){
+  clearTimeout(idleT); hideNudge();
+  if (settings.nudge === false || sprint) return;
+  idleT = setTimeout(() => {
+    if (!currentId || previewOn || coachOpen || document.hidden || !typedSinceOpen) return;
+    if (Date.now() - lastNudge < 10 * 60000 || analyse(ta.value).words.length < 15) return;
+    lastNudge = Date.now(); $('#nudge').classList.add('show');
+  }, 75000);
+}
+function hideNudge(){ $('#nudge').classList.remove('show'); }
+
+/* ----- Wiring ----- */
+$('#btnCoach').onclick = () => coachOpen ? closeCoach() : openCoach();
+$('#todayCard').onclick = () => { if (isMobile()) setMobile('editor'); openCoach('today'); };
+$('#sprintBadge').onclick = () => openCoach('today');
+$('#nudge').addEventListener('click', e => { if (e.target.closest('.x')){ hideNudge(); return; } openCoach('stuck'); });
+document.addEventListener('mousedown', e => { if (coachOpen && !e.target.closest('#coach') && !e.target.closest('#btnCoach') && !e.target.closest('#todayCard') && !e.target.closest('.modal') && !e.target.closest('#sprintBadge')) closeCoach(); });
+$('#coach').addEventListener('click', e => {
+  const t = e.target.closest('[data-tab]'); if (t){ coachTab = t.dataset.tab; renderCoach(); return; }
+  const g = e.target.closest('[data-dgoal]'); if (g){ stats.goal = stats.goal === +g.dataset.dgoal ? 0 : +g.dataset.dgoal; stats.goalAt = Date.now(); saveStatsSoon(); renderToday(); renderCoach(); return; }
+  const sp = e.target.closest('[data-sprint]'); if (sp){ startSprint(+sp.dataset.sprint); return; }
+  const u = e.target.closest('[data-use]');
+  if (u){
+    const d = lastIdeas[+u.dataset.use]; if (!d) return;
+    if (!currentId) newSheet();
+    const plain = d.q.replace(/<[^>]+>/g, '').replace(/&laquo;|«/g, '“').replace(/&raquo;|»/g, '”').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/\+\+/g, '');
+    const v = ta.value; let pos = ta.selectionEnd; if (document.activeElement !== ta && !ta.selectionEnd) pos = v.length;
+    ta.focus(); ta.setSelectionRange(pos, pos);
+    const before = v.slice(0, pos);
+    insert((before && !before.endsWith('\n\n') ? (before.endsWith('\n') ? '\n' : '\n\n') : '') + '++Idee: ' + plain + '++\n\n');
+    closeCoach(); toast('Idee als notitie toegevoegd — die komt niet in je export');
+    return;
+  }
+  const a = e.target.closest('[data-a]'); if (!a) return;
+  e.preventDefault();
+  if (a.dataset.a === 'more'){ ideaSeed++; renderCoach(); }
+  if (a.dataset.a === 'check'){ settings.check = !settings.check; LS.set('settings', settings); renderChecks(); renderCoach(); }
+  if (a.dataset.a === 'nudge'){ settings.nudge = settings.nudge === false; LS.set('settings', settings); renderCoach(); }
+  if (a.dataset.a === 'stopsprint'){ endSprint(true); }
+});
+ta.addEventListener('input', () => {
+  const w = countWords(ta.value); addWords(w - curWords); curWords = w;
+  typedSinceOpen = true; armNudge(); scheduleChecks();
+});
+ta.addEventListener('keydown', () => hideNudge());
+renderToday(); runSprint();
+setInterval(renderToday, 60000);   // roll over at midnight
 
 /* ---------------- Boot ---------------- */
 applySettings();
@@ -1326,6 +1813,7 @@ if (!sheets[currentId]) currentId = null;
 openSheet(currentId);
 if (!isMobile() && currentId) $('#app').dataset.view = 'editor';
 syncIdle();
+$('#nudgeCat').innerHTML = cat('curious');
 connect();
 })();
 </script>
