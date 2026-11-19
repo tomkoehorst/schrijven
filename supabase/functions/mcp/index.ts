@@ -7,7 +7,7 @@ import { z as z2 } from "npm:zod@4.1.12";
 
 // src/core.js
 import { z } from "npm:zod@4.1.12";
-var VERSION = "1.4.0";
+var VERSION = "1.4.1";
 function createCore(cfg = {}) {
   const SUPABASE_URL = cfg.url || "https://ssnbuwuqacjaxewrmdgg.supabase.co";
   const KEYS = [...new Set([cfg.key, "sb_publishable_4QtjFhDoIjPgvp0gAnPLkg_AqBLnxxz", ...cfg.fallbackKeys || []].filter(Boolean))];
@@ -182,7 +182,7 @@ function createCore(cfg = {}) {
   async function createSource({ url, title, project, note, tags }) {
     await checkBudget(project, "source");
     const id = uid(), now = Date.now();
-    const row = { id, user_id: session.user_id, kind: "article", url, title: title || host(url) || url, site: host(url), byline: "", published: "", excerpt: "", content: "", tags: tags || [], note: note || "", fav: false, created: now, updated: now };
+    const row = { id, user_id: session.user_id, kind: "article", url, title: title || host(url) || url, site: host(url), byline: "", published: "", excerpt: "", content: "", tags: [.../* @__PURE__ */ new Set(["ai", ...tags || []])], note: note || "", fav: false, created: now, updated: now };
     const grp = await projectId(project);
     if (grp) row.grp = grp;
     await upsert("sources", row);
@@ -219,9 +219,19 @@ function createCore(cfg = {}) {
     ]);
     return { sources: (src || []).length, fragments: (sn || []).length };
   }
+  const FREE = { sources: 3, fragments: 6, hours: 2 };
+  const QUESTIONS = "Vraag de gebruiker eerst, en wacht op het antwoord: (1) waarvoor heb je dit nodig \u2014 achtergrond, sc\xE8nedetails of feiten checken? (2) hoe diep \u2014 kort (\xB16 bronnen), gemiddeld (\xB112) of diep (\xB125)? (3) welke focus of periode? (4) wat moet er komen \u2014 tijdlijn, fragmenten, personages, dossier? Roep daarna research_plan aan met zijn antwoord.";
   async function checkBudget(project, kind, adding = 1) {
     const a = await activePlan(project);
-    if (!a) return null;
+    if (!a) {
+      const since = Date.now() - FREE.hours * 36e5;
+      const gid = project ? await projectId(project).catch(() => "") : "";
+      const table = kind === "source" ? "sources" : "snippets";
+      const rows = await rest("GET", `${table}?select=id&created=gte.${since}&tags=cs.${enc('["ai"]')}${gid ? "&grp=eq." + gid : ""}&limit=500`);
+      const max2 = kind === "source" ? FREE.sources : FREE.fragments, have2 = (rows || []).length;
+      if (have2 + adding > max2) throw new Error(`Zonder onderzoeksplan mag je maar ${max2} ${kind === "source" ? "bronnen" : "fragmenten"} per ${FREE.hours} uur bewaren (er zijn er al ${have2}). Stop met bewaren. ${QUESTIONS}`);
+      return null;
+    }
     const c = await planCounts(a.g.id, a.r.start);
     const max = kind === "source" ? a.r.max_sources : a.r.max_fragments, have = kind === "source" ? c.sources : c.fragments;
     if (have + adding > max) throw new Error(`Limiet van het onderzoeksplan bereikt (${have}/${max} ${kind === "source" ? "bronnen" : "fragmenten"}, diepte \u201C${a.r.depth}\u201D). Bewaar niets meer: vat samen wat je hebt en vraag de gebruiker of je door mag (dan research_plan opnieuw aanroepen met een hoger maximum) of rond af met finish_research.`);
@@ -259,7 +269,7 @@ function createCore(cfg = {}) {
     await upsert("snippets", row);
     return { row, source };
   }
-  const RULE_TEXT = "Bij een onderzoeksvraag: stel de gebruiker eerst een paar korte vragen (doel, diepte kort/gemiddeld/diep, focus of periode, wat er gemaakt moet worden) en leg het vast met research_plan v\xF3\xF3r je iets bewaart.";
+  const RULE_TEXT = "ONDERZOEK: stel de gebruiker bij een onderzoeksvraag EERST deze vragen en wacht op het antwoord \u2014 doel (achtergrond/sc\xE8nes/feiten), diepte (kort/gemiddeld/diep), focus of periode, en wat er moet komen \u2014 en leg het vast met research_plan. Zonder plan weigert de koppeling na een paar items.";
   const ok = (text) => ({ content: [{ type: "text", text }] });
   const fail = (e) => ({ content: [{ type: "text", text: "Dat lukte niet: " + (e.message || e) }], isError: true });
   const like = (q) => `*${String(q).replace(/[,()*%\\]/g, " ").trim()}*`;
@@ -274,6 +284,7 @@ function createCore(cfg = {}) {
     {
       project: z.string(),
       onderwerp: z.string(),
+      antwoord_gebruiker: z.string().min(3).describe("Het antwoord van de gebruiker op je vragen, letterlijk overgenomen uit de chat. Verzin dit nooit zelf: heb je de vragen nog niet gesteld, stel ze dan eerst en roep dit pas aan na zijn antwoord."),
       diepte: z.enum(["kort", "gemiddeld", "diep"]).describe("kort \u2248 6 bronnen/20 fragmenten, gemiddeld \u2248 12/40, diep \u2248 25/90"),
       doel: z.string().optional().describe("Waarvoor de gebruiker het nodig heeft"),
       focus: z.string().optional().describe("Afbakening: periode, personen, aspecten"),
@@ -287,7 +298,7 @@ function createCore(cfg = {}) {
         const g = gs.find((x) => x.name.toLowerCase() === a.project.toLowerCase()) || gs.find((x) => x.name.toLowerCase().includes(a.project.toLowerCase()));
         if (!g) return fail(new Error(`Project \u201C${a.project}\u201D bestaat niet. Maak het eerst met create_project.`));
         const d = DEPTHS[a.diepte];
-        g.research = { start: Date.now(), depth: a.diepte, topic: a.onderwerp, goal: a.doel || "", focus: a.focus || "", max_sources: a.max_bronnen || d.sources, max_fragments: a.max_fragmenten || d.fragments, done: false };
+        g.research = { start: Date.now(), depth: a.diepte, topic: a.onderwerp, answer: a.antwoord_gebruiker, goal: a.doel || "", focus: a.focus || "", max_sources: a.max_bronnen || d.sources, max_fragments: a.max_fragmenten || d.fragments, done: false };
         await saveGroups(gs);
         return ok(`Onderzoeksplan vastgelegd voor \u201C${g.name}\u201D: ${a.onderwerp} \u2014 diepte ${a.diepte}, maximaal ${g.research.max_sources} bronnen en ${g.research.max_fragments} fragmenten (tijdlijnpunten tellen als fragment). Kies de beste bronnen in plaats van zoveel mogelijk; sla geen dubbele of oppervlakkige pagina's op. Het plan geldt ${PLAN_HOURS} uur of tot finish_research.`);
       } catch (e) {

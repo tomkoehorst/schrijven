@@ -1,6 +1,6 @@
 // Schrijfkamer — kern van de Claude-koppeling (gedeeld door de pc-extensie en de online koppeling)
 import { z } from 'zod';
-export const VERSION = '1.4.0';
+export const VERSION = '1.4.1';
 export function createCore(cfg = {}) {
 const SUPABASE_URL = cfg.url || 'https://ssnbuwuqacjaxewrmdgg.supabase.co';
 // Keys to try, in order; the first that the project accepts is remembered.
@@ -134,7 +134,7 @@ async function ensureSource(args) {
 async function createSource({ url, title, project, note, tags }) {
   await checkBudget(project, 'source');
   const id = uid(), now = Date.now();
-  const row = { id, user_id: session.user_id, kind: 'article', url, title: title || host(url) || url, site: host(url), byline: '', published: '', excerpt: '', content: '', tags: tags || [], note: note || '', fav: false, created: now, updated: now };
+  const row = { id, user_id: session.user_id, kind: 'article', url, title: title || host(url) || url, site: host(url), byline: '', published: '', excerpt: '', content: '', tags: [...new Set(['ai', ...(tags || [])])], note: note || '', fav: false, created: now, updated: now };
   const grp = await projectId(project); if (grp) row.grp = grp;
   await upsert('sources', row);
   let fetched = false;
@@ -167,8 +167,20 @@ async function planCounts(gid, since) {
   ]);
   return { sources: (src || []).length, fragments: (sn || []).length };
 }
+const FREE = { sources: 3, fragments: 6, hours: 2 };
+const QUESTIONS = 'Vraag de gebruiker eerst, en wacht op het antwoord: (1) waarvoor heb je dit nodig — achtergrond, scènedetails of feiten checken? (2) hoe diep — kort (±6 bronnen), gemiddeld (±12) of diep (±25)? (3) welke focus of periode? (4) wat moet er komen — tijdlijn, fragmenten, personages, dossier? Roep daarna research_plan aan met zijn antwoord.';
 async function checkBudget(project, kind, adding = 1) {
-  const a = await activePlan(project); if (!a) return null;
+  const a = await activePlan(project);
+  if (!a) {
+    // Without a research plan only a few quick saves are allowed; bulk research needs the user's answers first.
+    const since = Date.now() - FREE.hours * 3600e3;
+    const gid = project ? await projectId(project).catch(() => '') : '';
+    const table = kind === 'source' ? 'sources' : 'snippets';
+    const rows = await rest('GET', `${table}?select=id&created=gte.${since}&tags=cs.${enc('["ai"]')}${gid ? '&grp=eq.' + gid : ''}&limit=500`);
+    const max = kind === 'source' ? FREE.sources : FREE.fragments, have = (rows || []).length;
+    if (have + adding > max) throw new Error(`Zonder onderzoeksplan mag je maar ${max} ${kind === 'source' ? 'bronnen' : 'fragmenten'} per ${FREE.hours} uur bewaren (er zijn er al ${have}). Stop met bewaren. ${QUESTIONS}`);
+    return null;
+  }
   const c = await planCounts(a.g.id, a.r.start);
   const max = kind === 'source' ? a.r.max_sources : a.r.max_fragments, have = kind === 'source' ? c.sources : c.fragments;
   if (have + adding > max) throw new Error(`Limiet van het onderzoeksplan bereikt (${have}/${max} ${kind === 'source' ? 'bronnen' : 'fragmenten'}, diepte “${a.r.depth}”). Bewaar niets meer: vat samen wat je hebt en vraag de gebruiker of je door mag (dan research_plan opnieuw aanroepen met een hoger maximum) of rond af met finish_research.`);
@@ -196,7 +208,7 @@ async function saveSnippet({ text, date, tags, note, source_url, source_title, p
   await upsert('snippets', row);
   return { row, source };
 }
-const RULE_TEXT = "Bij een onderzoeksvraag: stel de gebruiker eerst een paar korte vragen (doel, diepte kort/gemiddeld/diep, focus of periode, wat er gemaakt moet worden) en leg het vast met research_plan vóór je iets bewaart.";
+const RULE_TEXT = 'ONDERZOEK: stel de gebruiker bij een onderzoeksvraag EERST deze vragen en wacht op het antwoord — doel (achtergrond/scènes/feiten), diepte (kort/gemiddeld/diep), focus of periode, en wat er moet komen — en leg het vast met research_plan. Zonder plan weigert de koppeling na een paar items.';
 const ok = text => ({ content: [{ type: 'text', text }] });
 const fail = e => ({ content: [{ type: 'text', text: 'Dat lukte niet: ' + (e.message || e) }], isError: true });
 const like = q => `*${String(q).replace(/[,()*%\\]/g, ' ').trim()}*`;
@@ -212,6 +224,7 @@ server.tool('research_plan',
   'Leg een onderzoeksplan vast vóórdat je voor de gebruiker gaat onderzoeken en bewaren. Stel EERST in de chat een paar korte vragen en wacht op het antwoord: (1) waarvoor is het — achtergrond, scènedetails, feiten checken; (2) hoe diep — kort, gemiddeld of diep; (3) welke focus of periode; (4) wat moet er komen — tijdlijn, fragmenten, personages, dossier. Roep dit daarna aan. De koppeling bewaakt het maximum: daarboven weigert hij nieuwe bronnen en fragmenten tot de gebruiker toestemming geeft.',
   {
     project: z.string(), onderwerp: z.string(),
+    antwoord_gebruiker: z.string().min(3).describe('Het antwoord van de gebruiker op je vragen, letterlijk overgenomen uit de chat. Verzin dit nooit zelf: heb je de vragen nog niet gesteld, stel ze dan eerst en roep dit pas aan na zijn antwoord.'),
     diepte: z.enum(['kort', 'gemiddeld', 'diep']).describe('kort ≈ 6 bronnen/20 fragmenten, gemiddeld ≈ 12/40, diep ≈ 25/90'),
     doel: z.string().optional().describe('Waarvoor de gebruiker het nodig heeft'),
     focus: z.string().optional().describe('Afbakening: periode, personen, aspecten'),
@@ -224,7 +237,7 @@ server.tool('research_plan',
       const gs = await groups(); const g = gs.find(x => x.name.toLowerCase() === a.project.toLowerCase()) || gs.find(x => x.name.toLowerCase().includes(a.project.toLowerCase()));
       if (!g) return fail(new Error(`Project “${a.project}” bestaat niet. Maak het eerst met create_project.`));
       const d = DEPTHS[a.diepte];
-      g.research = { start: Date.now(), depth: a.diepte, topic: a.onderwerp, goal: a.doel || '', focus: a.focus || '', max_sources: a.max_bronnen || d.sources, max_fragments: a.max_fragmenten || d.fragments, done: false };
+      g.research = { start: Date.now(), depth: a.diepte, topic: a.onderwerp, answer: a.antwoord_gebruiker, goal: a.doel || '', focus: a.focus || '', max_sources: a.max_bronnen || d.sources, max_fragments: a.max_fragmenten || d.fragments, done: false };
       await saveGroups(gs);
       return ok(`Onderzoeksplan vastgelegd voor “${g.name}”: ${a.onderwerp} — diepte ${a.diepte}, maximaal ${g.research.max_sources} bronnen en ${g.research.max_fragments} fragmenten (tijdlijnpunten tellen als fragment). Kies de beste bronnen in plaats van zoveel mogelijk; sla geen dubbele of oppervlakkige pagina's op. Het plan geldt ${PLAN_HOURS} uur of tot finish_research.`);
     } catch (e) { return fail(e); }
