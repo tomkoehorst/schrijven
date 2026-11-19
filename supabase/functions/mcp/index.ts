@@ -5,7 +5,7 @@ import { z as z2 } from "npm:zod@4.1.12";
 
 // src/core.js
 import { z } from "npm:zod@4.1.12";
-var VERSION = "1.6.0";
+var VERSION = "1.6.1";
 function cleanInline(s) {
   return String(s).replace(/<\/?(b|strong|i|em|u)>/gi, "").replace(/(\*\*|__)(?=\S)(.+?)(?<=\S)\1/g, "$2").replace(/(^|[^*\w])(\*|_)(?=[^\s*_])([^*_\n]+?)(?<=\S)\2(?![*\w])/g, "$1$3").replace(/\*\*/g, "").replace(/`([^`\n]+)`/g, "$1").replace(/~~(.+?)~~/g, "$1").replace(/(^|[^\[])\[([^\[\]\n]+)\]\((https?:[^)\s]+)\)/g, "$1$2 ($3)");
 }
@@ -346,7 +346,7 @@ function createCore(cfg = {}) {
   );
   server.tool(
     "set_tags",
-    'Geef bronnen en fragmenten (nieuwe) tags om de verzameling te ordenen. De EERSTE tag is het hoofdthema waarop de app groepeert. De tag "ai" blijft altijd behouden. Voegt geen items toe en telt niet mee voor het onderzoeksplan.',
+    'Geef bronnen en fragmenten (nieuwe) tags om de verzameling te ordenen. De EERSTE tag is het hoofdthema waarop de app groepeert. Houd het overzichtelijk: kies samen met de gebruiker 4 \xE0 6 BREDE thema\u2019s voor het hele project (bv. Ambacht, Munt, Politiek, Personen, Plaatsen) en gebruik voor elk item \xE9\xE9n daarvan als eerste tag \u2014 geen bijna-dubbele thema\u2019s (Ambacht/Ambachtsman/Stempelsnijder) en geen thema\u2019s voor \xE9\xE9n item; details mogen als 2e/3e tag. De tag "ai" blijft altijd behouden. Voegt geen items toe en telt niet mee voor het onderzoeksplan.',
     {
       items: z.array(z.object({
         id: z.string(),

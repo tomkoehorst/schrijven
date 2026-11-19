@@ -281,7 +281,7 @@ server.tool('list_collection',
   });
 
 server.tool('set_tags',
-  'Geef bronnen en fragmenten (nieuwe) tags om de verzameling te ordenen. De EERSTE tag is het hoofdthema waarop de app groepeert. Houd het overzichtelijk: kies samen met de gebruiker 4 à 6 BREDE thema's voor het hele project (bv. Ambacht, Munt, Politiek, Personen, Plaatsen) en gebruik voor elk item één daarvan als eerste tag — geen bijna-dubbele thema's (Ambacht/Ambachtsman/Stempelsnijder) en geen thema's voor één item; details mogen als 2e/3e tag. De tag "ai" blijft altijd behouden. Voegt geen items toe en telt niet mee voor het onderzoeksplan.',
+  'Geef bronnen en fragmenten (nieuwe) tags om de verzameling te ordenen. De EERSTE tag is het hoofdthema waarop de app groepeert. Houd het overzichtelijk: kies samen met de gebruiker 4 à 6 BREDE thema’s voor het hele project (bv. Ambacht, Munt, Politiek, Personen, Plaatsen) en gebruik voor elk item één daarvan als eerste tag — geen bijna-dubbele thema’s (Ambacht/Ambachtsman/Stempelsnijder) en geen thema’s voor één item; details mogen als 2e/3e tag. De tag "ai" blijft altijd behouden. Voegt geen items toe en telt niet mee voor het onderzoeksplan.',
   {
     items: z.array(z.object({
       id: z.string(), type: z.enum(['bron', 'fragment']),
