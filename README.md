@@ -51,6 +51,8 @@ Download [schrijfkamer-claude.mcpb](https://github.com/tomkoehorst/schrijven/raw
 - **Onderzoeksopdracht** (prompt `onderzoek_project`): Claude zoekt op het web en vult het project met bronnen, tijdlijn, fragmenten en een onderzoeksdossier met open vragen (??)
 - Extra gereedschappen: `create_project`, `project_overview`, `create_text`, `append_to_text`, `add_timeline_events`
 
+**Op je telefoon en claude.ai:** zet de online koppeling `supabase/functions/mcp` neer (Edge Function `mcp`, Verify JWT uit, secrets `MCP_SECRET`, `SCHRIJF_EMAIL`, `SCHRIJF_PASSWORD`) en voeg op claude.ai bij Instellingen → Connectors een *custom connector* toe met de link `https://<project>.supabase.co/functions/v1/mcp/<MCP_SECRET>`.
+
 Broncode in `mcp/`.
 
 ## Ontdek
