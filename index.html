@@ -613,6 +613,30 @@ body.capture .dialog{box-shadow:none;border:1px solid var(--line)}
 .spchar{display:flex;gap:10px;align-items:center}.spc{display:block;min-width:0}.spc span{display:block;font-size:12.5px;color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 @media (max-width:1100px){ .csheet{grid-template-columns:1fr}.cside{grid-column:1;grid-row:auto} }
 @media (max-width:820px){ .chead{padding:10px 12px}.chead h1{font-size:21px}.cgrid,.csheet{padding:4px 12px}.cfields{grid-template-columns:1fr}.ctop{gap:12px;padding:12px}.cname{font-size:21px} }
+/* ---------- Overzicht ---------- */
+.otools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:0 4px 8px;font-size:12.5px;color:var(--muted);font-weight:800}
+.otools label{display:flex;gap:6px;align-items:center}
+.otools select{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:4px 8px;font:inherit;font-weight:700;color:var(--text);outline:none}
+.btools{padding:0 0 12px;max-width:none}
+.ofilters{display:flex;gap:5px;flex-wrap:wrap;padding:0 4px 10px}
+.ofilters .chip{padding:4px 10px;font-size:12px}
+.ogroup{margin-bottom:6px}
+.ohead{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:7px 8px;border-radius:9px;font-size:13.5px;position:sticky;top:0;background:var(--pane2);z-index:1}
+.bbody .ohead{background:var(--bg);font-size:15px;padding:8px 4px;margin-top:6px}
+.ohead:hover{background:var(--accent-soft)}
+.ohead small{margin-left:auto;color:var(--muted);font-weight:800;background:var(--card);border-radius:999px;padding:1px 8px}
+.ohead .chev{color:var(--muted);width:12px}
+.obody{padding:2px 0 4px}
+.srow2{display:block;width:100%;text-align:left;padding:8px 36px 8px 12px;border-radius:10px;position:relative;border:1px solid transparent;margin-bottom:2px}
+.srow2:hover{background:rgba(94,156,128,.06)}
+.srow2.on{background:var(--card);box-shadow:var(--shadow);border-color:var(--line)}
+.srow2 b{display:block;font-size:13.5px;font-weight:700;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow2 .rm{display:block;font-size:11.5px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow2 .rm em{font-style:normal;color:var(--accent);font-weight:800}
+.srow2 .del{position:absolute;right:6px;top:6px;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--faint);opacity:0}
+.srow2:hover .del{opacity:1}
+.srow2 .del svg{width:15px;height:15px}
+.srow2.loading .rm::after{content:' · ophalen…'}
 /* ---------- Mobile ---------- */
 @media (max-width:820px){
   .app,.app.hide-lib,.app.focus{display:block;position:relative}
@@ -1664,6 +1688,7 @@ function renderPanel(){
     </div>
     <h4>Tekst</h4>
     <div class="actions">
+      <button class="act" data-a="clean" title="Haalt **, *, tabellen en andere opmaaktekens weg; kopjes en lijstjes blijven">${icon('copy','')}Schone tekst</button>
       <button class="act" data-a="dup">${icon('dup','')}Dupliceren</button>
       ${s.trashed ? `<button class="act" data-a="restore">${icon('restore','')}Terugzetten</button><button class="act danger" data-a="destroy" style="grid-column:span 2">${icon('trash','')}Definitief verwijderen</button>`
         : `<button class="act danger" data-a="trash">${icon('trash','')}Naar prullenbak</button>`}
@@ -1700,6 +1725,7 @@ $('#panel').addEventListener('click', async e => {
     case 'copytxt': copy(plainText(ta.value), 'Tekst gekopieerd'); break;
     case 'dlmd': download(name + '.md', exportMd(ta.value), 'text/markdown'); break;
     case 'dlhtml': download(name + '.html', `<!DOCTYPE html><html lang="nl"><head><meta charset="utf-8"><title>${esc(titleOf(s))}</title><style>body{font-family:Georgia,serif;max-width:680px;margin:60px auto;padding:0 20px;line-height:1.7;color:#3D3A44}blockquote{border-left:3px solid #CFC6EA;margin:1em 0;padding:.2em 1em;color:#8A8594}mark{background:#F8EBB8}</style></head><body>${mdToHtml(ta.value)}</body></html>`, 'text/html'); break;
+    case 'clean': cleanCurrent(); renderPanel(); break;
     case 'dup': { const id = uid(); sheets[id] = {...cleanSheet(s), created:Date.now(), updated:Date.now(), trashed:false}; saveSheet(id, true); openSheet(id); renderLib(); toast('Gedupliceerd'); break; }
     case 'trash': s.trashed = true; touch(s, false); closePanel(); openSheet(null); renderLib(); toast('Naar de prullenbak verplaatst'); break;
     case 'restore': s.trashed = false; touch(s, false); ta.readOnly = false; renderPanel(); renderLib(); renderList(); toast('Teruggezet'); break;
@@ -2521,6 +2547,26 @@ async function cleanupSources(){
     toast(`Opgeruimd: ${merged} dubbele bron${merged === 1 ? '' : 'nen'} samengevoegd${fixed ? ', ' + fixed + ' titel' + (fixed === 1 ? '' : 's') + ' hersteld' : ''}`);
   };
 }
+/* ================= Overzicht: groeperen, sorteren, filteren ================= */
+let srcOpts = Object.assign({group: 'theme', sort: 'new', filter: 'all'}, LS.get('srcOpts', {}));
+let boardOpts = Object.assign({view: 'theme', sort: 'new'}, LS.get('boardOpts', {}));
+let collapsed = new Set(LS.get('collapsed', []));
+const THEME_SKIP = new Set(['ai', 'wikidata', 'uitgezocht']);
+const themeOf = x => { const t = (x.tags || []).find(t => !THEME_SKIP.has(String(t).toLowerCase())); return t ? t.charAt(0).toUpperCase() + t.slice(1).replace(/-/g, ' ') : ''; };
+function fragCounts(){ const m = {}; for (const n of Object.values(snippets)) if (n.source_id) m[n.source_id] = (m[n.source_id] || 0) + 1; return m; }
+function groupHtml(key, label, count, inner, prefix){
+  const id = prefix + ':' + key, closed = collapsed.has(id);
+  return `<div class="ogroup ${closed ? 'closed' : ''}"><button class="ohead" data-ogtoggle="${esc(id)}"><span class="chev">${closed ? '▸' : '▾'}</span><b>${esc(label)}</b><small>${count}</small></button>${closed ? '' : `<div class="obody">${inner}</div>`}</div>`;
+}
+function groupBy(items, keyFn, labelOrder){
+  const m = new Map(); for (const x of items){ const k = keyFn(x) || ''; if (!m.has(k)) m.set(k, []); m.get(k).push(x); }
+  return [...m.entries()].sort((a, b) => (a[0] === '' ? 1 : 0) - (b[0] === '' ? 1 : 0) || b[1].length - a[1].length || a[0].localeCompare(b[0], 'nl'));
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-ogtoggle]'); if (!t) return;
+  const id = t.dataset.ogtoggle; collapsed.has(id) ? collapsed.delete(id) : collapsed.add(id); LS.set('collapsed', [...collapsed]);
+  if (view === 'sources') renderSources(); else if (isBoard()) renderBoard();
+});
 function renderSources(){
   $('#listTitle').textContent = query.trim() ? 'Bronnen · zoeken' : 'Bronnen';
   const el = $('#sheets'), arr = visibleSources();
@@ -2531,14 +2577,33 @@ function renderSources(){
     return;
   }
   const probs = sourceProblems(), nProb = probs.dupes.reduce((a, g) => a + g.length - 1, 0) + probs.blocked.length;
-  el.innerHTML = projChips() + (nProb ? `<button class="cleanbar" data-a="cleanup">🧹 ${nProb} bron${nProb === 1 ? '' : 'nen'} op te ruimen (dubbel of geblokkeerd)</button>` : '') + arr.map(s => `<button class="src ${s.id === currentSrc ? 'on' : ''} ${s._pending ? 'loading' : ''}" data-src="${s.id}">
-    <span class="del" role="button" data-sdel="${s.id}" title="Verwijderen" aria-label="Verwijderen">${icon('trash','')}</span>
-    <div class="s">${s.fav ? '★ ' : ''}${esc(KIND[s.kind] || 'Bron')} · ${esc(s.site || host(s.url))}</div>
-    <div class="t">${esc(s.title || s.url)}</div>
-    ${s.note ? `<div class="x">✎ ${esc(s.note)}</div>` : s.excerpt ? `<div class="x">${esc(s.excerpt)}</div>` : ''}
-    ${(s.tags || []).length ? `<div class="tg">${s.tags.map(t => `<span>#${esc(t)}</span>`).join('')}</div>` : ''}
-  </button>`).join('');
+  const fc = fragCounts();
+  const used = s => (fc[s.id] || 0) > 0 || (typeof usedIn === 'function' && usedIn(s).length > 0);
+  const F = {all: () => true, frag: s => (fc[s.id] || 0) > 0, unused: s => !used(s), fav: s => s.fav, empty: s => srcContent[s.id] === '' || (!s.excerpt && srcContent[s.id] === undefined && s.kind === 'article' && /niet ophalen/.test(s.note || ''))};
+  let list = arr.filter(F[srcOpts.filter] || F.all);
+  const S = {new: (a, b) => b.created - a.created, title: (a, b) => (a.title || '').localeCompare(b.title || '', 'nl'), site: (a, b) => (a.site || host(a.url)).localeCompare(b.site || host(b.url), 'nl'), frags: (a, b) => (fc[b.id] || 0) - (fc[a.id] || 0) || b.created - a.created};
+  list.sort(S[srcOpts.sort] || S.new);
+  const row = s => `<button class="srow2 ${s.id === currentSrc ? 'on' : ''} ${s._pending ? 'loading' : ''}" data-src="${s.id}">
+      <span class="del" role="button" data-sdel="${s.id}" title="Verwijderen" aria-label="Verwijderen">${icon('trash','')}</span>
+      <b>${s.fav ? '★ ' : ''}${esc(s.title || s.url)}</b>
+      <span class="rm">${esc(KIND[s.kind] || 'Bron')} · ${esc(s.site || host(s.url))}${fc[s.id] ? ` · <em>${fc[s.id]} fragment${fc[s.id] === 1 ? '' : 'en'}</em>` : ''}${themeOf(s) && srcOpts.group !== 'theme' ? ' · #' + esc(themeOf(s)) : ''}</span></button>`;
+  const keyFn = {theme: s => themeOf(s), kind: s => KIND[s.kind] || 'Bron', site: s => s.site || host(s.url), none: () => 'all'}[srcOpts.group] || (() => 'all');
+  const noneLabel = {theme: 'Zonder thema', kind: 'Overig', site: 'Onbekend'}[srcOpts.group] || '';
+  const groups_ = srcOpts.group === 'none' ? [['all', list]] : groupBy(list, keyFn);
+  const tools = `<div class="otools">
+      <label>Groep <select data-so="group"><option value="theme">Thema</option><option value="kind">Soort</option><option value="site">Website</option><option value="none">Geen</option></select></label>
+      <label>Sorteer <select data-so="sort"><option value="new">Nieuwste</option><option value="title">Titel</option><option value="site">Website</option><option value="frags">Meeste fragmenten</option></select></label>
+    </div>
+    <div class="ofilters">${[['all', 'Alles'], ['frag', 'Met fragmenten'], ['unused', 'Nog niet gebruikt'], ['fav', '★ Favoriet'], ['empty', 'Zonder tekst']].map(([k, l]) => `<button class="chip ${srcOpts.filter === k ? 'on' : ''}" data-sf="${k}">${l}</button>`).join('')}</div>`;
+  const listHtml = !list.length ? '<p class="muted" style="padding:8px">Geen bronnen voor dit filter.</p>'
+    : srcOpts.group === 'none' ? list.map(row).join('')
+    : groups_.map(([k, items]) => groupHtml(k, k || noneLabel, items.length, items.map(row).join(''), 'src-' + srcOpts.group)).join('');
+  const untagged = srcOpts.group === 'theme' && groups_.length === 1 && groups_[0][0] === '' && list.length > 5;
+  el.innerHTML = projChips() + (nProb ? `<button class="cleanbar" data-a="cleanup">🧹 ${nProb} bron${nProb === 1 ? '' : 'nen'} op te ruimen (dubbel of geblokkeerd)</button>` : '') + tools
+    + (untagged ? `<div class="tip" style="margin:0 4px 8px;font-size:12.5px">Je bronnen hebben nog geen thema's. Vraag Claude: <i>“Orden mijn bronnen en fragmenten in ${esc(grpName(projFilter) || 'mijn project')} in thema's.”</i></div>` : '') + listHtml;
+  el.querySelectorAll('[data-so]').forEach(sel => { sel.value = srcOpts[sel.dataset.so]; sel.onchange = () => { srcOpts[sel.dataset.so] = sel.value; LS.set('srcOpts', srcOpts); renderSources(); }; });
 }
+document.addEventListener('click', e => { const f = e.target.closest('[data-sf]'); if (!f) return; srcOpts.filter = f.dataset.sf; LS.set('srcOpts', srcOpts); renderSources(); });
 let srcSearchT;
 function srcServerSearch(){
   clearTimeout(srcSearchT); srcServerHits = null;
@@ -2952,8 +3017,16 @@ function renderBoard(){
     }
   } else {
     body = `<div class="capture"><textarea id="capIn" rows="1" placeholder="Wat schiet je te binnen? Enter om te bewaren"></textarea></div>`;
-    const sorted = list.sort((a, b) => b.created - a.created);
-    body += sorted.length ? `<div class="cards">${sorted.map(card).join('')}</div>`
+    const dk = x => (parseDate(x.date) || {key: '999999'}).key;
+    const SB = {new: (a, b) => b.created - a.created, old: (a, b) => a.created - b.created, date: (a, b) => dk(a).localeCompare(dk(b)) || a.created - b.created};
+    const sorted = list.sort(SB[boardOpts.sort] || SB.new);
+    body += `<div class="otools btools"><div class="seg">${[['all', 'Alles'], ['theme', 'Per thema'], ['source', 'Per bron']].map(([k, l]) => `<button data-bv="${k}" class="${boardOpts.view === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+      <label>Sorteer <select data-bs><option value="new">Nieuwste</option><option value="old">Oudste</option><option value="date">Op datum (tijdlijn)</option></select></label></div>`;
+    const cardsOf = arr => `<div class="cards">${arr.map(card).join('')}</div>`;
+    if (sorted.length && boardOpts.view !== 'all'){
+      const keyFn = boardOpts.view === 'theme' ? themeOf : x => (sources[x.source_id] || {}).title || '';
+      body += groupBy(sorted, keyFn).map(([k, items]) => groupHtml(k, k || (boardOpts.view === 'theme' ? 'Zonder thema' : 'Losse gedachten (geen bron)'), items.length, cardsOf(items), 'bd-' + boardOpts.view)).join('');
+    } else body += sorted.length ? cardsOf(sorted)
       : `<div class="empty">${cat('sleepy')}${boardQ || boardTag ? 'Niets gevonden.' : 'Je braindump is nog leeg.<br>Typ hierboven een gedachte, of selecteer tekst in een <a href="#" data-goview="sources" style="color:var(--accent);font-weight:800">bron</a> en kies <b>Fragment</b>.'}</div>`;
   }
   const keepQ = document.activeElement && document.activeElement.id === 'boardQ';
@@ -2967,6 +3040,7 @@ function renderBoard(){
     ${tags.length || noDate ? `<div class="btags"><button class="chip ${!boardTag ? 'on' : ''}" data-btag="">Alles · ${all.length}</button>${tags.map(t => `<button class="chip ${boardTag === t ? 'on' : ''}" data-btag="${esc(t)}">#${esc(t)}</button>`).join('')}${!tl && noDate ? `<button class="chip ${boardTag === '__nodate' ? 'on' : ''}" data-btag="__nodate">zonder datum · ${noDate}</button>` : ''}</div>` : ''}
     <div class="bbody">${body}</div>`;
   if (keepQ){ const q = $('#boardQ'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+  const bs = el.querySelector('[data-bs]'); if (bs){ bs.value = boardOpts.sort; bs.onchange = () => { boardOpts.sort = bs.value; LS.set('boardOpts', boardOpts); renderBoard(); }; }
   const cap = $('#capIn');
   if (cap){
     const fit = () => { cap.style.height = 'auto'; cap.style.height = cap.scrollHeight + 'px'; };
@@ -2984,6 +3058,7 @@ function renderBoard(){
 $('#board').addEventListener('click', e => {
   const t = e.target;
   const gv = t.closest('[data-goview]'); if (gv){ e.preventDefault(); setView(gv.dataset.goview); return; }
+  const bv = t.closest('[data-bv]'); if (bv){ boardOpts.view = bv.dataset.bv; LS.set('boardOpts', boardOpts); renderBoard(); return; }
   const bt = t.closest('[data-btag]'); if (bt){ boardTag = bt.dataset.btag; renderBoard(); return; }
   const ct = t.closest('[data-tag]'); if (ct){ boardTag = ct.dataset.tag; renderBoard(); return; }
   const os = t.closest('[data-opensrc]'); if (os){ e.preventDefault(); setView('sources'); openSource(os.dataset.opensrc); return; }
@@ -3567,6 +3642,56 @@ function fragmentFromSelection(){
 function citeFromSelection(){ if (selectedSourceText()) citeSelection(); else toast('Selecteer eerst tekst in een bron'); }
 function sprintToggle(){ if (sprint) endSprint(true); else startSprint(settings.sprintMin || 25); }
 
+/* Schone tekst: haal Markdown-opmaaktekens weg (**vet**, *cursief*, `code`, tabellen, ---),
+   maar laat kopjes (#), lijstjes (-), citaten (>), [[links]] en ?? staan. */
+function cleanInline(s){
+  return String(s)
+    .replace(/<\/?(b|strong|i|em|u)>/gi, '')
+    .replace(/(\*\*|__)(?=\S)(.+?)(?<=\S)\1/g, '$2')
+    .replace(/(^|[^*\w])(\*|_)(?=[^\s*_])([^*_\n]+?)(?<=\S)\2(?![*\w])/g, '$1$3')
+    .replace(/\*\*/g, '')
+    .replace(/`([^`\n]+)`/g, '$1')
+    .replace(/~~(.+?)~~/g, '$1')
+    .replace(/(^|[^\[])\[([^\[\]\n]+)\]\((https?:[^)\s]+)\)/g, '$1$2 ($3)');
+}
+function tableToText(rows){
+  const cells = rows.map(r => r.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => cleanInline(c.trim())))
+    .filter(r => !r.every(c => /^:?-{2,}:?$/.test(c) || c === ''));
+  if (!cells.length) return [];
+  if (cells.length === 1) return [cells[0].filter(Boolean).join(' · ')];
+  const head = cells[0], out = [];
+  for (const r of cells.slice(1)){
+    const label = r[0], rest = r.slice(1).map((c, j) => c ? (head[j + 1] && r.length > 2 ? `${head[j + 1]}: ${c}` : c) : '').filter(Boolean);
+    if (!label && !rest.length) continue;
+    out.push('- ' + (label ? label + (rest.length ? (r.length > 2 ? ' — ' : ': ') + rest.join('; ') : '') : rest.join('; ')));
+  }
+  return out;
+}
+function cleanText(md){
+  const lines = String(md || '').replace(/\r\n?/g, '\n').split('\n'), out = [];
+  let code = false;
+  for (let i = 0; i < lines.length; i++){
+    const l = lines[i];
+    if (/^\s*```/.test(l)){ code = !code; continue; }
+    if (code){ out.push(l); continue; }
+    if (/^\s*\|.*\|\s*$/.test(l)){
+      const block = []; while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) block.push(lines[i++]); i--;
+      out.push(...tableToText(block)); continue;
+    }
+    if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(l)){ out.push(''); continue; }
+    out.push(cleanInline(l.replace(/^(\s*)[*+]\s+/, '$1- ')));
+  }
+  return out.join('\n').replace(/\n{3,}/g, '\n\n');
+}
+function cleanCurrent(){
+  if (!currentId){ toast('Open eerst een tekst'); return; }
+  const before = ta.value, after = cleanText(before);
+  if (after === before){ toast('Deze tekst is al schoon ✓'); return; }
+  ta.focus(); ta.select();
+  if (!document.execCommand('insertText', false, after)){ ta.value = after; }
+  ta.setSelectionRange(0, 0); ta.dispatchEvent(new Event('input'));
+  toast('Opmaaktekens weggehaald — Ctrl+Z zet het terug');
+}
 const ACTIONS = [
   {id:'palette',  label:'Opdrachtenmenu',                      def:'Ctrl+Alt+KeyA', run: () => paletteDialog()},
   {id:'check',    label:'Markeer als “nog uitzoeken” (??)',     def:'Ctrl+Alt+KeyK', run: markCheck},
@@ -3575,6 +3700,7 @@ const ACTIONS = [
   {id:'lookup',   label:'Woord opzoeken',                       def:'Ctrl+Alt+KeyL', run: lookupAtCaret},
   {id:'fragment', label:'Selectie bewaren als fragment',        def:'Ctrl+Alt+KeyB', run: fragmentFromSelection},
   {id:'cite',     label:'Selectie uit bron citeren in je tekst',def:'Ctrl+Alt+KeyQ', run: citeFromSelection},
+  {id:'clean',    label:'Schone tekst: opmaaktekens (** * tabellen) weghalen', def:'', run: cleanCurrent},
   {id:'split', label:'Gesplitst scherm', def:'Ctrl+Alt+KeyG', run: () => toggleSplit()},
   {id:'discover', label:'Ontdek: onderzoek je alinea of selectie', def:'Ctrl+Alt+KeyO', run: () => startDiscover()},
   {id:'research', label:'Onderzoekspaneel open/dicht',           def:'Ctrl+Alt+KeyR', run: () => toggleResearch()},

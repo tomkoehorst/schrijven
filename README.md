@@ -23,10 +23,13 @@ Een rustige schrijfapp in de browser, met een indeling zoals in Ulysses: bibliot
 - Eigen notities en citaten, tags, favorieten en zoeken door de volledige tekst
 - Tekst selecteren in een bron → **Citeer in je tekst** (met bronvermelding)
 - Bewaren vanaf de telefoon (deelmenu op Android, Opdracht op iPhone) of met een bladwijzer
+- **Overzicht:** groeperen per thema, site, soort of project; sorteren (nieuw, oud, A–Z, meeste fragmenten); filters (met fragmenten, nog niet gebruikt, favoriet, zonder tekst); groepen in- en uitklappen
+- **Claude laat ordenen:** vraag *“Orden mijn bronnen en fragmenten in De muntenmaker in thema's”* — Claude gebruikt `list_collection` en `set_tags` (eerste tag = thema)
 
 **Fragmenten:** selecteer tekst in een bron en kies **Fragment** — met datum, tags en kleur.
 
-- **Braindump:** bord met kaartjes voor fragmenten en losse gedachten (snel intikken bovenaan)
+- **Braindump:** bord met kaartjes voor fragmenten en losse gedachten (snel intikken bovenaan); weergave Alles, Per thema of Per bron, sorteren op nieuw/oud/datum
+- **Schone tekst:** knop in Info (ⓘ → Tekst → Schone tekst) of het opdrachtenmenu haalt `**`, `*`, tabellen e.d. weg; kopjes en lijstjes blijven. Claude levert via de koppeling sowieso schone tekst aan.
 - **Tijdlijn:** fragmenten met een datum op volgorde, per jaar; jaartallen en datums worden herkend
 - Elk kaartje kan met één klik in je tekst (als citaat met bronvermelding)
 

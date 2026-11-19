@@ -1,13 +1,54 @@
-// @ts-nocheck
-// Schrijfkamer — online Claude-koppeling (gebouwd uit mcp/src/http.js + core.js). Plak dit in Supabase → Edge Functions → mcp.
-// Secrets: MCP_SECRET, SCHRIJF_EMAIL, SCHRIJF_PASSWORD. Verify JWT: UIT. Link: https://<project>.supabase.co/functions/v1/<functienaam>/<MCP_SECRET>
+// @ts-nocheck — gebouwd uit mcp/src/http.js + core.js; niet met de hand bewerken
 
 // src/http.js
 import { z as z2 } from "npm:zod@4.1.12";
 
 // src/core.js
 import { z } from "npm:zod@4.1.12";
-var VERSION = "1.4.1";
+var VERSION = "1.6.0";
+function cleanInline(s) {
+  return String(s).replace(/<\/?(b|strong|i|em|u)>/gi, "").replace(/(\*\*|__)(?=\S)(.+?)(?<=\S)\1/g, "$2").replace(/(^|[^*\w])(\*|_)(?=[^\s*_])([^*_\n]+?)(?<=\S)\2(?![*\w])/g, "$1$3").replace(/\*\*/g, "").replace(/`([^`\n]+)`/g, "$1").replace(/~~(.+?)~~/g, "$1").replace(/(^|[^\[])\[([^\[\]\n]+)\]\((https?:[^)\s]+)\)/g, "$1$2 ($3)");
+}
+function tableToText(rows) {
+  const cells = rows.map((r) => r.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => cleanInline(c.trim()))).filter((r) => !r.every((c) => /^:?-{2,}:?$/.test(c) || c === ""));
+  if (!cells.length) return [];
+  if (cells.length === 1) return [cells[0].filter(Boolean).join(" \xB7 ")];
+  const head = cells[0], out = [];
+  for (const r of cells.slice(1)) {
+    const label = r[0], rest = r.slice(1).map((c, j) => c ? head[j + 1] && r.length > 2 ? `${head[j + 1]}: ${c}` : c : "").filter(Boolean);
+    if (!label && !rest.length) continue;
+    out.push("- " + (label ? label + (rest.length ? (r.length > 2 ? " \u2014 " : ": ") + rest.join("; ") : "") : rest.join("; ")));
+  }
+  return out;
+}
+function cleanText(md) {
+  const lines = String(md || "").replace(/\r\n?/g, "\n").split("\n"), out = [];
+  let code = false;
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    if (/^\s*```/.test(l)) {
+      code = !code;
+      continue;
+    }
+    if (code) {
+      out.push(l);
+      continue;
+    }
+    if (/^\s*\|.*\|\s*$/.test(l)) {
+      const block = [];
+      while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) block.push(lines[i++]);
+      i--;
+      out.push(...tableToText(block));
+      continue;
+    }
+    if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(l)) {
+      out.push("");
+      continue;
+    }
+    out.push(cleanInline(l.replace(/^(\s*)[*+]\s+/, "$1- ")));
+  }
+  return out.join("\n").replace(/\n{3,}/g, "\n\n");
+}
 function createCore(cfg = {}) {
   const SUPABASE_URL = cfg.url || "https://ssnbuwuqacjaxewrmdgg.supabase.co";
   const KEYS = [...new Set([cfg.key, "sb_publishable_4QtjFhDoIjPgvp0gAnPLkg_AqBLnxxz", ...cfg.fallbackKeys || []].filter(Boolean))];
@@ -263,7 +304,7 @@ function createCore(cfg = {}) {
     const now = Date.now();
     const allTags = [...new Set(["ai", ...tags || []].map((t) => String(t).replace(/^#/, "").trim()).filter(Boolean))];
     const d = parseDate(date);
-    const row = { id: uid(), user_id: session.user_id, source_id: source ? source.id : "", text, note: note || "", tags: allTags, date: d ? d.label : "", color: color || "", created: now, updated: now };
+    const row = { id: uid(), user_id: session.user_id, source_id: source ? source.id : "", text: cleanText(text).trim(), note: cleanText(note || "").trim(), tags: allTags, date: d ? d.label : "", color: color || "", created: now, updated: now };
     const grp = await projectId(project);
     if (grp) row.grp = grp;
     await upsert("snippets", row);
@@ -278,6 +319,67 @@ function createCore(cfg = {}) {
     tool: (name, description, shape, handler) => tools.push({ name, description, shape, handler }),
     prompt: (name, description, shape, render) => prompts.push({ name, description, shape, render })
   };
+  server.tool(
+    "list_collection",
+    "Geef een overzicht van alle bronnen en/of fragmenten van een project met hun id en huidige tags \u2014 bedoeld om de verzameling te ORDENEN (thema-tags geven met set_tags). Voegt niets toe.",
+    { project: z.string(), type: z.enum(["bronnen", "fragmenten", "beide"]).optional(), limit: z.number().int().min(1).max(500).optional() },
+    async ({ project, type = "beide", limit = 300 }) => {
+      try {
+        await token();
+        const gid = await projectId(project);
+        const out = [];
+        if (type !== "fragmenten") {
+          const rows = await rest("GET", `sources?select=id,title,site,url,tags&grp=eq.${gid}&order=created.desc&limit=${limit}`);
+          out.push(`Bronnen (${rows.length}):
+` + rows.map((r) => `- [bron ${r.id}] ${r.title} (${r.site || host(r.url)}) tags: ${(r.tags || []).join(", ") || "\u2014"}`).join("\n"));
+        }
+        if (type !== "bronnen") {
+          const rows = await rest("GET", `snippets?select=id,text,date,tags&grp=eq.${gid}&order=created.desc&limit=${limit}`);
+          out.push(`Fragmenten (${rows.length}):
+` + rows.map((r) => `- [fragment ${r.id}] ${String(r.text).replace(/\s+/g, " ").slice(0, 110)}${r.date ? " (" + r.date + ")" : ""} tags: ${(r.tags || []).join(", ") || "\u2014"}`).join("\n"));
+        }
+        return ok(out.join("\n\n") + "\n\nTip: kies 4\u20138 duidelijke thema\u2019s (bv. ambacht, personen, politiek, munt, plaatsen, sc\xE8ne-idee\xEBn) en geef elk item met set_tags \xE9\xE9n hoofdthema als EERSTE tag.");
+      } catch (e) {
+        return fail(e);
+      }
+    }
+  );
+  server.tool(
+    "set_tags",
+    'Geef bronnen en fragmenten (nieuwe) tags om de verzameling te ordenen. De EERSTE tag is het hoofdthema waarop de app groepeert. De tag "ai" blijft altijd behouden. Voegt geen items toe en telt niet mee voor het onderzoeksplan.',
+    {
+      items: z.array(z.object({
+        id: z.string(),
+        type: z.enum(["bron", "fragment"]),
+        tags: z.array(z.string()).min(1).describe("Eerste = hoofdthema, kleine letters, zonder #"),
+        mode: z.enum(["vervangen", "toevoegen"]).optional().describe("vervangen (standaard): thema-tags vervangen; toevoegen: erbij zetten")
+      })).min(1).max(150)
+    },
+    async ({ items }) => {
+      try {
+        await token();
+        let n = 0;
+        const bad = [];
+        for (const it of items) {
+          const table = it.type === "bron" ? "sources" : "snippets";
+          const rows = await rest("GET", `${table}?select=tags&id=eq.${enc(it.id)}`);
+          if (!rows.length) {
+            bad.push(it.id);
+            continue;
+          }
+          const clean = it.tags.map((t) => String(t).replace(/^#/, "").trim().toLowerCase()).filter(Boolean);
+          const old = rows[0].tags || [];
+          const keep = old.filter((t) => String(t).toLowerCase() === "ai");
+          const tags = [...new Set(it.mode === "toevoegen" ? [...old.filter((t) => t !== "ai"), ...clean, ...keep] : [...clean, ...keep])];
+          await rest("PATCH", `${table}?id=eq.${enc(it.id)}`, { tags, updated: Date.now() }, "return=minimal");
+          n++;
+        }
+        return ok(`${n} item(s) getagd.${bad.length ? " Niet gevonden: " + bad.join(", ") : ""} De app groepeert op de eerste tag (Bronnen \u2192 Groep: Thema, Braindump \u2192 Per thema).`);
+      } catch (e) {
+        return fail(e);
+      }
+    }
+  );
   server.tool(
     "research_plan",
     "Leg een onderzoeksplan vast v\xF3\xF3rdat je voor de gebruiker gaat onderzoeken en bewaren. Stel EERST in de chat een paar korte vragen en wacht op het antwoord: (1) waarvoor is het \u2014 achtergrond, sc\xE8nedetails, feiten checken; (2) hoe diep \u2014 kort, gemiddeld of diep; (3) welke focus of periode; (4) wat moet er komen \u2014 tijdlijn, fragmenten, personages, dossier. Roep dit daarna aan. De koppeling bewaakt het maximum: daarboven weigert hij nieuwe bronnen en fragmenten tot de gebruiker toestemming geeft.",
@@ -561,16 +663,16 @@ ${(s.content || s.excerpt || "(geen tekst bewaard)").slice(0, 15e3)}`);
   );
   server.tool(
     "create_text",
-    "Maak een nieuwe tekst (document) in de Schrijfkamer, bijvoorbeeld een onderzoeksdossier, personenoverzicht of hoofdstukopzet. De inhoud is Markdown: ## kopjes, - lijsten, > citaten, **vet**. Zet ?? achter feiten die nog gecontroleerd moeten worden; gebruik [[Titel]] om naar andere teksten of bronnen te linken.",
-    { title: z.string(), body: z.string().describe("De inhoud in Markdown (zonder de titel)."), project: z.string().optional(), folder: z.string().optional().describe('Map binnen het project, bv. "Hoofdstukken" of "Onderzoek". Gebruik voor personages liever create_character.') },
+    "Maak een nieuwe tekst (document) in de Schrijfkamer, bijvoorbeeld een onderzoeksdossier, personenoverzicht of hoofdstukopzet. Schrijf schone, gewone tekst: alleen ## kopjes en - lijstjes; GEEN **vet**, *cursief*, tabellen of andere opmaaktekens (die worden toch weggehaald). Zet ?? achter feiten die nog gecontroleerd moeten worden; gebruik [[Titel]] om naar andere teksten of bronnen te linken.",
+    { title: z.string(), body: z.string().describe("De inhoud als schone tekst (zonder de titel); alleen ## kopjes en - lijstjes."), project: z.string().optional(), folder: z.string().optional().describe('Map binnen het project, bv. "Hoofdstukken" of "Onderzoek". Gebruik voor personages liever create_character.') },
     async ({ title, body, project, folder }) => {
       try {
         await token();
         const gid = project ? await projectId(project) : "inbox";
         if (folder && gid !== "inbox") await ensureFolder(gid, folder);
-        await insertSheet({ body: `# ${title}
+        await insertSheet({ body: `# ${cleanInline(title)}
 
-${body.trim()}
+${cleanText(body).trim()}
 `, grp: gid, folder: gid !== "inbox" ? folder || "" : "" });
         return ok(`Tekst \u201C${title}\u201D aangemaakt${project ? " in project " + project : ""}${folder ? ", map " + folder : ""}. De gebruiker ziet hem direct in de app.`);
       } catch (e) {
@@ -612,7 +714,7 @@ ${body.trim()}
 ${meta ? meta + "\n\n" : ""}`;
         for (const [k, label] of CHAR_FIELDS) if ((vals[k] || "").trim()) md += `## ${label}
 
-${vals[k].trim()}
+${cleanText(vals[k]).trim()}
 
 `;
         await ensureFolder(gid, "Personages");
@@ -626,7 +728,7 @@ ${vals[k].trim()}
   server.tool(
     "append_to_text",
     "Voeg tekst toe aan het einde van een bestaande tekst in de Schrijfkamer (gevonden op titel), bijvoorbeeld nieuwe bevindingen in het onderzoeksdossier. Overschrijft niets.",
-    { title: z.string().describe("Titel (eerste regel) van de bestaande tekst."), content: z.string().describe("Markdown die onderaan wordt toegevoegd."), project: z.string().optional() },
+    { title: z.string().describe("Titel (eerste regel) van de bestaande tekst."), content: z.string().describe("Schone tekst die onderaan wordt toegevoegd (alleen ## kopjes en - lijstjes, geen **vet** of tabellen)."), project: z.string().optional() },
     async ({ title, content, project }) => {
       try {
         await token();
@@ -636,7 +738,7 @@ ${vals[k].trim()}
         const t = title.toLowerCase().trim();
         const hit = rows.find((r) => titleOf(r.body).toLowerCase() === t) || rows.find((r) => titleOf(r.body).toLowerCase().includes(t));
         if (!hit) return fail(new Error(`Geen tekst gevonden met de titel \u201C${title}\u201D. Bestaande teksten: ${rows.slice(0, 15).map((r) => titleOf(r.body)).filter(Boolean).join(", ")}`));
-        const body = String(hit.body).replace(/\s*$/, "") + "\n\n" + content.trim() + "\n";
+        const body = String(hit.body).replace(/\s*$/, "") + "\n\n" + cleanText(content).trim() + "\n";
         await rest("PATCH", `sheets?id=eq.${enc(hit.id)}`, { body, updated: Date.now() }, "return=minimal");
         return ok(`Toegevoegd aan \u201C${titleOf(hit.body)}\u201D.`);
       } catch (e) {
@@ -678,7 +780,7 @@ Niet herkende datums (overgeslagen): ${bad.join("; ")}` : ""}`);
       }
     }
   );
-  const INSTRUCTIONS = "Koppeling met de Schrijfkamer van de gebruiker: bewaar fragmenten, tijdlijnmomenten, bronnen, teksten en personages, en doorzoek de verzameling. Antwoord in het Nederlands. " + RULE_TEXT + " Verzamel liever weinig goede bronnen dan veel; controleer met search_collection of iets er al is.";
+  const INSTRUCTIONS = "Koppeling met de Schrijfkamer van de gebruiker: bewaar fragmenten, tijdlijnmomenten, bronnen, teksten en personages, en doorzoek de verzameling. Antwoord in het Nederlands. Schrijf in de Schrijfkamer schone, gewone tekst: geen **vet**, *cursief*, tabellen of andere Markdown-tekens, alleen ## kopjes en - lijstjes. " + RULE_TEXT + " Verzamel liever weinig goede bronnen dan veel; controleer met search_collection of iets er al is.";
   const PROMPT_ONDERZOEK = "Je bent mijn onderzoeksassistent voor mijn schrijfproject \u201C${arguments.project}\u201D. Ik concentreer me op het creatieve schrijven; jij doet het feitenwerk en zet alles in mijn Schrijfkamer.\n\nOnderwerp: ${arguments.onderwerp}\n\nWerkwijze:\n0. Stel mij eerst een paar korte vragen en wacht op mijn antwoord: waarvoor heb ik dit nodig, hoe diep (kort, gemiddeld of diep), welke focus of periode, en wat moet er komen (tijdlijn, fragmenten, personages, dossier). Leg het daarna vast met research_plan en houd je aan het maximum.\n1. Roep eerst project_overview aan (bestaat het project niet, maak het dan met create_project) zodat je niets dubbel doet.\n2. Zoek op het web naar betrouwbare bronnen (encyclopedie\xEBn, musea, wetenschappelijke en historische bronnen). Bewaar de belangrijkste met save_source.\n3. Zet elke gebeurtenis met een datum op de tijdlijn (add_timeline_events), steeds met de bron-URL.\n4. Bewaar losse feiten, citaten en details die bruikbaar zijn voor een verhaal (zintuiglijke details, gebruiken, voorwerpen, plaatsen) als fragmenten met save_fragment, met tags en bron.\n5. Maak met create_text (map \u201COnderzoek\u201D) een tekst \u201COnderzoeksdossier: ${arguments.onderwerp}\u201D in het project met: korte samenvatting, belangrijkste personen en plekken (met [[links]] waar zinnig), chronologie in het kort, en een lijst \u201COpen vragen\u201D. Zet ?? achter alles wat onzeker of tegenstrijdig is. Maak voor belangrijke (historische) personen een character sheet met create_character.\n6. Werk in het Nederlands. Verzin niets: geen bron, dan markeren met ??.\n7. Sluit af met een korte samenvatting in de chat van wat je hebt toegevoegd en welke vragen nog open staan, en roep finish_research aan.";
   server.prompt(
     "onderzoek_project",
