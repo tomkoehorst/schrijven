@@ -1,6 +1,6 @@
 // @ts-nocheck
 // Schrijfkamer — online Claude-koppeling (gebouwd uit mcp/src/http.js + core.js). Plak dit in Supabase → Edge Functions → mcp.
-// Secrets: MCP_SECRET, SCHRIJF_EMAIL, SCHRIJF_PASSWORD. Verify JWT: UIT. Link: https://<project>.supabase.co/functions/v1/mcp/<MCP_SECRET>
+// Secrets: MCP_SECRET, SCHRIJF_EMAIL, SCHRIJF_PASSWORD. Verify JWT: UIT. Link: https://<project>.supabase.co/functions/v1/<functienaam>/<MCP_SECRET>
 
 // src/http.js
 import { z as z2 } from "npm:zod@4.1.12";
@@ -10,19 +10,32 @@ import { z } from "npm:zod@4.1.12";
 var VERSION = "1.3.0";
 function createCore(cfg = {}) {
   const SUPABASE_URL = cfg.url || "https://ssnbuwuqacjaxewrmdgg.supabase.co";
-  const SUPABASE_KEY = cfg.key || "sb_publishable_4QtjFhDoIjPgvp0gAnPLkg_AqBLnxxz";
+  const KEYS = [...new Set([cfg.key, "sb_publishable_4QtjFhDoIjPgvp0gAnPLkg_AqBLnxxz", ...cfg.fallbackKeys || []].filter(Boolean))];
+  let SUPABASE_KEY = KEYS[0];
+  const keyKind = (k) => /^sb_publishable_/.test(k) ? "publishable-sleutel" : /^eyJ/.test(k) ? "anon-sleutel (JWT)" : "sleutel";
   const FUNCTION = cfg.fn || "bronnen";
   const EMAIL = cfg.email || "";
   const PASSWORD = cfg.password || "";
   let session = null;
   async function authRequest(grant, body) {
-    const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=${grant}`, {
-      method: "POST",
-      headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(j.error_description || j.msg || j.message || `Inloggen mislukt (${r.status})`);
+    let r, j, tried = [];
+    for (const k of [SUPABASE_KEY, ...KEYS.filter((x) => x !== SUPABASE_KEY)]) {
+      r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=${grant}`, {
+        method: "POST",
+        headers: { apikey: k, "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      j = await r.json().catch(() => ({}));
+      tried.push(keyKind(k));
+      if (!/invalid api key|no api key/i.test(j.message || j.msg || "")) {
+        SUPABASE_KEY = k;
+        break;
+      }
+    }
+    if (!r.ok) {
+      const m = j.error_description || j.msg || j.message || `Inloggen mislukt (${r.status})`;
+      throw new Error(/invalid api key/i.test(m) ? `${m} \u2014 geprobeerd op ${new URL(SUPABASE_URL).host} met: ${tried.join(", ")}` : m);
+    }
     session = { access_token: j.access_token, refresh_token: j.refresh_token, expires_at: Date.now() + (j.expires_in || 3600) * 1e3, user_id: j.user && j.user.id };
     return session;
   }
@@ -529,8 +542,9 @@ Niet herkende datums (overgeslagen): ${bad.join("; ")}` : ""}`);
 // src/http.js
 var env = (k) => (globalThis.Deno ? Deno.env.get(k) : process.env[k]) || "";
 var core = createCore({
-  url: env("SUPABASE_URL") || void 0,
+  url: env("SCHRIJF_SUPABASE_URL") || void 0,
   key: env("SCHRIJF_SUPABASE_KEY") || void 0,
+  fallbackKeys: [env("SUPABASE_ANON_KEY")].filter(Boolean),
   fn: env("SCHRIJF_FUNCTION") || void 0,
   email: env("SCHRIJF_EMAIL"),
   password: env("SCHRIJF_PASSWORD")

@@ -12,8 +12,11 @@ import { z } from 'zod';
 import { createCore, VERSION } from './core.js';
 
 const env = k => (globalThis.Deno ? Deno.env.get(k) : process.env[k]) || '';
+// Always use the public project URL (the internal SUPABASE_URL of the Edge runtime may not accept the new
+// sb_publishable_ keys); fall back to the legacy anon key that Supabase injects into every function.
 const core = createCore({
-  url: env('SUPABASE_URL') || undefined, key: env('SCHRIJF_SUPABASE_KEY') || undefined,
+  url: env('SCHRIJF_SUPABASE_URL') || undefined, key: env('SCHRIJF_SUPABASE_KEY') || undefined,
+  fallbackKeys: [env('SUPABASE_ANON_KEY')].filter(Boolean),
   fn: env('SCHRIJF_FUNCTION') || undefined, email: env('SCHRIJF_EMAIL'), password: env('SCHRIJF_PASSWORD')
 });
 const PROTOCOLS = ['2025-06-18', '2025-03-26', '2024-11-05'];

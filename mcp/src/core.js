@@ -3,7 +3,10 @@ import { z } from 'zod';
 export const VERSION = '1.3.0';
 export function createCore(cfg = {}) {
 const SUPABASE_URL = cfg.url || 'https://ssnbuwuqacjaxewrmdgg.supabase.co';
-const SUPABASE_KEY = cfg.key || 'sb_publishable_4QtjFhDoIjPgvp0gAnPLkg_AqBLnxxz';
+// Keys to try, in order; the first that the project accepts is remembered.
+const KEYS = [...new Set([cfg.key, 'sb_publishable_4QtjFhDoIjPgvp0gAnPLkg_AqBLnxxz', ...(cfg.fallbackKeys || [])].filter(Boolean))];
+let SUPABASE_KEY = KEYS[0];
+const keyKind = k => /^sb_publishable_/.test(k) ? 'publishable-sleutel' : /^eyJ/.test(k) ? 'anon-sleutel (JWT)' : 'sleutel';
 const FUNCTION = cfg.fn || 'bronnen';
 const EMAIL = cfg.email || '';
 const PASSWORD = cfg.password || '';
@@ -11,11 +14,19 @@ const PASSWORD = cfg.password || '';
 /* ---------------- Auth & REST ---------------- */
 let session = null; // {access_token, refresh_token, expires_at, user_id}
 async function authRequest(grant, body) {
-  const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=${grant}`, {
-    method: 'POST', headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body)
-  });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(j.error_description || j.msg || j.message || `Inloggen mislukt (${r.status})`);
+  let r, j, tried = [];
+  for (const k of [SUPABASE_KEY, ...KEYS.filter(x => x !== SUPABASE_KEY)]) {
+    r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=${grant}`, {
+      method: 'POST', headers: { apikey: k, 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+    j = await r.json().catch(() => ({}));
+    tried.push(keyKind(k));
+    if (!/invalid api key|no api key/i.test(j.message || j.msg || '')) { SUPABASE_KEY = k; break; }
+  }
+  if (!r.ok) {
+    const m = j.error_description || j.msg || j.message || `Inloggen mislukt (${r.status})`;
+    throw new Error(/invalid api key/i.test(m) ? `${m} — geprobeerd op ${new URL(SUPABASE_URL).host} met: ${tried.join(', ')}` : m);
+  }
   session = { access_token: j.access_token, refresh_token: j.refresh_token, expires_at: Date.now() + (j.expires_in || 3600) * 1000, user_id: j.user && j.user.id };
   return session;
 }
