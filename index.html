@@ -412,6 +412,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 /* ---------- Projecten & onderzoekspaneel ---------- */
 .pchips{display:flex;gap:6px;flex-wrap:wrap;padding:0 4px 10px}
 .bhead + .pchips{padding:0 22px 8px}
+.bhead + .pbar{padding:0 22px 8px;max-width:360px}
 .psel{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:6px 9px;font-size:13.5px;outline:none;color:var(--text)}
 .card .cproj{font-size:11.5px;font-weight:800;color:var(--text);border-radius:999px;padding:2px 8px;opacity:.85}
 .research{position:absolute;top:calc(56px + var(--sat));right:0;bottom:0;width:380px;background:var(--pane2);border-left:1px solid var(--line);display:none;flex-direction:column;z-index:9}
@@ -614,6 +615,13 @@ body.capture .dialog{box-shadow:none;border:1px solid var(--line)}
 @media (max-width:1100px){ .csheet{grid-template-columns:1fr}.cside{grid-column:1;grid-row:auto} }
 @media (max-width:820px){ .chead{padding:10px 12px}.chead h1{font-size:21px}.cgrid,.csheet{padding:4px 12px}.cfields{grid-template-columns:1fr}.ctop{gap:12px;padding:12px}.cname{font-size:21px} }
 /* ---------- Overzicht ---------- */
+.pbar{display:flex;gap:6px;align-items:center;padding:0 4px 8px}
+.pbar .psel2{flex:1;min-width:0;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:7px 10px;font:inherit;font-size:13px;font-weight:800;color:var(--text);outline:none}
+.pbar .vbtn{flex:none;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:7px 10px;font:inherit;font-size:12.5px;font-weight:800;color:var(--muted);cursor:pointer;white-space:nowrap}
+.pbar .vbtn.on{background:var(--accent-soft,rgba(120,160,130,.15));color:var(--accent);border-color:transparent}
+.vpanel{padding:8px 4px 4px;margin:0 0 8px;border-bottom:1px solid var(--line)}
+.vsum{display:flex;gap:6px;flex-wrap:wrap;padding:0 4px 8px}
+.vsum .chip{padding:3px 9px;font-size:11.5px}
 .otools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:0 4px 8px;font-size:12.5px;color:var(--muted);font-weight:800}
 .otools label{display:flex;gap:6px;align-items:center}
 .otools select{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:4px 8px;font:inherit;font-weight:700;color:var(--text);outline:none}
@@ -2558,6 +2566,13 @@ function groupHtml(key, label, count, inner, prefix){
   const id = prefix + ':' + key, closed = collapsed.has(id);
   return `<div class="ogroup ${closed ? 'closed' : ''}"><button class="ohead" data-ogtoggle="${esc(id)}"><span class="chev">${closed ? '▸' : '▾'}</span><b>${esc(label)}</b><small>${count}</small></button>${closed ? '' : `<div class="obody">${inner}</div>`}</div>`;
 }
+/* Veel kleine groepjes (1 item) maken het rommelig: voeg ze samen tot “Overig”. */
+function mergeSmall(gs){
+  if (gs.length <= 4) return gs;
+  const big = gs.filter(([k, it]) => k && it.length > 1), small = gs.filter(([k, it]) => !k || it.length <= 1);
+  if (small.length < 2) return gs;
+  return [...big, ['', small.flatMap(([, it]) => it)]];
+}
 function groupBy(items, keyFn, labelOrder){
   const m = new Map(); for (const x of items){ const k = keyFn(x) || ''; if (!m.has(k)) m.set(k, []); m.get(k).push(x); }
   return [...m.entries()].sort((a, b) => (a[0] === '' ? 1 : 0) - (b[0] === '' ? 1 : 0) || b[1].length - a[1].length || a[0].localeCompare(b[0], 'nl'));
@@ -2573,7 +2588,7 @@ function renderSources(){
   if (!useSupabase){ el.innerHTML = `<div class="empty">${cat('sleepy')}Bronnen werken met je Supabase-account.</div>`; return; }
   if (!sbUser){ el.innerHTML = `<div class="empty">${cat('sleepy')}Log in om artikelen en links te bewaren.<br><br><button class="btn" data-a="login">Inloggen</button></div>`; return; }
   if (!arr.length){
-    el.innerHTML = projChips() + `<div class="empty">${cat(query.trim() ? 'curious' : 'sleepy')}${query.trim() ? 'Niets gevonden.' : 'Nog geen bronnen.<br>Tik op <b>+</b> om een artikel, link of citaat te bewaren.'}</div>`;
+    el.innerHTML = projChips(true) + `<div class="empty">${cat(query.trim() ? 'curious' : 'sleepy')}${query.trim() ? 'Niets gevonden.' : 'Nog geen bronnen.<br>Tik op <b>+</b> om een artikel, link of citaat te bewaren.'}</div>`;
     return;
   }
   const probs = sourceProblems(), nProb = probs.dupes.reduce((a, g) => a + g.length - 1, 0) + probs.blocked.length;
@@ -2588,18 +2603,22 @@ function renderSources(){
       <b>${s.fav ? '★ ' : ''}${esc(s.title || s.url)}</b>
       <span class="rm">${esc(KIND[s.kind] || 'Bron')} · ${esc(s.site || host(s.url))}${fc[s.id] ? ` · <em>${fc[s.id]} fragment${fc[s.id] === 1 ? '' : 'en'}</em>` : ''}${themeOf(s) && srcOpts.group !== 'theme' ? ' · #' + esc(themeOf(s)) : ''}</span></button>`;
   const keyFn = {theme: s => themeOf(s), kind: s => KIND[s.kind] || 'Bron', site: s => s.site || host(s.url), none: () => 'all'}[srcOpts.group] || (() => 'all');
-  const noneLabel = {theme: 'Zonder thema', kind: 'Overig', site: 'Onbekend'}[srcOpts.group] || '';
-  const groups_ = srcOpts.group === 'none' ? [['all', list]] : groupBy(list, keyFn);
-  const tools = `<div class="otools">
+  const noneLabel = 'Overig';
+  let groups_ = srcOpts.group === 'none' ? [['all', list]] : groupBy(list, keyFn);
+  if (srcOpts.group !== 'none') groups_ = mergeSmall(groups_);
+  const FL = {all: 'Alles', frag: 'Met fragmenten', unused: 'Nog niet gebruikt', fav: '★ Favoriet', empty: 'Zonder tekst'};
+  const GL = {theme: 'Thema', kind: 'Soort', site: 'Website', none: 'Geen'}, SL = {new: 'Nieuwste', title: 'Titel', site: 'Website', frags: 'Meeste fragmenten'};
+  const summary = srcOpts.filter !== 'all' ? `<div class="vsum"><button class="chip on" data-sf="all" title="Filter weghalen">${FL[srcOpts.filter]} ✕</button></div>` : '';
+  const tools = !viewOpen ? summary : `<div class="vpanel"><div class="otools">
       <label>Groep <select data-so="group"><option value="theme">Thema</option><option value="kind">Soort</option><option value="site">Website</option><option value="none">Geen</option></select></label>
       <label>Sorteer <select data-so="sort"><option value="new">Nieuwste</option><option value="title">Titel</option><option value="site">Website</option><option value="frags">Meeste fragmenten</option></select></label>
     </div>
-    <div class="ofilters">${[['all', 'Alles'], ['frag', 'Met fragmenten'], ['unused', 'Nog niet gebruikt'], ['fav', '★ Favoriet'], ['empty', 'Zonder tekst']].map(([k, l]) => `<button class="chip ${srcOpts.filter === k ? 'on' : ''}" data-sf="${k}">${l}</button>`).join('')}</div>`;
+    <div class="ofilters">${[['all', 'Alles'], ['frag', 'Met fragmenten'], ['unused', 'Nog niet gebruikt'], ['fav', '★ Favoriet'], ['empty', 'Zonder tekst']].map(([k, l]) => `<button class="chip ${srcOpts.filter === k ? 'on' : ''}" data-sf="${k}">${l}</button>`).join('')}</div></div>`;
   const listHtml = !list.length ? '<p class="muted" style="padding:8px">Geen bronnen voor dit filter.</p>'
     : srcOpts.group === 'none' ? list.map(row).join('')
     : groups_.map(([k, items]) => groupHtml(k, k || noneLabel, items.length, items.map(row).join(''), 'src-' + srcOpts.group)).join('');
   const untagged = srcOpts.group === 'theme' && groups_.length === 1 && groups_[0][0] === '' && list.length > 5;
-  el.innerHTML = projChips() + (nProb ? `<button class="cleanbar" data-a="cleanup">🧹 ${nProb} bron${nProb === 1 ? '' : 'nen'} op te ruimen (dubbel of geblokkeerd)</button>` : '') + tools
+  el.innerHTML = projChips(true) + (nProb ? `<button class="cleanbar" data-a="cleanup">🧹 ${nProb} bron${nProb === 1 ? '' : 'nen'} op te ruimen (dubbel of geblokkeerd)</button>` : '') + tools
     + (untagged ? `<div class="tip" style="margin:0 4px 8px;font-size:12.5px">Je bronnen hebben nog geen thema's. Vraag Claude: <i>“Orden mijn bronnen en fragmenten in ${esc(grpName(projFilter) || 'mijn project')} in thema's.”</i></div>` : '') + listHtml;
   el.querySelectorAll('[data-so]').forEach(sel => { sel.value = srcOpts[sel.dataset.so]; sel.onchange = () => { srcOpts[sel.dataset.so] = sel.value; LS.set('srcOpts', srcOpts); renderSources(); }; });
 }
@@ -3025,7 +3044,7 @@ function renderBoard(){
     const cardsOf = arr => `<div class="cards">${arr.map(card).join('')}</div>`;
     if (sorted.length && boardOpts.view !== 'all'){
       const keyFn = boardOpts.view === 'theme' ? themeOf : x => (sources[x.source_id] || {}).title || '';
-      body += groupBy(sorted, keyFn).map(([k, items]) => groupHtml(k, k || (boardOpts.view === 'theme' ? 'Zonder thema' : 'Losse gedachten (geen bron)'), items.length, cardsOf(items), 'bd-' + boardOpts.view)).join('');
+      body += (boardOpts.view === 'theme' ? mergeSmall(groupBy(sorted, keyFn)) : groupBy(sorted, keyFn)).map(([k, items]) => groupHtml(k, k || (boardOpts.view === 'theme' ? 'Overig' : 'Losse gedachten (geen bron)'), items.length, cardsOf(items), 'bd-' + boardOpts.view)).join('');
     } else body += sorted.length ? cardsOf(sorted)
       : `<div class="empty">${cat('sleepy')}${boardQ || boardTag ? 'Niets gevonden.' : 'Je braindump is nog leeg.<br>Typ hierboven een gedachte, of selecteer tekst in een <a href="#" data-goview="sources" style="color:var(--accent);font-weight:800">bron</a> en kies <b>Fragment</b>.'}</div>`;
   }
@@ -3098,11 +3117,18 @@ function defaultProject(){
   return '';
 }
 const projMatch = x => !projFilter || (projFilter === '__none' ? !x.grp || !grpName(x.grp) : x.grp === projFilter);
-function projChips(){
-  if (!groups.length) return '';
-  return `<div class="pchips">${[['', 'Alle projecten'], ...groups.map(g => [g.id, g.name]), ['__none', 'Zonder project']].map(([id, n]) =>
-    `<button class="chip ${projFilter === id ? 'on' : ''}" data-proj="${esc(id)}">${id && id !== '__none' ? `<span class="dot" style="background:${esc(grpColor(id))};margin:0 5px 0 0;width:8px;height:8px;display:inline-block"></span>` : ''}${esc(n)}</button>`).join('')}</div>`;
+function projChips(viewBtn){
+  const vb = viewBtn ? `<button class="vbtn ${viewOpen ? 'on' : ''}" data-vtoggle title="Groeperen, sorteren en filteren">⚙ Weergave</button>` : '';
+  if (groups.length) return `<div class="pbar"><select class="psel2" data-projsel aria-label="Project">${[['', 'Alle projecten'], ...groups.map(g => [g.id, g.name]), ['__none', 'Zonder project']].map(([id, n]) => `<option value="${esc(id)}" ${projFilter === id ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>${vb}</div>`;
+  return vb ? `<div class="pbar"><div style="flex:1"></div>${vb}</div>` : '';
 }
+let viewOpen = LS.get('viewOpen', false);
+document.addEventListener('click', e => { if (!e.target.closest('[data-vtoggle]')) return; viewOpen = !viewOpen; LS.set('viewOpen', viewOpen); if (view === 'sources') renderSources(); });
+document.addEventListener('change', e => {
+  const s = e.target.closest('[data-projsel]'); if (!s) return;
+  projFilter = s.value; LS.set('projFilter', projFilter);
+  if (view === 'sources') renderSources(); if (isBoard()) renderBoard();
+});
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-proj]'); if (!b) return;
   projFilter = b.dataset.proj; LS.set('projFilter', projFilter);
