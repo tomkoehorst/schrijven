@@ -70,10 +70,11 @@ async function handle(msg) {
 
 export async function serve(req) {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
-  const secret = env('MCP_SECRET');
+  const secret = env('MCP_SECRET').trim();
   const parts = new URL(req.url).pathname.split('/').filter(Boolean);
   if (!secret || secret.length < 16) return json({ error: 'MCP_SECRET is nog niet ingesteld (minstens 16 tekens).' }, 500);
-  if (parts[parts.length - 1] !== secret) return json({ error: 'Onbekende link' }, 404);
+  let last = parts[parts.length - 1] || ''; try { last = decodeURIComponent(last); } catch (e) {}
+  if (last.trim() !== secret) return json({ error: 'Onbekende link — de code achter de laatste / is niet gelijk aan MCP_SECRET' }, 404);
   if (req.method === 'GET' || req.method === 'DELETE') return new Response(null, { status: 405, headers: { ...cors, Allow: 'POST' } });
   if (req.method !== 'POST') return new Response(null, { status: 405, headers: cors });
   let body;
