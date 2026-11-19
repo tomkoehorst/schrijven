@@ -53,6 +53,8 @@ Download [schrijfkamer-claude.mcpb](https://github.com/tomkoehorst/schrijven/raw
 
 **Op je telefoon en claude.ai:** zet de online koppeling `supabase/functions/mcp` neer (Edge Function `mcp`, Verify JWT uit, secrets `MCP_SECRET`, `SCHRIJF_EMAIL`, `SCHRIJF_PASSWORD`) en voeg op claude.ai bij Instellingen → Connectors een *custom connector* toe met de link `https://<project>.supabase.co/functions/v1/mcp/<MCP_SECRET>`.
 
+**Regelaar:** bij een onderzoeksvraag stelt Claude eerst vragen (doel, diepte, focus) en legt een onderzoeksplan vast (`research_plan`: kort ≈ 6 bronnen/20 fragmenten, gemiddeld ≈ 12/40, diep ≈ 25/90). De koppeling weigert daarboven nieuwe bronnen en fragmenten tot je toestemming geeft. Dubbele links worden herkend (ook met/zonder www, #, trackingcodes) en bot-controlepagina's niet als artikel bewaard. In Bronnen ruimt de 🧹-knop bestaande dubbele en geblokkeerde bronnen op.
+
 Broncode in `mcp/`.
 
 ## Ontdek

@@ -1,6 +1,6 @@
 // Schrijfkamer — kern van de Claude-koppeling (gedeeld door de pc-extensie en de online koppeling)
 import { z } from 'zod';
-export const VERSION = '1.3.0';
+export const VERSION = '1.4.0';
 export function createCore(cfg = {}) {
 const SUPABASE_URL = cfg.url || 'https://ssnbuwuqacjaxewrmdgg.supabase.co';
 // Keys to try, in order; the first that the project accepts is remembered.
@@ -104,10 +104,35 @@ async function projectId(name) {
   return g.id;
 }
 const host = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return ''; } };
-async function ensureSource({ url, title, project, note, tags }) {
+/* Same page, different spelling: https/http, www., #anchor, tracking codes, trailing slash */
+function normUrl(u) {
+  try {
+    const x = new URL(String(u).trim());
+    x.hash = ''; x.hostname = x.hostname.toLowerCase().replace(/^www\./, ''); x.protocol = 'https:';
+    for (const k of [...x.searchParams.keys()]) if (/^(utm_|fbclid|gclid|mc_|ref$|ref_src|igshid|si$)/i.test(k)) x.searchParams.delete(k);
+    return decodeURIComponent(x.href).replace(/\/+$/, '').toLowerCase();
+  } catch (e) { return String(u || '').trim().toLowerCase(); }
+}
+let srcIndex = null, srcIndexAt = 0; const inflight = new Map();
+async function sourceIndex() {
+  if (srcIndex && Date.now() - srcIndexAt < 60000) return srcIndex;
+  const rows = await rest('GET', `sources?select=id,title,url&limit=5000`);
+  srcIndex = new Map(); for (const r of rows || []) if (r.url) srcIndex.set(normUrl(r.url), { id: r.id, title: r.title });
+  srcIndexAt = Date.now(); return srcIndex;
+}
+const BLOCKED = /just a moment|even checken of je een bot|are you a robot|attention required|checking your browser|verify you are human|access denied|captcha|enable javascript and cookies|ddos protection|pardon our interruption/i;
+async function ensureSource(args) {
   await token();
-  const found = await rest('GET', `sources?select=id,title,url&url=eq.${enc(url)}`);
-  if (found && found.length) return { id: found[0].id, title: found[0].title, existed: true };
+  const key = normUrl(args.url);
+  const known = (await sourceIndex()).get(key);
+  if (known) return { ...known, existed: true };
+  if (inflight.has(key)) return { ...(await inflight.get(key)), existed: true };   // parallel calls for the same page
+  const p = createSource(args).then(r => { srcIndex && srcIndex.set(key, { id: r.id, title: r.title }); return r; });
+  inflight.set(key, p);
+  try { return await p; } finally { inflight.delete(key); }
+}
+async function createSource({ url, title, project, note, tags }) {
+  await checkBudget(project, 'source');
   const id = uid(), now = Date.now();
   const row = { id, user_id: session.user_id, kind: 'article', url, title: title || host(url) || url, site: host(url), byline: '', published: '', excerpt: '', content: '', tags: tags || [], note: note || '', fav: false, created: now, updated: now };
   const grp = await projectId(project); if (grp) row.grp = grp;
@@ -115,10 +140,44 @@ async function ensureSource({ url, title, project, note, tags }) {
   let fetched = false;
   try {
     const a = await callFunction({ action: 'fetch', url });
+    if (a.blocked || BLOCKED.test(a.title || '')) {
+      row.note = [row.note, 'De website liet de tekst niet ophalen (beveiliging/bot-controle) — open de link zelf.'].filter(Boolean).join(' ');
+      row.updated = Date.now(); await upsert('sources', row);
+      return { id, title: row.title, existed: false, fetched: false, blocked: true };
+    }
     Object.assign(row, { url: a.url || url, title: a.title || row.title, site: a.site || row.site, byline: a.byline || '', published: a.published || '', excerpt: a.excerpt || '', content: a.content || '', updated: Date.now() });
     await upsert('sources', row); fetched = !!a.content;
   } catch (e) { /* keep the link */ }
   return { id, title: row.title, existed: false, fetched };
+}
+/* ---------- Onderzoeksplan (regelaar) ---------- */
+const DEPTHS = { kort: { sources: 6, fragments: 20 }, gemiddeld: { sources: 12, fragments: 40 }, diep: { sources: 25, fragments: 90 } };
+const PLAN_HOURS = 12;
+async function activePlan(project) {
+  if (!project) return null;
+  const gs = await groups(); const g = gs.find(x => x.name.toLowerCase() === String(project).toLowerCase()) || gs.find(x => x.name.toLowerCase().includes(String(project).toLowerCase()));
+  const r = g && g.research;
+  if (!r || r.done || Date.now() - r.start > PLAN_HOURS * 3600e3) return null;
+  return { g, gs, r };
+}
+async function planCounts(gid, since) {
+  const [src, sn] = await Promise.all([
+    rest('GET', `sources?select=id&grp=eq.${gid}&created=gte.${since}&limit=1000`),
+    rest('GET', `snippets?select=id&grp=eq.${gid}&created=gte.${since}&limit=2000`)
+  ]);
+  return { sources: (src || []).length, fragments: (sn || []).length };
+}
+async function checkBudget(project, kind, adding = 1) {
+  const a = await activePlan(project); if (!a) return null;
+  const c = await planCounts(a.g.id, a.r.start);
+  const max = kind === 'source' ? a.r.max_sources : a.r.max_fragments, have = kind === 'source' ? c.sources : c.fragments;
+  if (have + adding > max) throw new Error(`Limiet van het onderzoeksplan bereikt (${have}/${max} ${kind === 'source' ? 'bronnen' : 'fragmenten'}, diepte “${a.r.depth}”). Bewaar niets meer: vat samen wat je hebt en vraag de gebruiker of je door mag (dan research_plan opnieuw aanroepen met een hoger maximum) of rond af met finish_research.`);
+  return { have: have + adding, max };
+}
+async function budgetNote(project) {
+  const a = await activePlan(project); if (!a) return '';
+  const c = await planCounts(a.g.id, a.r.start);
+  return ` [Onderzoeksplan: ${c.sources}/${a.r.max_sources} bronnen, ${c.fragments}/${a.r.max_fragments} fragmenten]`;
 }
 async function upsert(table, row) {
   try { return await rest('POST', table, row, 'resolution=merge-duplicates,return=minimal'); }
@@ -126,6 +185,7 @@ async function upsert(table, row) {
 }
 async function saveSnippet({ text, date, tags, note, source_url, source_title, project, color }) {
   await token();
+  await checkBudget(project, 'fragment');
   let source = null;
   if (source_url) source = await ensureSource({ url: source_url, title: source_title, project });
   const now = Date.now();
@@ -136,6 +196,7 @@ async function saveSnippet({ text, date, tags, note, source_url, source_title, p
   await upsert('snippets', row);
   return { row, source };
 }
+const RULE_TEXT = "Bij een onderzoeksvraag: stel de gebruiker eerst een paar korte vragen (doel, diepte kort/gemiddeld/diep, focus of periode, wat er gemaakt moet worden) en leg het vast met research_plan vóór je iets bewaart.";
 const ok = text => ({ content: [{ type: 'text', text }] });
 const fail = e => ({ content: [{ type: 'text', text: 'Dat lukte niet: ' + (e.message || e) }], isError: true });
 const like = q => `*${String(q).replace(/[,()*%\\]/g, ' ').trim()}*`;
@@ -146,6 +207,51 @@ const tools = [], prompts = [];
     tool: (name, description, shape, handler) => tools.push({ name, description, shape, handler }),
     prompt: (name, description, shape, render) => prompts.push({ name, description, shape, render })
   };
+
+server.tool('research_plan',
+  'Leg een onderzoeksplan vast vóórdat je voor de gebruiker gaat onderzoeken en bewaren. Stel EERST in de chat een paar korte vragen en wacht op het antwoord: (1) waarvoor is het — achtergrond, scènedetails, feiten checken; (2) hoe diep — kort, gemiddeld of diep; (3) welke focus of periode; (4) wat moet er komen — tijdlijn, fragmenten, personages, dossier. Roep dit daarna aan. De koppeling bewaakt het maximum: daarboven weigert hij nieuwe bronnen en fragmenten tot de gebruiker toestemming geeft.',
+  {
+    project: z.string(), onderwerp: z.string(),
+    diepte: z.enum(['kort', 'gemiddeld', 'diep']).describe('kort ≈ 6 bronnen/20 fragmenten, gemiddeld ≈ 12/40, diep ≈ 25/90'),
+    doel: z.string().optional().describe('Waarvoor de gebruiker het nodig heeft'),
+    focus: z.string().optional().describe('Afbakening: periode, personen, aspecten'),
+    max_bronnen: z.number().int().min(1).max(100).optional().describe('Alleen als de gebruiker een eigen aantal noemt'),
+    max_fragmenten: z.number().int().min(1).max(300).optional()
+  },
+  async (a) => {
+    try {
+      await token();
+      const gs = await groups(); const g = gs.find(x => x.name.toLowerCase() === a.project.toLowerCase()) || gs.find(x => x.name.toLowerCase().includes(a.project.toLowerCase()));
+      if (!g) return fail(new Error(`Project “${a.project}” bestaat niet. Maak het eerst met create_project.`));
+      const d = DEPTHS[a.diepte];
+      g.research = { start: Date.now(), depth: a.diepte, topic: a.onderwerp, goal: a.doel || '', focus: a.focus || '', max_sources: a.max_bronnen || d.sources, max_fragments: a.max_fragmenten || d.fragments, done: false };
+      await saveGroups(gs);
+      return ok(`Onderzoeksplan vastgelegd voor “${g.name}”: ${a.onderwerp} — diepte ${a.diepte}, maximaal ${g.research.max_sources} bronnen en ${g.research.max_fragments} fragmenten (tijdlijnpunten tellen als fragment). Kies de beste bronnen in plaats van zoveel mogelijk; sla geen dubbele of oppervlakkige pagina's op. Het plan geldt ${PLAN_HOURS} uur of tot finish_research.`);
+    } catch (e) { return fail(e); }
+  });
+
+server.tool('research_status',
+  'Hoeveel bronnen en fragmenten zijn er volgens het lopende onderzoeksplan van een project al bewaard, en hoeveel mogen er nog?',
+  { project: z.string() },
+  async ({ project }) => {
+    try {
+      await token(); const a = await activePlan(project);
+      if (!a) return ok(`Er loopt geen onderzoeksplan voor “${project}”. ${RULE_TEXT}`);
+      const c = await planCounts(a.g.id, a.r.start);
+      return ok(`Plan “${a.r.topic}” (${a.r.depth}): ${c.sources}/${a.r.max_sources} bronnen, ${c.fragments}/${a.r.max_fragments} fragmenten.${a.r.focus ? ' Focus: ' + a.r.focus + '.' : ''}`);
+    } catch (e) { return fail(e); }
+  });
+
+server.tool('finish_research',
+  'Rond het lopende onderzoeksplan van een project af (na de samenvatting voor de gebruiker).',
+  { project: z.string() },
+  async ({ project }) => {
+    try {
+      await token(); const a = await activePlan(project); if (!a) return ok('Er liep geen onderzoeksplan.');
+      const c = await planCounts(a.g.id, a.r.start); a.r.done = true; await saveGroups(a.gs);
+      return ok(`Onderzoek “${a.r.topic}” afgerond: ${c.sources} bronnen en ${c.fragments} fragmenten bewaard.`);
+    } catch (e) { return fail(e); }
+  });
 
 server.tool('save_fragment',
   'Bewaar een fragment (citaat, feit, idee of samenvatting) op de braindump in de Schrijfkamer van de gebruiker. Geef bij voorkeur de bron-URL mee als de informatie van een webpagina komt. Krijgt automatisch de tag "ai". Gebruik dit wanneer de gebruiker vraagt iets te bewaren, op te slaan of te noteren.',
@@ -400,11 +506,17 @@ server.tool('add_timeline_events',
     } catch (e) { return fail(e); }
   });
 
-const PROMPT_ONDERZOEK = "Je bent mijn onderzoeksassistent voor mijn schrijfproject “${arguments.project}”. Ik concentreer me op het creatieve schrijven; jij doet het feitenwerk en zet alles in mijn Schrijfkamer.\n\nOnderwerp: ${arguments.onderwerp}\n\nWerkwijze:\n1. Roep eerst project_overview aan (bestaat het project niet, maak het dan met create_project) zodat je niets dubbel doet.\n2. Zoek op het web naar betrouwbare bronnen (encyclopedieën, musea, wetenschappelijke en historische bronnen). Bewaar de belangrijkste met save_source.\n3. Zet elke gebeurtenis met een datum op de tijdlijn (add_timeline_events), steeds met de bron-URL.\n4. Bewaar losse feiten, citaten en details die bruikbaar zijn voor een verhaal (zintuiglijke details, gebruiken, voorwerpen, plaatsen) als fragmenten met save_fragment, met tags en bron.\n5. Maak met create_text (map “Onderzoek”) een tekst “Onderzoeksdossier: ${arguments.onderwerp}” in het project met: korte samenvatting, belangrijkste personen en plekken (met [[links]] waar zinnig), chronologie in het kort, en een lijst “Open vragen”. Zet ?? achter alles wat onzeker of tegenstrijdig is. Maak voor belangrijke (historische) personen een character sheet met create_character.\n6. Werk in het Nederlands. Verzin niets: geen bron, dan markeren met ??.\n7. Sluit af met een korte samenvatting in de chat van wat je hebt toegevoegd en welke vragen nog open staan.";
+const INSTRUCTIONS = 'Koppeling met de Schrijfkamer van de gebruiker: bewaar fragmenten, tijdlijnmomenten, bronnen, teksten en personages, en doorzoek de verzameling. Antwoord in het Nederlands. ' + RULE_TEXT + ' Verzamel liever weinig goede bronnen dan veel; controleer met search_collection of iets er al is.';
+const PROMPT_ONDERZOEK = "Je bent mijn onderzoeksassistent voor mijn schrijfproject “${arguments.project}”. Ik concentreer me op het creatieve schrijven; jij doet het feitenwerk en zet alles in mijn Schrijfkamer.\n\nOnderwerp: ${arguments.onderwerp}\n\nWerkwijze:\n0. Stel mij eerst een paar korte vragen en wacht op mijn antwoord: waarvoor heb ik dit nodig, hoe diep (kort, gemiddeld of diep), welke focus of periode, en wat moet er komen (tijdlijn, fragmenten, personages, dossier). Leg het daarna vast met research_plan en houd je aan het maximum.\n1. Roep eerst project_overview aan (bestaat het project niet, maak het dan met create_project) zodat je niets dubbel doet.\n2. Zoek op het web naar betrouwbare bronnen (encyclopedieën, musea, wetenschappelijke en historische bronnen). Bewaar de belangrijkste met save_source.\n3. Zet elke gebeurtenis met een datum op de tijdlijn (add_timeline_events), steeds met de bron-URL.\n4. Bewaar losse feiten, citaten en details die bruikbaar zijn voor een verhaal (zintuiglijke details, gebruiken, voorwerpen, plaatsen) als fragmenten met save_fragment, met tags en bron.\n5. Maak met create_text (map “Onderzoek”) een tekst “Onderzoeksdossier: ${arguments.onderwerp}” in het project met: korte samenvatting, belangrijkste personen en plekken (met [[links]] waar zinnig), chronologie in het kort, en een lijst “Open vragen”. Zet ?? achter alles wat onzeker of tegenstrijdig is. Maak voor belangrijke (historische) personen een character sheet met create_character.\n6. Werk in het Nederlands. Verzin niets: geen bron, dan markeren met ??.\n7. Sluit af met een korte samenvatting in de chat van wat je hebt toegevoegd en welke vragen nog open staan, en roep finish_research aan.";
 server.prompt('onderzoek_project',
   'Laat Claude onderzoek doen en het researchkader van een project in de Schrijfkamer vullen.',
   { project: z.string().describe('Naam van het project, bv. De muntenmaker'), onderwerp: z.string().describe('Waar gaat het onderzoek over?') },
   ({ project, onderwerp }) => ({ messages: [{ role: 'user', content: { type: 'text', text: PROMPT_ONDERZOEK.replace(/\$\{arguments\.project\}/g, project).replace(/\$\{arguments\.onderwerp\}/g, onderwerp) } }] }));
 
-return { tools, prompts, PROMPT_ONDERZOEK, version: VERSION };
+for (const t of tools) if (['save_fragment', 'add_to_timeline', 'save_source', 'add_timeline_events'].includes(t.name)) {
+  const h = t.handler;
+  t.handler = async (a) => { const r = await h(a); if (!r.isError && a.project) { try { const n = await budgetNote(a.project); if (n) r.content[0].text += n; } catch (e) {} } return r; };
+  t.description += ' ' + RULE_TEXT + ' Geef altijd het project mee.';
+}
+return { tools, prompts, PROMPT_ONDERZOEK, version: VERSION, instructions: INSTRUCTIONS };
 }

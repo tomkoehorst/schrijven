@@ -41,7 +41,7 @@ async function handle(msg) {
         const v = PROTOCOLS.includes(params.protocolVersion) ? params.protocolVersion : PROTOCOLS[0];
         return { jsonrpc: '2.0', id, result: { protocolVersion: v, capabilities: { tools: { listChanged: false }, prompts: { listChanged: false } },
           serverInfo: { name: 'schrijfkamer', version: VERSION },
-          instructions: 'Koppeling met de Schrijfkamer van de gebruiker: bewaar fragmenten, tijdlijnmomenten, bronnen, teksten en personages, en doorzoek de verzameling. Antwoord in het Nederlands.' } };
+          instructions: core.instructions } };
       }
       case 'ping': return { jsonrpc: '2.0', id, result: {} };
       case 'tools/list': return { jsonrpc: '2.0', id, result: { tools: toolList } };

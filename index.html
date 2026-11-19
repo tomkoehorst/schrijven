@@ -323,6 +323,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .tagrow input{border:1px dashed var(--line);background:transparent;border-radius:999px;padding:4px 10px;font-size:12.5px;width:120px;outline:none}
 .tagrow input:focus{border-color:var(--sage);border-style:solid}
 .src{display:block;width:100%;text-align:left;padding:12px 14px 12px 16px;border-radius:12px;margin-bottom:6px;position:relative;border:1px solid transparent}
+.cleanbar{display:block;width:100%;text-align:left;margin:0 0 8px;padding:9px 12px;border-radius:11px;background:rgba(244,230,176,.55);font-size:13px;font-weight:800;color:#8A6A2C}
+.cleanbar:hover{background:rgba(244,230,176,.85)}
 .src:hover{background:rgba(94,156,128,.06)}
 .src.on{background:var(--card);box-shadow:var(--shadow);border-color:var(--line)}
 .src .s{font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;display:flex;gap:6px;align-items:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
@@ -525,6 +527,8 @@ body.capture .dialog{box-shadow:none;border:1px solid var(--line)}
 .phead h1{font-size:26px;margin:0;letter-spacing:-.01em}
 .pdot{width:14px;height:14px;border-radius:50%;flex:none}
 .phead .btn{padding:8px 14px;font-size:13.5px}
+.presearch{margin:4px 28px 0;background:var(--accent-soft);border-radius:12px;padding:9px 14px;font-size:13.5px}
+.presearch span{color:var(--muted);font-weight:700}
 .pstats{display:flex;gap:10px;flex-wrap:wrap;padding:10px 28px 14px}
 .pstat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 14px;min-width:96px}
 .pstat b{display:block;font-size:20px;font-weight:800}
@@ -2308,7 +2312,10 @@ let srcServerHits = null;                      // ids matching a full-text searc
 let srcFnOk = null;                            // is the Edge Function reachable?
 const persistSources = () => LS.set('sources', sources);
 const host = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch(e){ return ''; } };
-const normUrl = u => { try { const x = new URL(u); x.hash = ''; ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','fbclid','gclid'].forEach(k => x.searchParams.delete(k)); return x.href.replace(/\/$/, ''); } catch(e){ return u; } };
+const normUrl = u => { try { const x = new URL(String(u).trim()); x.hash = ''; x.hostname = x.hostname.toLowerCase().replace(/^www\./, ''); x.protocol = 'https:';
+  for (const k of [...x.searchParams.keys()]) if (/^(utm_|fbclid|gclid|mc_|ref$|ref_src|igshid|si$)/i.test(k)) x.searchParams.delete(k);
+  return decodeURIComponent(x.href).replace(/\/+$/, '').toLowerCase(); } catch(e){ return String(u || '').trim().toLowerCase(); } };
+const BLOCKED_RE = /just a moment|even checken of je een bot|are you a robot|attention required|checking your browser|verify you are human|access denied|captcha|enable javascript and cookies|ddos protection|pardon our interruption/i;
 const KIND = {article:'Artikel', wiki:'Wikipedia', note:'Notitie', link:'Link'};
 I.board = '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>';
 I.timeline = '<path d="M12 3v18"/><circle cx="12" cy="7" r="2"/><circle cx="12" cy="17" r="2"/><path d="M14 7h6M4 17h6"/>';
@@ -2407,6 +2414,13 @@ async function saveFromUrl(raw, hint = {}, opts = {}){
   try { await srcUpsert(stripLocal(s)); } catch(e){ toast('Bewaren mislukt: ' + (e.message || e)); delete sources[id]; persistSources(); renderList(); renderReader(); return null; }
   try {
     const a = await callFn({action:'fetch', url});
+    if (a.blocked || BLOCKED_RE.test(a.title || '')){
+      s.note = [s.note, 'De website liet de tekst niet ophalen (beveiliging/bot-controle) — open de link zelf.'].filter(Boolean).join(' ');
+      s.updated = Date.now(); await srcUpsert(stripLocal(s));
+      toast('Link bewaard — deze website laat de tekst niet automatisch ophalen');
+      delete s._pending; persistSources(); renderList(); if (currentSrc === id) renderReader(); if (rpOpen && rpSrc === id) renderResearch();
+      return id;
+    }
     Object.assign(s, {url: a.url || url, title: a.title || s.title, site: a.site || s.site, byline: a.byline || '', published: a.published || '', excerpt: a.excerpt || s.excerpt, updated: Date.now()});
     srcContent[id] = a.content || '';
     await srcUpsert({...stripLocal(s), content: a.content || ''});
@@ -2463,6 +2477,50 @@ function visibleSources(){
   }
   return arr.sort((a, b) => (b.fav - a.fav) || (b.created - a.created));
 }
+/* ----- Opruimen: dubbele bronnen samenvoegen, geblokkeerde titels herstellen ----- */
+function sourceProblems(){
+  const byUrl = new Map();
+  for (const s of Object.values(sources)) if (s.url){ const k = normUrl(s.url); if (!byUrl.has(k)) byUrl.set(k, []); byUrl.get(k).push(s); }
+  const dupes = [...byUrl.values()].filter(g => g.length > 1);
+  const blocked = Object.values(sources).filter(s => BLOCKED_RE.test(s.title || ''));
+  return {dupes, blocked};
+}
+function titleFromUrl(u){ try { const x = new URL(u); const segs = x.pathname.split('/').filter(Boolean).map(p => decodeURIComponent(p)); const last = (segs.reverse().find(p => /[a-z]{3}/i.test(p) && !/^(text_ocr|index|view|page|pages|html?|default|read|show|item|detail|catalog|diglit)$/i.test(p.replace(/\.\w+$/, ''))) || '').replace(/[-_]+/g, ' ').replace(/\.\w+$/, ''); return (last ? last.charAt(0).toUpperCase() + last.slice(1) + ' — ' : '') + x.hostname.replace(/^www\./, ''); } catch(e){ return u; } }
+async function cleanupSources(){
+  const {dupes, blocked} = sourceProblems();
+  if (!dupes.length && !blocked.length){ toast('Niets op te ruimen — je bronnen zijn netjes'); return; }
+  const n = dupes.reduce((a, g) => a + g.length - 1, 0);
+  openModal(`<h3>Bronnen opruimen</h3>
+    ${n ? `<p><b>${n} dubbele bron${n === 1 ? '' : 'nen'}</b> in ${dupes.length} groep${dupes.length === 1 ? '' : 'en'}. Per groep blijft de vollediste bron over; tags en notities worden samengevoegd en fragmenten verhuizen mee.</p><ul class="muted" style="font-size:13px;max-height:150px;overflow:auto">${dupes.map(g => `<li>${esc(g[0].title || g[0].url)} — ${g.length}×</li>`).join('')}</ul>` : ''}
+    ${blocked.length ? `<p><b>${blocked.length} bron${blocked.length === 1 ? '' : 'nen'} met een bot-controle als titel</b> (bv. “${esc(blocked[0].title)}”). De titel wordt hersteld uit de link en er komt een notitie bij.</p>` : ''}
+    <div class="btns"><button class="btn ghost" data-close>Annuleren</button><button class="btn" id="cuGo">Opruimen</button></div>`);
+  $('#cuGo').onclick = async () => {
+    $('#cuGo').disabled = true; $('#cuGo').textContent = 'Bezig…';
+    let merged = 0, fixed = 0;
+    try {
+      for (const g of dupes){
+        const score = s => (srcContent[s.id] ? srcContent[s.id].length : 0) + (s.excerpt || '').length + (BLOCKED_RE.test(s.title || '') ? -1e6 : 0) + (s.note ? 50 : 0);
+        await Promise.all(g.filter(s => srcContent[s.id] === undefined).map(s => loadContent(s.id)));
+        const keep = [...g].sort((a, b) => score(b) - score(a) || a.created - b.created)[0];
+        const rest = g.filter(s => s !== keep), ids = rest.map(s => s.id);
+        const tags = [...new Set(g.flatMap(s => s.tags || []))], note = [...new Set(g.map(s => (s.note || '').trim()).filter(Boolean))].join('\n');
+        const {error: e1} = await sb.from('snippets').update({source_id: keep.id, updated: Date.now()}).in('source_id', ids); if (e1) throw e1;
+        for (const sn of Object.values(snippets)) if (ids.includes(sn.source_id)) sn.source_id = keep.id;
+        Object.assign(keep, {tags, note, fav: g.some(s => s.fav), grp: keep.grp || (g.find(s => s.grp) || {}).grp || '', updated: Date.now()});
+        await srcUpsert(stripLocal(keep));
+        const {error: e2} = await sb.from('sources').delete().in('id', ids); if (e2) throw e2;
+        for (const id of ids){ delete sources[id]; delete srcContent[id]; }
+        merged += ids.length;
+      }
+      for (const s of Object.values(sources)) if (BLOCKED_RE.test(s.title || '')){
+        s.title = titleFromUrl(s.url); s.note = [s.note, 'De website liet de tekst niet ophalen (bot-controle) — open de link zelf.'].filter(Boolean).join(' ');
+        s.updated = Date.now(); await srcUpsert(stripLocal(s)); fixed++;
+      }
+    } catch(e){ toast('Opruimen gestopt: ' + (e.message || e)); }
+    persistSources(); persistSnips(); closeModal(); renderList(); renderReader(); renderLib();
+    toast(`Opgeruimd: ${merged} dubbele bron${merged === 1 ? '' : 'nen'} samengevoegd${fixed ? ', ' + fixed + ' titel' + (fixed === 1 ? '' : 's') + ' hersteld' : ''}`);
+  };
+}
 function renderSources(){
   $('#listTitle').textContent = query.trim() ? 'Bronnen · zoeken' : 'Bronnen';
   const el = $('#sheets'), arr = visibleSources();
@@ -2472,7 +2530,8 @@ function renderSources(){
     el.innerHTML = projChips() + `<div class="empty">${cat(query.trim() ? 'curious' : 'sleepy')}${query.trim() ? 'Niets gevonden.' : 'Nog geen bronnen.<br>Tik op <b>+</b> om een artikel, link of citaat te bewaren.'}</div>`;
     return;
   }
-  el.innerHTML = projChips() + arr.map(s => `<button class="src ${s.id === currentSrc ? 'on' : ''} ${s._pending ? 'loading' : ''}" data-src="${s.id}">
+  const probs = sourceProblems(), nProb = probs.dupes.reduce((a, g) => a + g.length - 1, 0) + probs.blocked.length;
+  el.innerHTML = projChips() + (nProb ? `<button class="cleanbar" data-a="cleanup">🧹 ${nProb} bron${nProb === 1 ? '' : 'nen'} op te ruimen (dubbel of geblokkeerd)</button>` : '') + arr.map(s => `<button class="src ${s.id === currentSrc ? 'on' : ''} ${s._pending ? 'loading' : ''}" data-src="${s.id}">
     <span class="del" role="button" data-sdel="${s.id}" title="Verwijderen" aria-label="Verwijderen">${icon('trash','')}</span>
     <div class="s">${s.fav ? '★ ' : ''}${esc(KIND[s.kind] || 'Bron')} · ${esc(s.site || host(s.url))}</div>
     <div class="t">${esc(s.title || s.url)}</div>
@@ -2686,6 +2745,7 @@ $('#sheets').addEventListener('click', e => {
   if (d){ e.stopPropagation(); const s = sources[d.dataset.sdel]; confirmDialog('Bron verwijderen?', `“${esc(s.title)}” verdwijnt uit je bronnen.`, 'Verwijderen', () => removeSource(s.id)); return; }
   const b = e.target.closest('[data-src]'); if (b) openSource(b.dataset.src);
   const l = e.target.closest('[data-a="login"]'); if (l) loginDialog();
+  const cu = e.target.closest('[data-a="cleanup"]'); if (cu) cleanupSources();
 }, true);
 
 /* ================= Fragmenten: braindump en tijdlijn ================= */
@@ -4071,6 +4131,8 @@ function renderProject(){
     <button class="btn ghost" data-pact="quick">＋ Snel bewaren</button>
     <button class="btn" data-pact="new">＋ Nieuwe tekst</button>
   </div>
+  ${(() => { const r = g.research; if (!r || r.done || Date.now() - r.start > 12 * 3600e3) return ''; const ns = D.srcs.filter(x => x.created >= r.start).length, nf = D.snips.filter(x => x.created >= r.start).length;
+    return `<div class="presearch">🔎 <b>Claude onderzoekt:</b> ${esc(r.topic)} <span>· ${esc(r.depth)} · ${ns}/${r.max_sources} bronnen · ${nf}/${r.max_fragments} fragmenten</span></div>`; })()}
   <div class="pstats">${stat(D.texts.length, D.texts.length === 1 ? 'tekst' : 'teksten')}${stat(D.words, 'woorden')}${stat(D.srcs.length, D.srcs.length === 1 ? 'bron' : 'bronnen')}${stat(D.snips.length, D.snips.length === 1 ? 'fragment' : 'fragmenten')}${stat(D.dated.length, 'op de tijdlijn')}${stat(D.todos.length, 'nog uitzoeken')}</div>
   ${!D.texts.length && !D.srcs.length && !D.snips.length ? `<div class="pwelcome">${cat('happy')}<div><h3>Welkom bij ${esc(g.name)}!</h3><p>Begin met een <b>nieuwe tekst</b>, bewaar bronnen met de browser-extensie of vraag Claude om iets “in project ${esc(g.name)}” te zetten. Alles van dit project komt hier samen.</p></div></div>` : ''}
   <div class="pgrid">

@@ -67,8 +67,16 @@ async function fetchArticle(raw: string) {
   return extract(html, res.url || u.href);
 }
 
+const BLOCKED = /just a moment|even checken of je een bot|are you a robot|attention required|checking your browser|verify you are human|access denied|captcha|enable javascript and cookies|ddos protection|pardon our interruption|please wait while we/i;
+
 export function extract(html: string, url: string) {
   const { document } = parseHTML(html);
+  const pageTitle = document.querySelector("title")?.textContent?.trim() || "";
+  const bodyText = (document.body?.textContent || "").replace(/\s+/g, " ").slice(0, 3000);
+  if (BLOCKED.test(pageTitle) || (bodyText.length < 1500 && BLOCKED.test(bodyText))) {
+    const h = new URL(url).hostname.replace(/^www\./, "");
+    return { url, title: "", site: h, excerpt: "", byline: "", published: "", content: "", blocked: true };
+  }
   const meta = (sel: string) => document.querySelector(sel)?.getAttribute("content")?.trim() || "";
   const host = new URL(url).hostname.replace(/^www\./, "");
   const info = {
