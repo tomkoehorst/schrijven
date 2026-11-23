@@ -5,7 +5,7 @@ import { z as z2 } from "npm:zod@4.1.12";
 
 // src/core.js
 import { z } from "npm:zod@4.1.12";
-var VERSION = "1.9.0";
+var VERSION = "1.10.0";
 function cleanInline(s) {
   return String(s).replace(/<\/?(b|strong|i|em|u)>/gi, "").replace(/(\*\*|__)(?=\S)(.+?)(?<=\S)\1/g, "$2").replace(/(^|[^*\w])(\*|_)(?=[^\s*_])([^*_\n]+?)(?<=\S)\2(?![*\w])/g, "$1$3").replace(/\*\*/g, "").replace(/`([^`\n]+)`/g, "$1").replace(/~~(.+?)~~/g, "$1").replace(/(^|[^\[])\[([^\[\]\n]+)\]\((https?:[^)\s]+)\)/g, "$1$2 ($3)");
 }
@@ -220,8 +220,8 @@ function createCore(cfg = {}) {
       inflight.delete(key);
     }
   }
-  async function createSource({ url, title, project, note, tags }) {
-    await checkBudget(project, "source");
+  async function createSource({ url, title, project, note, tags, noBudget }) {
+    if (!noBudget) await checkBudget(project, "source");
     const id = uid(), now = Date.now();
     const row = { id, user_id: session.user_id, kind: "article", url, title: title || host(url) || url, site: host(url), byline: "", published: "", excerpt: "", content: "", tags: [.../* @__PURE__ */ new Set(["ai", ...tags || []])], note: note || "", fav: false, created: now, updated: now };
     const grp = await projectId(project);
@@ -296,11 +296,11 @@ function createCore(cfg = {}) {
       throw e;
     }
   }
-  async function saveSnippet({ text, date, tags, note, source_url, source_title, project, color }) {
+  async function saveSnippet({ text, date, tags, note, source_url, source_title, project, color, noBudget }) {
     await token();
-    await checkBudget(project, "fragment");
+    if (!noBudget) await checkBudget(project, "fragment");
     let source = null;
-    if (source_url) source = await ensureSource({ url: source_url, title: source_title, project });
+    if (source_url) source = await ensureSource({ url: source_url, title: source_title, project, noBudget });
     const now = Date.now();
     const allTags = [...new Set(["ai", ...tags || []].map((t) => String(t).replace(/^#/, "").trim()).filter(Boolean))];
     const d = parseDate(date);
@@ -651,7 +651,7 @@ ${(s.content || s.excerpt || "(geen tekst bewaard)").slice(0, 15e3)}`);
         const dated = sn.map((x) => ({ x, d: parseDate(x.date) })).filter((y) => y.d).sort((a, b) => a.d.key.localeCompare(b.d.key));
         const tags = {};
         for (const x of sn) for (const t of x.tags || []) tags[t] = (tags[t] || 0) + 1;
-        const SKIP = /^(ai|wikidata|uitgezocht|feit|idee|sc[eè]ne(-idee)?)$/i, topics = {};
+        const SKIP = /^(ai|wikidata|uitgezocht|feit|idee|antwoord|sc[eè]ne(-idee)?)$/i, topics = {};
         for (const x of sn) {
           const t = (x.tags || []).find((t2) => !SKIP.test(t2));
           if (t) topics[t.toLowerCase()] = (topics[t.toLowerCase()] || 0) + 1;
@@ -1029,6 +1029,90 @@ ${r.body}`);
       }
     }
   );
+  const TODO_RX = /\?\?|\[check(?::\s*([^\]\n]*))?\]/gi;
+  const ABBR_RX = /(?:v\.\s?chr|n\.\s?chr|v\.\s?c|bv|o\.a|ca|dr|mr|st|nr|blz|jr|vs|etc|ibid|e\.a|resp|zgn|evt|incl|d\.w\.z|i\.p\.v)\.$/i;
+  function todosInBody(v) {
+    v = String(v || "");
+    const out = [];
+    for (const m of v.matchAll(TODO_RX)) {
+      const i = m.index;
+      let start = Math.max(0, v.lastIndexOf("\n", i - 1) + 1);
+      for (let j = i - 1; j > start; j--) {
+        if (/[.!?]/.test(v[j]) && /\s/.test(v[j + 1] || "") && v.slice(j + 1, i).trim() && !ABBR_RX.test(v.slice(Math.max(start, j - 10), j + 1))) {
+          start = j + 1;
+          break;
+        }
+      }
+      const sentence = v.slice(start, i).replace(/^[\s.!?#>*-]+/, "").replace(/\+\+/g, "").trim();
+      const q = (m[1] || "").trim();
+      out.push({ text: q || sentence || "(leeg)", context: sentence });
+    }
+    return out;
+  }
+  const normQ = (t) => String(t || "").toLowerCase().replace(/\?\?|\[check:?|\]/g, "").replace(/[^\p{L}\p{N}]+/gu, " ").trim().slice(0, 60);
+  async function openQuestions(gid) {
+    let rows;
+    try {
+      rows = await rest("GET", `sheets?select=id,body,kind,meta,ord,updated&grp=eq.${enc(gid)}&trashed=eq.false&order=updated.desc`);
+    } catch (e) {
+      rows = await rest("GET", `sheets?select=id,body,updated&grp=eq.${enc(gid)}&trashed=eq.false&order=updated.desc`);
+    }
+    const answers = (await rest("GET", `snippets?select=id,text,note,tags&grp=eq.${enc(gid)}&limit=2000`)).filter((n) => (n.tags || []).some((t) => String(t).toLowerCase() === "antwoord"));
+    const scenes = rows.filter((r) => r.kind === "scene" && !(r.meta && r.meta.bench)).sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0));
+    const label = (r) => r.kind === "scene" ? (r.meta && r.meta.bench ? "Werkbank: " : "Sc\xE8ne " + (scenes.indexOf(r) + 1) + ": ") + sceneTitle(r) : titleOf(r.body);
+    const qs = [];
+    for (const r of rows) {
+      for (const t of todosInBody(r.body)) qs.push({ ...t, where: label(r) });
+      const mq = r.meta && r.meta.questions;
+      if (mq) for (const l of String(mq).split("\n").map((x) => x.replace(/^[-*]\s*/, "").trim()).filter(Boolean)) qs.push({ text: l, context: l, where: label(r) + " (kaartje)" });
+    }
+    for (const q of qs) {
+      const k = normQ(q.text);
+      q.answer = k.length >= 6 && answers.find((n) => {
+        const v = normQ(String(n.note || "").replace(/^vraag:\s*/i, "").replace(/\s*\(in “.*$/, ""));
+        return v && (v.startsWith(k.slice(0, 40)) || k.startsWith(v.slice(0, 40)));
+      });
+    }
+    return qs.map((q, i) => ({ ...q, nr: i + 1 }));
+  }
+  server.tool(
+    "list_open_questions",
+    "Geef de open vragen in een project: alles wat de schrijver met ?? of [check: \u2026] markeerde in teksten en sc\xE8nes, plus de \u201COpen vragen\u201D op sc\xE8nekaartjes. Vragen die al beantwoord zijn staan erbij gemarkeerd. Gebruik dit als de gebruiker vraagt zijn open vragen uit te zoeken; zoek ze daarna op en zet elk antwoord met answer_question.",
+    { project: z.string(), include_answered: z.boolean().optional() },
+    async ({ project, include_answered }) => {
+      try {
+        await token();
+        const gid = await projectId(project);
+        const qs = await openQuestions(gid), open = qs.filter((q) => !q.answer);
+        const list = include_answered ? qs : open;
+        if (!list.length) return ok(qs.length ? `Alle ${qs.length} vragen in ${project} zijn al beantwoord.` : `Geen open vragen in ${project}.`);
+        return ok(`${open.length} open vraag/vragen${qs.length - open.length ? ` (${qs.length - open.length} al beantwoord)` : ""} in ${project}:
+` + list.map((q) => `${q.nr}. ${q.answer ? "[beantwoord] " : ""}${q.text}${q.context && q.context !== q.text ? `
+   context: \u201C${q.context.slice(0, 160)}\u201D` : ""}
+   in: ${q.where}`).join("\n"));
+      } catch (e) {
+        return fail(e);
+      }
+    }
+  );
+  server.tool(
+    "answer_question",
+    "Zet het antwoord op een open vraag in de Schrijfkamer. Het antwoord verschijnt in de app bij de vraag (Uitzoeken) en in Naslag naast de tekst. De tekst van de schrijver zelf wordt NIET veranderd. Geef een kort, feitelijk antwoord in schone tekst, met bron; zet ?? achter wat onzeker blijft. Telt niet mee voor het onderzoeksplan.",
+    { project: z.string(), question: z.string().describe("Nummer uit list_open_questions, of de tekst van de vraag."), answer: z.string(), topic: z.string().optional().describe("Onderwerp waar het antwoord bij hoort (bv. \u201CLeven van een slaaf\u201D, \u201CSardis\u201D). Hergebruik bestaande onderwerpen."), source_url: z.string().optional(), source_title: z.string().optional() },
+    async ({ project, question, answer, topic, source_url, source_title }) => {
+      try {
+        await token();
+        const gid = await projectId(project);
+        const qs = await openQuestions(gid), s = String(question).trim();
+        const q = /^\d+$/.test(s) ? qs.find((x) => x.nr === +s) : qs.find((x) => normQ(x.text) === normQ(s)) || qs.find((x) => normQ(x.text).includes(normQ(s).slice(0, 30)));
+        if (!q) throw new Error(`Vraag \u201C${question}\u201D niet gevonden. Roep eerst list_open_questions aan.`);
+        await saveSnippet({ text: answer, tags: [...topic ? [topic] : [], "antwoord"], note: `Vraag: ${q.text} (in \u201C${q.where}\u201D)`, source_url, source_title, project, noBudget: true });
+        return ok(`Antwoord bewaard bij vraag ${q.nr} (\u201C${q.text.slice(0, 70)}\u201D)${topic ? ", onderwerp " + topic : ""}. De schrijver ziet het in Uitzoeken en in Naslag.`);
+      } catch (e) {
+        return fail(e);
+      }
+    }
+  );
   server.tool(
     "create_text",
     "Maak een nieuwe tekst (document) in de Schrijfkamer, bijvoorbeeld een onderzoeksdossier, personenoverzicht of hoofdstukopzet. Schrijf schone, gewone tekst: alleen ## kopjes en - lijstjes; GEEN **vet**, *cursief*, tabellen of andere opmaaktekens (die worden toch weggehaald). Zet ?? achter feiten die nog gecontroleerd moeten worden; gebruik [[Titel]] om naar andere teksten of bronnen te linken.",
@@ -1205,7 +1289,7 @@ Niet herkende datums (overgeslagen): ${bad.join("; ")}` : ""}`);
       }
     }
   );
-  const INSTRUCTIONS = "Koppeling met de Schrijfkamer van de gebruiker: bewaar fragmenten, tijdlijnmomenten, bronnen, teksten en personages, en doorzoek de verzameling. Antwoord in het Nederlands. De schrijver werkt ONTDEKKEND: volg zijn tekst, stel geen vaste structuur, statussen of kaartvelden op tenzij hij erom vraagt, en zet zijsporen liever als los stuk op de Werkbank (create_scene met on_bench) dan ze weg te strepen. Een verhaal bestaat uit SC\xC8NES op volgorde (list_scenes, get_scene, create_scene, update_scene, reorder_scenes): elke sc\xE8ne heeft een kaartje (planning) en een sc\xE8netekst (proza). Teksten kun je lezen en verbeteren met read_text en update_text; verwijderen (delete_text) alleen na uitdrukkelijke bevestiging van de gebruiker. Materiaal is ingedeeld in ONDERWERPEN (de eerste tag van een fragment of bron); gebruik write_topic voor achtergrondkennis met feiten en sc\xE8ne-idee\xEBn, en hergebruik bestaande onderwerpnamen. Schrijf in de Schrijfkamer schone, gewone tekst: geen **vet**, *cursief*, tabellen of andere Markdown-tekens, alleen ## kopjes en - lijstjes. " + RULE_TEXT + " Verzamel liever weinig goede bronnen dan veel; controleer met search_collection of iets er al is.";
+  const INSTRUCTIONS = "Koppeling met de Schrijfkamer van de gebruiker: bewaar fragmenten, tijdlijnmomenten, bronnen, teksten en personages, en doorzoek de verzameling. Antwoord in het Nederlands. De schrijver werkt ONTDEKKEND: volg zijn tekst, stel geen vaste structuur, statussen of kaartvelden op tenzij hij erom vraagt, en zet zijsporen liever als los stuk op de Werkbank (create_scene met on_bench) dan ze weg te strepen. Vraagt de schrijver zijn open vragen uit te zoeken: list_open_questions, zoek op, en zet elk antwoord met bron via answer_question (verander zijn tekst niet). Een verhaal bestaat uit SC\xC8NES op volgorde (list_scenes, get_scene, create_scene, update_scene, reorder_scenes): elke sc\xE8ne heeft een kaartje (planning) en een sc\xE8netekst (proza). Teksten kun je lezen en verbeteren met read_text en update_text; verwijderen (delete_text) alleen na uitdrukkelijke bevestiging van de gebruiker. Materiaal is ingedeeld in ONDERWERPEN (de eerste tag van een fragment of bron); gebruik write_topic voor achtergrondkennis met feiten en sc\xE8ne-idee\xEBn, en hergebruik bestaande onderwerpnamen. Schrijf in de Schrijfkamer schone, gewone tekst: geen **vet**, *cursief*, tabellen of andere Markdown-tekens, alleen ## kopjes en - lijstjes. " + RULE_TEXT + " Verzamel liever weinig goede bronnen dan veel; controleer met search_collection of iets er al is.";
   const PROMPT_ONDERZOEK = "Je bent mijn onderzoeksassistent voor mijn schrijfproject \u201C${arguments.project}\u201D. Ik concentreer me op het creatieve schrijven; jij doet het feitenwerk en zet alles in mijn Schrijfkamer.\n\nOnderwerp: ${arguments.onderwerp}\n\nWerkwijze:\n0. Stel mij eerst een paar korte vragen en wacht op mijn antwoord: waarvoor heb ik dit nodig, hoe diep (kort, gemiddeld of diep), welke focus of periode, en wat moet er komen (tijdlijn, fragmenten, personages, dossier). Leg het daarna vast met research_plan en houd je aan het maximum.\n1. Roep eerst project_overview aan (bestaat het project niet, maak het dan met create_project) zodat je niets dubbel doet.\n2. Zoek op het web naar betrouwbare bronnen (encyclopedie\xEBn, musea, wetenschappelijke en historische bronnen). Bewaar de belangrijkste met save_source.\n3. Zet elke gebeurtenis met een datum op de tijdlijn (add_timeline_events), steeds met de bron-URL.\n4. Deel de kennis in 4 \xE0 8 brede onderwerpen in (hergebruik bestaande onderwerpen uit project_overview) en vul elk onderwerp met write_topic: een korte achtergrondtekst in schone tekst, feiten met een kopje en bron, en concrete sc\xE8ne-idee\xEBn (zintuiglijke details, gebruiken, voorwerpen, plaatsen).\n5. Zet ?? achter alles wat onzeker of tegenstrijdig is en noem open vragen in de achtergrondtekst. Maak voor belangrijke (historische) personen een character sheet met create_character.\n6. Werk in het Nederlands. Verzin niets: geen bron, dan markeren met ??.\n7. Sluit af met een korte samenvatting in de chat van wat je hebt toegevoegd en welke vragen nog open staan, en roep finish_research aan.";
   server.prompt(
     "onderzoek_project",

@@ -561,6 +561,27 @@ body.capture .dialog{box-shadow:none;border:1px solid var(--line)}
 .reflist{display:flex;flex-direction:column;gap:2px;margin:4px 0 6px}
 .reflist button{display:flex;align-items:center;gap:8px;text-align:left;padding:6px 8px;border-radius:10px}
 .reflist button:hover{background:var(--pane2)}.reflist b{font-size:14px}.reflist span{font-size:12px;color:var(--muted);margin-left:auto;text-align:right}
+.wwi{max-width:var(--ed-width,680px);margin:0 auto 18px;background:var(--accent-soft);border-radius:16px;padding:12px 16px}
+.wwih{display:flex;align-items:center;font-weight:800;font-size:13px;color:var(--accent)}
+.wwit{margin:4px 0 8px;font-size:15px}
+.wwip{margin:0 0 8px;padding:8px 12px;border-left:3px solid var(--sage);background:var(--card);border-radius:0 10px 10px 0;font-size:14.5px;line-height:1.6;color:var(--muted)}
+.wwij{font-size:13.5px;margin-bottom:10px}
+.wwib{display:flex;gap:8px;flex-wrap:wrap}
+.prikkel{max-width:var(--ed-width,680px);margin:-6px auto 16px;background:#FBF3DC;border:1px solid #F0E2B4;border-radius:14px;padding:10px 14px}
+.pkh{display:flex;align-items:center;gap:4px;font-weight:800;font-size:12.5px;color:#9A7A2E}
+.pkt{font-size:15px;line-height:1.55;margin:4px 0 2px}.pkf{font-size:11.5px;color:var(--muted)}
+.pkq{font-size:15.5px;font-weight:800;margin-top:8px;color:var(--text)}
+#atoast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,160%);display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:14px;padding:8px 8px 8px 16px;font-size:14px;z-index:60;transition:transform .25s;max-width:92vw}
+#atoast.show{transform:translate(-50%,0)}#atoast .btn{padding:7px 12px;font-size:13px}
+.nmch{display:inline-flex;align-items:center;gap:3px;margin:0 10px 6px 0;font-size:13.5px}.nmch .chip{padding:2px 7px}
+.hv{border-top:1px solid var(--line);padding:10px 0}.hv b{font-size:14px}.hv p{margin:2px 0 8px;font-size:13px;color:var(--muted)}
+.dgrid{display:grid;gap:2px;align-items:center;min-width:min-content}
+.dgh{position:sticky;left:-28px;background:var(--bg);height:28px}
+.dgc{font-size:11px;font-weight:800;color:var(--muted);height:28px;border-radius:8px}.dgc:hover{background:var(--pane2);color:var(--text)}
+.dgl{position:sticky;left:-28px;background:var(--bg);font-size:13px;padding:3px 8px 3px 0;z-index:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dgl button{text-align:left;font-weight:700}.dgl button:hover{color:var(--accent)}
+.dgd{height:26px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--pane2)}
+.dgd i{width:12px;height:12px;border-radius:50%;background:var(--sage)}
 .seclib{display:flex;width:100%;justify-content:space-between;align-items:center;text-align:left;cursor:pointer;background:none;border:0}
 .seclib span{font-size:11px;color:var(--faint)}
 .pbody.wide{max-width:none}
@@ -846,7 +867,9 @@ body.capture .dialog{box-shadow:none;border:1px solid var(--line)}
     <div class="fmtbar" id="fmtMob"><div class="fmt"></div></div>
     <div class="scroll" id="scroll">
       <div class="paper" id="paper">
+        <div class="wwi" id="wwi" hidden></div>
         <div class="scenebar" id="sceneBar" hidden></div>
+        <div class="prikkel" id="prikkel" hidden></div>
         <div class="ed" id="ed">
           <div class="checks" id="checks" aria-hidden="true"></div>
           <div class="mirror" id="mirror"></div>
@@ -1163,7 +1186,7 @@ async function startSupabase(user){
     }
   };
   await sbPull();
-  checkSceneCols(); cleanFolders();
+  checkSceneCols(); cleanFolders(); setTimeout(() => whereWasI(), 300);
   Promise.all([srcPull(), snipPull()]).then(() => { processIncoming(); processCapture(); });
   sbChannel = sb.channel('sync-' + user.id)
     .on('postgres_changes', {event:'*', schema:'public', table:'sources'}, p => srcRealtime(p))
@@ -1562,6 +1585,7 @@ function discardIfEmpty(id){
   delete sheets[id]; saveSheet(id, true); return true;
 }
 function openSheet(id){
+  if (currentId && currentId !== id){ maybeHarvest(currentId); const pk = $('#prikkel'); if (pk) pk.hidden = true; const w = $('#wwi'); if (w && wwiDone) w.hidden = true; }
   if (currentId && currentId !== id && discardIfEmpty(currentId)) renderLib();
   if (id && !sheets[id]) id = null;
   currentId = id; LS.set('current', id);
@@ -1576,6 +1600,7 @@ function openSheet(id){
     closePanel(); renderList(); return;
   }
   const s = sheets[id];
+  noteStart(id);
   ta.value = s.body || '';
   ta.readOnly = !!s.trashed;
   if (previewOn) renderPreview();
@@ -2688,7 +2713,7 @@ async function cleanupSources(){
 let srcOpts = Object.assign({group: 'theme', sort: 'new', filter: 'all'}, LS.get('srcOpts', {}));
 let boardOpts = Object.assign({view: 'theme', sort: 'new'}, LS.get('boardOpts', {}));
 let collapsed = new Set(LS.get('collapsed', []));
-const THEME_SKIP = new Set(['ai', 'wikidata', 'uitgezocht', 'feit', 'idee', 'scène-idee', 'scene-idee', 'scène', 'scene']);
+const THEME_SKIP = new Set(['ai', 'wikidata', 'uitgezocht', 'feit', 'idee', 'scène-idee', 'scene-idee', 'scène', 'scene', 'antwoord']);
 const themeOf = x => { const t = (x.tags || []).find(t => !THEME_SKIP.has(String(t).toLowerCase())); return t ? t.charAt(0).toUpperCase() + t.slice(1).replace(/-/g, ' ') : ''; };
 function fragCounts(){ const m = {}; for (const n of Object.values(snippets)) if (n.source_id) m[n.source_id] = (m[n.source_id] || 0) + 1; return m; }
 function groupHtml(key, label, count, inner, prefix){
@@ -3527,7 +3552,9 @@ function todoHtml(){
   const multi = todoScope === 'project';
   const scope = `<div class="seg" style="display:inline-flex;margin-bottom:12px"><button data-tscope="sheet" class="${!multi ? 'on' : ''}">Deze tekst</button><button data-tscope="project" class="${multi ? 'on' : ''}">${esc(grpName((sheets[currentId] || {}).group) || 'Inbox')}</button></div>`;
   if (!list.length) return scope + `<div class="empty" style="padding:16px 6px">${cat('happy')}Niets meer uit te zoeken.<br><span class="muted">Typ <b>??</b> achter iets wat je nog moet nakijken, of <b>[check: je vraag]</b>.</span></div>`;
-  return scope + list.map((t, i) => `<div class="rpi todo-i"><div class="rpk">Nog uitzoeken${multi && t.sheet !== currentId ? ' · ' + esc(titleOf(sheets[t.sheet])) : ''}</div>
+  const gidT = (sheets[currentId] || {}).group;
+  const claudeBar = gidT && gidT !== 'inbox' ? `<div class="tip" style="margin:0 0 12px;font-size:13px">Laat Claude ze in één keer uitzoeken: <button class="pmore" data-copyclaude="${esc(gidT)}">📋 Opdracht kopiëren</button> — de antwoorden verschijnen hier en in Naslag.</div>` : '';
+  return scope + claudeBar + list.map((t, i) => `<div class="rpi todo-i"><div class="rpk">Nog uitzoeken${multi && t.sheet !== currentId ? ' · ' + esc(titleOf(sheets[t.sheet])) : ''}</div>
     <div class="rpt">${esc(t.text)}</div>
     <div class="answer" data-answer="${i}"><span class="muted">Antwoord zoeken…</span></div>
     <div class="rpa"><button data-todo="find" data-ti="${i}">Zoek</button><button data-todo="wiki" data-ti="${i}">Wikipedia</button><button data-todo="web" data-ti="${i}">Web</button><button data-todo="go" data-ti="${i}" class="ghost">Ga naar</button><button data-todo="done" data-ti="${i}" class="ok">✓ Klaar</button></div></div>`).join('');
@@ -3872,6 +3899,9 @@ const ACTIONS = [
   {id:'material', label:'Naar materiaal van dit project',       def:'',              run: () => openProjTab('material')},
   {id:'ideas',    label:'Naar ideeën van dit project',          def:'',              run: () => openProjTab('ideas')},
   {id:'scene',    label:'Nieuwe scène',                         def:'',              run: () => { const gid = projGid(); if (gid){ const id = newScene(gid); if (id) openScene(id); } }},
+  {id:'prikkel',  label:'Prikkel: iets uit je materiaal + een vraag', def:'', run: () => { if (currentId){ if (projOpen()) showProject(false); prikkel(); } }},
+  {id:'oogst',    label:'Oogsten: wat is er ontstaan?',           def:'', run: () => { if (currentId) harvestDialog(currentId); }},
+  {id:'waar',     label:'Waar was ik?',                           def:'', run: () => whereWasI(true)},
   {id:'merge',    label:'Hele verhaal samenvoegen',             def:'',              run: () => { const gid = projGid(); if (gid) mergeDialog(gid); }},
   {id:'texts',    label:'Naar mijn teksten',                    def:'',              run: () => { setView('all'); openSheet(currentId); }},
   {id:'theme',    label:'Licht / donker',                       def:'',              run: () => $('#btnTheme').click()},
@@ -4252,6 +4282,8 @@ function fillAnswers(){
   document.querySelectorAll('[data-answer]').forEach(async el => {
     const t = todoList[+el.dataset.answer]; if (!t || el.dataset.done) return;
     el.dataset.done = '1';
+    const ca = answerFor2(t);
+    if (ca){ const src = sources[ca.source_id]; el.innerHTML = `<div class="ans"><div class="rpk">✓ Uitgezocht door Claude${src ? ' · ' + esc(src.site || host(src.url)) : ''}</div><div>${esc(ca.text)}</div>${src ? `<div class="rpa"><button data-rpread="${src.id}">Bron lezen</button></div>` : ''}</div>`; return; }
     const a = await answerFor(t);
     if (!a){ el.innerHTML = '<span class="muted">Geen antwoord gevonden — probeer de zoekknoppen.</span>'; return; }
     el.innerHTML = `<div class="ans ${a.confident ? '' : 'weak'}"><div class="rpk">${a.confident ? 'Mogelijk antwoord' : 'Misschien relevant'} · Wikipedia: ${esc(a.title)}</div>
@@ -4389,7 +4421,7 @@ function showProject(on){
   $('#app').classList.toggle('projmode', !!on);
   $('#btnProj').style.display = view.startsWith('g:') || view.startsWith('f:') ? '' : 'none';
   $('#btnProj').classList.toggle('on', !!on);
-  if (on){ closePanel(); closeCoach(); if ($('#app').classList.contains('focus')) toggleFocus(); renderProject(); }
+  if (on){ if (currentId) maybeHarvest(currentId); closePanel(); closeCoach(); if ($('#app').classList.contains('focus')) toggleFocus(); renderProject(); }
 }
 function projectData(gid){
   const texts = Object.entries(sheets).filter(([, s]) => !s.trashed && s.group === gid).map(([id, s]) => ({id, ...s})).sort((a, b) => b.updated - a.updated);
@@ -4417,6 +4449,7 @@ function topicsOf(gid){
     let th = themeOf(n);
     const src = sources[n.source_id];
     if (!th && src) th = themeOf(src);
+    if (!th && (n.tags || []).some(t => String(t).toLowerCase() === 'antwoord')) th = 'Antwoorden op je vragen';
     if (!th && !src){ ideas.push(n); continue; }
     const t = get(th || 'Overig');
     ((n.tags || []).some(isSceneTag) ? t.scenes : t.facts).push(n);
@@ -4683,7 +4716,7 @@ function renderSceneBar(){
            <button class="pmore" data-scact="up" ${i <= 0 ? 'disabled' : ''} title="Eerder in het verhaal">⇡</button><button class="pmore" data-scact="down" ${i >= list.length - 1 ? 'disabled' : ''} title="Later in het verhaal">⇣</button>`}
     </div>
     <input id="scTitle" class="sctitle" data-scf="title" placeholder="${bench ? 'Titel (mag leeg blijven)' : 'Titel van de scène'}" value="${esc(m.title || '')}">
-    <div class="scmini"><button class="pmore" data-scact="card">${cardOpen ? 'Kaartje ▴' : 'Kaartje ▾'}</button>${!cardOpen && summary ? `<span>${esc(summary)}</span>` : ''}${hasStatus(s) ? `<span class="scdot2" style="--d:${STATUS_DOT[m.status]}" title="Status: ${esc(m.status)}"></span>` : ''}
+    <div class="scmini"><button class="pmore" data-scact="card">${cardOpen ? 'Kaartje ▴' : 'Kaartje ▾'}</button><button class="pmore" data-scact="prikkel" title="Iets uit je eigen materiaal, met een vraag (als je vastzit)">💡 Prikkel</button><button class="pmore" data-scact="oogst" title="Kijken wat er is ontstaan: namen, open vragen, journaal">🌾 Oogsten</button>${!cardOpen && summary ? `<span>${esc(summary)}</span>` : ''}${hasStatus(s) ? `<span class="scdot2" style="--d:${STATUS_DOT[m.status]}" title="Status: ${esc(m.status)}"></span>` : ''}
       ${L.chars.length || L.topics.length ? `<span class="grow"></span>${L.chars.map(c => `<button class="schip" data-sclchar="${c.id}" title="Bekijk in Naslag">${esc(charName(c))}</button>`).join('')}${L.topics.map(t => `<button class="schip t" data-scltopic="${esc(t.key)}" title="Bekijk in Naslag">${esc(t.name)}</button>`).join('')}` : ''}</div>
     ${cardOpen ? `<div class="sccard">
       ${filled.map(fieldHtml).join('')}
@@ -4725,6 +4758,8 @@ document.addEventListener('click', e => {
   if (a.dataset.scact === 'prev' && i > 0){ shownFields = new Set(); openScene(list[i - 1].id); }
   if (a.dataset.scact === 'next' && i < list.length - 1){ shownFields = new Set(); openScene(list[i + 1].id); }
   if ((a.dataset.scact === 'up' && i > 0) || (a.dataset.scact === 'down' && i < list.length - 1)){ const ids = list.map(x => x.id), j = a.dataset.scact === 'up' ? i - 1 : i + 1; [ids[i], ids[j]] = [ids[j], ids[i]]; renumber(ids); renderSceneBar(); renderList(); toast('Nu scène ' + (j + 1)); return; }
+  if (a.dataset.scact === 'prikkel'){ prikkel(); return; }
+  if (a.dataset.scact === 'oogst'){ harvestDialog(currentId); return; }
   if (a.dataset.scact === 'card'){ cardOpen = !cardOpen; LS.set('cardOpen2', cardOpen); renderSceneBar(); }
   if (a.dataset.scact === 'toline'){ toLine(currentId); renderSceneBar(); renderList(); toast('Staat nu als scène ' + scenesOf(s.group).length + ' in de lijn'); }
   if (a.dataset.scact === 'tobench'){ toBench(currentId); renderSceneBar(); renderList(); toast('Op de werkbank gezet — de lijn is opnieuw genummerd'); }
@@ -4749,7 +4784,7 @@ function storyHtml(gid, g){
   const legacy = D.texts.filter(t => !isScene(t) && /^##\s*kaartje/im.test(t.body || ''));
   const bench = benchOf(gid);
   let h = `<div class="sbar"><button class="btn" data-sact="free" title="Begin een los stuk op de werkbank — het hoeft nog nergens te passen">✎ Gewoon schrijven</button><button class="btn ghost" data-sact="new">＋ Scène</button>
-    <div class="seg">${[['lijn', 'Verhaallijnen'], ['tijd', 'Historische tijd'], ['bord', 'Status']].map(([k, l]) => `<button data-smode="${k}" class="${storyMode === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <div class="seg">${[['lijn', 'Verhaallijnen'], ['tijd', 'Historische tijd'], ['bord', 'Status'], ['ontdekt', 'Wat ontdekte ik?']].map(([k, l]) => `<button data-smode="${k}" class="${storyMode === k ? 'on' : ''}">${l}</button>`).join('')}</div>
     <span class="grow"></span>${list.length ? `<button class="btn ghost" data-sact="merge">⧉ Hele verhaal</button>` : ''}</div>`;
   if (!sceneCols) h += `<div class="tip" style="margin-bottom:12px">Om scènes te bewaren moet je eerst één keer <b>schema.sql</b> draaien in Supabase. <a href="#" data-sact="sql" style="color:var(--accent);font-weight:800">Zo doe je dat →</a></div>`;
   if (legacy.length) h += `<div class="tip" style="margin-bottom:12px">${legacy.length} ${legacy.length === 1 ? 'tekst heeft' : 'teksten hebben'} een <b>## Kaartje</b>. <button class="btn" data-sact="migrate" style="margin-left:8px">Omzetten naar scènes…</button></div>`;
@@ -4757,6 +4792,7 @@ function storyHtml(gid, g){
   const benchHtml = `<div class="sbench" data-bench><div class="sbh"><b>Werkbank</b><span>zijsporen, losse stukken, probeersels — zonder nummer of plek. Sleep een stuk de lijn in als het ergens past, of een scène hierheen.</span></div>
     <div class="sbcards">${bench.map(s => sceneCard(s, 0, gid)).join('')}<button class="sbnew" data-sact="free">✎ Nieuw los stuk</button></div></div>`;
   if (!list.length) return h + `<div class="pwelcome">${cat('happy')}<div><h3>Begin waar je wilt</h3><p>Klik op <b>✎ Gewoon schrijven</b> en schrijf. Wat een scène wordt, zet je later in de lijn; zijsporen blijven op de werkbank. Plannen mag, hoeft niet.</p></div></div>` + benchHtml;
+  if (storyMode === 'ontdekt') return h + discoveredHtml(gid) + benchHtml;
   if (storyMode === 'bord'){
     return h + `<div class="sboard">${SCENE_STATUS.map(([k, l]) => `<div class="scol" data-scol="${k}"><div class="scolh"><i style="background:${STATUS_DOT[k]}"></i>${l} <small>${counts[k]}</small></div>${list.map((s, i) => statusOf(s) === k ? sceneCard(s, i + 1, gid) : '').join('')}</div>`).join('')}</div>` + benchHtml;
   }
@@ -4870,21 +4906,195 @@ function refHtml(){
       <button class="pmore" data-rtopen="${esc(t.key)}">Onderwerp openen →</button></div>`;
   }
   const L = sh ? sceneLinks(sh) : {chars: [], topics: []}, auto = bestTopic(T.list);
+  const answered = sh ? todosIn(currentId).map(t => [t, answerFor2(t)]).filter(x => x[1]) : [];
   const here = [...L.chars.map(x => ['char', x.id, charName(x)]), ...L.topics.map(t => ['topic', t.key, t.name])];
   if (auto && !here.some(h => h[1] === auto.key)) here.push(['topic', auto.key, auto.name]);
   const topics = T.list.filter(t => t.key !== 'overig');
-  return `${here.length ? `<div class="rpk dsec" style="margin-top:0">Hier in je tekst</div><div class="sclinks" style="margin:4px 0 6px">${here.map(([ty, id, n]) => `<button data-ref="${ty}|${esc(id)}">${ty === 'char' ? '👤' : '📚'} ${esc(n)}</button>`).join('')}</div>` : ''}
+  return `${answered.length ? `<div class="rpk dsec" style="margin-top:0">✓ Uitgezocht voor deze tekst</div>${answered.map(([t, a]) => `<div class="rpi"><div class="rpk">${esc(t.text.slice(0, 80))}</div><div class="rpt">${esc(a.text)}</div></div>`).join('')}` : ''}${here.length ? `<div class="rpk dsec" style="margin-top:0">Hier in je tekst</div><div class="sclinks" style="margin:4px 0 6px">${here.map(([ty, id, n]) => `<button data-ref="${ty}|${esc(id)}">${ty === 'char' ? '👤' : '📚'} ${esc(n)}</button>`).join('')}</div>` : ''}
     <div class="rpk dsec">Personages</div>
     ${chars.length ? `<div class="reflist">${chars.map(x => `<button data-ref="char|${x.id}">${avatar(charName(x), 26)}<b>${esc(charName(x))}</b><span>${esc(parseChar(x.body).rol || '')}</span></button>`).join('')}</div>` : '<p class="muted" style="margin:4px 0">Nog geen personages.</p>'}
     <div class="rpk dsec">Plaatsen, leefwerelden en andere onderwerpen</div>
     ${topics.length ? `<div class="reflist">${topics.map(t => `<button data-ref="topic|${esc(t.key)}"><b>${esc(t.name)}</b><span>${topicMeta(t)}</span></button>`).join('')}</div>` : `<p class="muted" style="margin:4px 0">Nog geen onderwerpen. Vraag Claude bv. <i>“Maak onderwerpen voor de plaatsen Sardis en Philippi en voor het leven van een slaaf.”</i></p>`}`;
 }
+document.addEventListener('click', e => { const cc = e.target.closest('[data-copyclaude]'); if (cc) copyClaudePrompt(cc.dataset.copyclaude); });
 document.addEventListener('click', e => {
   const r = e.target.closest('[data-ref]'); if (r){ const [type, ...id] = r.dataset.ref.split('|'); openRef(type, id.join('|')); return; }
   if (e.target.closest('[data-refback]')){ rpRef = null; renderResearch(); return; }
   const oc = e.target.closest('[data-refopenchar]'); if (oc){ const x = sheets[oc.dataset.refopenchar]; if (x){ charId = oc.dataset.refopenchar; setView('c:' + x.group); } return; }
   const so = e.target.closest('[data-scopen2]'); if (so){ openScene(so.dataset.scopen2); return; }
 });
+/* ================= Werkwijze: waar was ik · prikkel · oogsten · ontdekt ================= */
+/* ----- kleine melding met een knop ----- */
+function actionToast(msg, label, fn){
+  let el = $('#atoast'); if (!el){ el = document.createElement('div'); el.id = 'atoast'; document.body.appendChild(el); }
+  el.innerHTML = `<span>${esc(msg)}</span><button class="btn">${esc(label)}</button><button class="ib" aria-label="Sluiten">✕</button>`;
+  el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 12000);
+  el.querySelector('.btn').onclick = () => { el.classList.remove('show'); fn(); };
+  el.querySelector('.ib').onclick = () => el.classList.remove('show');
+}
+/* ----- schrijfjournaal (één regel per sessie, per project) ----- */
+function journalOf(gid){ const g = groups.find(x => x.id === gid); return (g && Array.isArray(g.journal)) ? g.journal : []; }
+function addJournal(gid, text, piece){
+  const g = groups.find(x => x.id === gid); if (!g || !text.trim()) return;
+  g.journal = [...journalOf(gid), {at: Date.now(), text: text.trim(), piece: piece || ''}].slice(-300); saveProfile();
+}
+/* ----- namen die opduiken (hoofdletterwoorden midden in een zin) ----- */
+const MOTIF_SKIP = new Set('staat stond staan brengt bracht lacht lachte kijkt keek kijken zegt zeggen zeide loopt liep lopen gaan komen doen deed doet maakt maakte maken zien zag weten weet wist denkt dacht voelt voelde ligt lag liggen houdt hield neemt nam geeft gaf laat liet blijft bleef zitten zit zat hebben worden wordt werden zouden kunnen moeten heeft zoals altijd nooit misschien gewoon alleen echter eigen elkaar iemand terwijl tegen zelfs steeds weg naast boven onder'.split(' '));
+const NAME_SKIP = new Set(['Ik', 'Hij', 'Zij', 'Wij', 'Jij', 'Het', 'De', 'Een', 'Maar', 'En', 'Toen', 'Dan', 'Als', 'Wat', 'Waar', 'Wie', 'Hoe', 'Niet', 'Nee', 'Ja', 'Mijn', 'Zijn', 'Haar', 'Hun', 'Onze', 'Romeinse', 'Romeinen', 'Grieks', 'Griekse', 'God', 'Goden', 'Heer', 'Vader', 'Moeder']);
+function namesIn(text){
+  const cnt = {};
+  for (const m of String(text || '').matchAll(/(?<=[^.!?:\n"“‘'(]\s)([A-ZÀ-Þ][a-zà-ÿ]{2,}(?:\s(?:van|de|der)\s[A-Z][a-zà-ÿ]+)?)/gu)){ const n = m[1]; if (!NAME_SKIP.has(n)) cnt[n] = (cnt[n] || 0) + 1; }
+  return cnt;
+}
+function knownNames(gid){
+  const s = new Set();
+  for (const c of charsOf(gid)) for (const w of charName(c).split(/\s+/)) if (w.length > 2) s.add(w.toLowerCase());
+  for (const t of topicsOf(gid).list) for (const w of t.name.split(/\s+/)) if (w.length > 2) s.add(w.toLowerCase());
+  return s;
+}
+function newNames(gid, text, min){
+  const known = knownNames(gid);
+  return Object.entries(namesIn(text)).filter(([n, k]) => k >= (min || 2) && !n.split(/\s+/).some(w => known.has(w.toLowerCase()))).sort((a, b) => b[1] - a[1]).map(x => x[0]);
+}
+function quickChar(gid, name){
+  const g = groups.find(x => x.id === gid); if (!g) return;
+  if (!(g.folders || []).includes(CHAR_FOLDER)){ g.folders = [...(g.folders || []), CHAR_FOLDER]; saveProfile(); }
+  const id = uid();
+  sheets[id] = {body: buildChar({name, rol: '', leeftijd: '', fields: {}, extra: []}), group: gid, folder: CHAR_FOLDER, fav: false, trashed: false, goal: 0, created: Date.now(), updated: Date.now()};
+  saveSheet(id, true); renderLib(); return id;
+}
+/* ----- antwoorden die Claude bij je open vragen zette ----- */
+const normQ = t => String(t || '').toLowerCase().replace(/\?\?|\[check:?|\]/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim().slice(0, 60);
+function claudeAnswers(gid){ return Object.values(snippets).filter(n => (n.grp === gid || !gid) && (n.tags || []).some(t => String(t).toLowerCase() === 'antwoord')); }
+function answerFor2(t){
+  const q = normQ(t.text); if (q.length < 6) return null;
+  const sh = sheets[t.sheet], gid = sh && sh.group;
+  return claudeAnswers(gid).find(n => { const v = normQ(String(n.note || '').replace(/^vraag:\s*/i, '').replace(/\s*\(in “.*$/, '')); return v && (v.startsWith(q.slice(0, 40)) || q.startsWith(v.slice(0, 40))); }) || null;
+}
+function claudePrompt(gid){ return `Zoek mijn open vragen uit in ${grpName(gid) || 'mijn project'} (list_open_questions) en zet de antwoorden met bron in de Schrijfkamer (answer_question).`; }
+async function copyClaudePrompt(gid){
+  const t = claudePrompt(gid);
+  try { await navigator.clipboard.writeText(t); toast('Opdracht gekopieerd — plak hem in Claude (telefoon, claude.ai of Desktop)'); }
+  catch(e){ openModal(`<h3>Opdracht voor Claude</h3><textarea readonly style="min-height:90px">${esc(t)}</textarea><div class="btns"><button class="btn" data-close>Klaar</button></div>`); }
+}
+/* ----- Prikkel: iets uit je eigen materiaal + een vraag ----- */
+const PRIKKEL_Q = ['Wat als dit nu de scène binnenvalt?', 'Hoe ruikt, klinkt of voelt dit voor {naam}?', 'Wat zou {naam} hierover verzwijgen?', 'Waar herinnert dit {naam} aan, van lang geleden?', 'Wat gaat er mis als dit gebeurt?', 'Wie weet hier meer van dan {naam} — en laat dat merken?', 'Wat doet {naam} met zijn handen terwijl dit speelt?', 'Wat ziet {naam} hier dat een ander over het hoofd ziet?'];
+function prikkelPool(s){
+  const gid = s.group, pool = [], L = sceneLinks(s), T = topicsOf(gid).list;
+  const topics = L.topics.length ? L.topics : T, chars = L.chars.length ? L.chars : charsOf(gid);
+  for (const t of topics) for (const n of [...t.scenes, ...t.facts]) pool.push({text: n.text, from: t.name});
+  for (const c of chars){ const p = parseChar(c.body); for (const [k, l] of CHAR_FIELDS) if ((p.fields[k] || '').trim()) pool.push({text: p.fields[k].split(/(?<=[.!?])\s/)[0].slice(0, 220), from: charName(c) + ' · ' + l}); }
+  const m = s.meta || {}; for (const k of ['senses', 'stamp', 'facts']) if ((m[k] || '').trim()) pool.push({text: m[k].split('\n')[0], from: 'je kaartje'});
+  for (const j of journalOf(gid).slice(-20)) pool.push({text: j.text, from: 'je journaal'});
+  return {pool, names: (L.chars.length ? L.chars : chars).map(charName)};
+}
+let lastPrikkel = -1;
+function prikkel(){
+  const s = sheets[currentId]; const box = $('#prikkel'); if (!s || !box) return;
+  const {pool, names} = s.group && s.group !== 'inbox' ? prikkelPool(s) : {pool: [], names: []};
+  let item = null; if (pool.length){ let i; do { i = Math.floor(Math.random() * pool.length); } while (pool.length > 1 && i === lastPrikkel); lastPrikkel = i; item = pool[i]; }
+  const name = names.length ? names[Math.floor(Math.random() * names.length)].split(' ')[0] : 'je verteller';
+  const q = PRIKKEL_Q[Math.floor(Math.random() * PRIKKEL_Q.length)].replace(/\{naam\}/g, name);
+  box.hidden = false;
+  box.innerHTML = `<div class="pkh">💡 Prikkel <span class="grow"></span><button class="pmore" data-pk="again">Nog een</button><button class="pmore" data-pk="note" title="Als ++notitie++ in je tekst zetten (komt niet in het hele verhaal)">Als notitie</button><button class="ib" data-pk="close" aria-label="Sluiten">✕</button></div>
+    ${item ? `<div class="pkt">${esc(item.text)}</div><div class="pkf">uit ${esc(item.from)}</div>` : '<div class="pkf">Nog geen materiaal in dit project — een vraag dan:</div>'}
+    <div class="pkq">${esc(q)}</div>`;
+  box._txt = (item ? item.text + ' — ' : '') + q;
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-pk]'); if (!b) return;
+  const box = $('#prikkel');
+  if (b.dataset.pk === 'again') prikkel();
+  if (b.dataset.pk === 'close'){ box.hidden = true; ta.focus(); }
+  if (b.dataset.pk === 'note'){ const t = '++' + box._txt.replace(/\+\+/g, '') + '++'; ta.focus(); const p = ta.selectionStart || ta.value.length; ta.setSelectionRange(p, p); if (!document.execCommand('insertText', false, (p && ta.value[p - 1] !== '\n' ? ' ' : '') + t)){ ta.setRangeText(t, p, p, 'end'); ta.dispatchEvent(new Event('input')); } box.hidden = true; }
+});
+/* ----- Waar was ik? ----- */
+function lastPiece(){
+  return Object.entries(sheets).filter(([, s]) => !s.trashed && (s.body || '').trim() && s.group && s.group !== 'inbox' && !isCharSheet(s) && s.folder !== TOPIC_FOLDER)
+    .sort((a, b) => (b[1].updated || 0) - (a[1].updated || 0))[0];
+}
+function lastParagraph(body){ const ps = String(body || '').replace(/\+\+[\s\S]*?\+\+/g, '').split(/\n\s*\n/).map(x => x.trim()).filter(x => x && !/^#/.test(x)); const p = ps[ps.length - 1] || ''; return p.length > 320 ? '…' + p.slice(-320) : p; }
+let wwiDone = false;
+function whereWasI(force){
+  if ((wwiDone && !force) || sessionStorage.getItem('wwi') && !force) return;
+  const lp = lastPiece(); if (!lp) return;
+  const [id, s] = lp, j = journalOf(s.group).slice(-1)[0];
+  wwiDone = true; sessionStorage.setItem('wwi', '1');
+  const box = $('#wwi'); if (!box) return;
+  if (projOpen()) showProject(false);
+  if (view !== 'g:' + s.group){ view = 'g:' + s.group; LS.set('view', view); $('#app').classList.remove('srcmode', 'boardmode'); renderLib(); }
+  if (id !== currentId) openSheet(id); else renderList();
+  setMobile('editor');
+  box.hidden = false;
+  box.innerHTML = `<div class="wwih">Welkom terug <span class="grow"></span><button class="ib" data-wwi="close" aria-label="Sluiten">✕</button></div>
+    <div class="wwit">Je schreef het laatst aan <b>${esc(titleOf(s))}</b> <span class="muted">· ${fmtDate(s.updated)}</span></div>
+    ${lastParagraph(s.body) ? `<blockquote class="wwip">${esc(lastParagraph(s.body))}</blockquote>` : ''}
+    ${j ? `<div class="wwij">Vorige keer ontdekte je: <i>${esc(j.text)}</i></div>` : ''}
+    <div class="wwib"><button class="btn" data-wwi="go">✎ Verder schrijven</button><button class="btn ghost" data-wwi="prikkel">💡 Geef me een prikkel</button></div>`;
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-wwi]'); if (!b) return;
+  const box = $('#wwi'); box.hidden = true;
+  if (b.dataset.wwi === 'go'){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); typewriter && typewriter(); }
+  if (b.dataset.wwi === 'prikkel') prikkel();
+});
+/* ----- Oogsten na het schrijven ----- */
+const startWords = {}; const harvested = new Set();
+function noteStart(id){ if (id && sheets[id] && startWords[id] == null) startWords[id] = countWords(sheets[id].body || ''); }
+function maybeHarvest(id){
+  const s = sheets[id]; if (!s || s.trashed || !s.group || s.group === 'inbox' || harvested.has(id) || startWords[id] == null) return;
+  const grown = countWords(s.body || '') - startWords[id];
+  if (grown >= 40){ harvested.add(id); const t = titleOf(s); setTimeout(() => actionToast(`${grown} woorden geschreven aan “${t}”. Even oogsten?`, '🌾 Oogsten', () => harvestDialog(id)), 400); }
+}
+function harvestDialog(id){
+  const s = sheets[id]; if (!s) return; const gid = s.group;
+  harvested.add(id);
+  const names = newNames(gid, s.body, 2).slice(0, 6), todos = todosIn(id), bench = isBench(s), L = sceneLinks(s);
+  openModal(`<h3>🌾 Oogsten</h3><p class="muted" style="margin-top:-4px">${esc(titleOf(s))} — wat er nu is ontstaan. Alles is een voorstel; sla gerust over.</p>
+    ${names.length ? `<div class="hv"><b>Namen die opduiken</b><p>Een persoon (👤) of een plaats/onderwerp (📍)? Dan zie je ze terug in Naslag.</p><div class="chips">${names.map(n => `<span class="nmch"><b>${esc(n)}</b><button class="chip" data-hvname="${esc(n)}" title="Personage maken">👤</button><button class="chip" data-hvplace="${esc(n)}" title="Plaats of onderwerp maken">📍</button></span>`).join('')}</div></div>` : ''}
+    ${L.chars.length || L.topics.length ? `<div class="hv"><b>Al verbonden</b><p>${[...L.chars.map(charName), ...L.topics.map(t => t.name)].map(esc).join(', ')}</p></div>` : ''}
+    ${bench ? `<div class="hv"><b>Werkbank</b><p>Is dit al een scène, of blijft het een zijspoor?</p><div class="chips"><button class="chip" data-hvline>→ In de lijn zetten</button><button class="chip on" data-hvstay>Blijft op de werkbank</button></div></div>` : ''}
+    ${todos.length ? `<div class="hv"><b>${todos.length} open vraag${todos.length === 1 ? '' : 'en'}</b><p>${todos.slice(0, 3).map(t => '“' + esc(t.text.slice(0, 70)) + '”').join(' · ')}${todos.length > 3 ? ' …' : ''}</p><div class="chips"><button class="chip" data-hvclaude>📋 Opdracht voor Claude kopiëren</button></div></div>` : ''}
+    <div class="hv"><b>Wat ontdekte je vandaag?</b><p>Eén regel, mag leeg. Je ziet hem terug als je de volgende keer begint.</p><input type="text" id="hvJ" maxlength="200" placeholder="bv. Onesimos is bang voor water"></div>
+    <div class="btns"><button class="btn" id="hvOk">Klaar</button></div>`);
+  const box = $('.modal');
+  box.addEventListener('click', e => {
+    const n = e.target.closest('[data-hvname],[data-hvplace]'); if (n){ const nm = n.dataset.hvname || n.dataset.hvplace; if (n.dataset.hvname) quickChar(gid, nm); else topicNew(gid, nm); n.parentNode.innerHTML = '<b>✓ ' + esc(nm) + (n.dataset.hvname ? ' (personage)' : ' (onderwerp)') + '</b>'; return; }
+    if (e.target.closest('[data-hvline]')){ toLine(id); e.target.closest('.hv').innerHTML = '<b>Werkbank</b><p>✓ Staat nu als scène ' + scenesOf(gid).length + ' in de lijn.</p>'; renderList(); renderSceneBar(); return; }
+    if (e.target.closest('[data-hvclaude]')) copyClaudePrompt(gid);
+  });
+  const done = () => { const j = $('#hvJ').value; if (j.trim()) addJournal(gid, j, id); closeModal(); if (j.trim()) toast('Bewaard in je schrijfjournaal'); if (projOpen()) renderProject(); };
+  $('#hvOk').onclick = done; $('#hvJ').addEventListener('keydown', e => { if (e.key === 'Enter') done(); });
+}
+/* ----- Wat heb ik ontdekt? ----- */
+function discoveredHtml(gid){
+  const pieces = [...scenesOf(gid).map((s, i) => ({s, lab: pad2(i + 1)})), ...benchOf(gid).map(s => ({s, lab: 'W'}))].filter(p => (p.s.body || '').trim());
+  if (!pieces.length) return '<p class="muted">Nog niets geschreven om in te kijken. Schrijf eerst — hier zie je daarna wat er vanzelf terugkomt.</p>';
+  const links = pieces.map(p => sceneLinks(p.s));
+  const rows = [];
+  const chars = charsOf(gid).filter(c => links.some(l => l.chars.some(x => x.id === c.id)));
+  for (const c of chars) rows.push({kind: '👤', label: charName(c), ref: 'char|' + c.id, hit: links.map(l => l.chars.some(x => x.id === c.id))});
+  const tops = topicsOf(gid).list.filter(t => links.some(l => l.topics.some(x => x.key === t.key)));
+  for (const t of tops) rows.push({kind: '📚', label: t.name, ref: 'topic|' + t.key, hit: links.map(l => l.topics.some(x => x.key === t.key))});
+  // motieven: woorden die in meerdere stukken terugkomen
+  const known = knownNames(gid), per = pieces.map(p => { const m = {}; for (const w of String(p.s.body).toLowerCase().replace(/\+\+[\s\S]*?\+\+/g, '').matchAll(/[\p{L}]{5,}/gu)){ const st = stem(w[0]); if (STOP.has(w[0]) || MOTIF_SKIP.has(w[0]) || known.has(w[0])) continue; (m[st] = m[st] || {n: 0, w: {}}).n++; m[st].w[w[0]] = (m[st].w[w[0]] || 0) + 1; } return m; });
+  const agg = {}; per.forEach((m, i) => { for (const [st, v] of Object.entries(m)){ const a = agg[st] = agg[st] || {pieces: new Set(), n: 0, w: {}}; a.pieces.add(i); a.n += v.n; for (const [w, k] of Object.entries(v.w)) a.w[w] = (a.w[w] || 0) + k; } });
+  const minP = pieces.length >= 4 ? 2 : 2;
+  const motifs = Object.entries(agg).filter(([, a]) => a.pieces.size >= minP && a.pieces.size < pieces.length || (pieces.length <= 2 && a.n >= 3)).sort((a, b) => b[1].pieces.size - a[1].pieces.size || b[1].n - a[1].n).slice(0, 10);
+  for (const [st, a] of motifs){ const word = Object.entries(a.w).sort((x, y) => y[1] - x[1])[0][0]; rows.push({kind: '✦', label: word, hit: pieces.map((_, i) => a.pieces.has(i))}); }
+  const allText = pieces.map(p => p.s.body).join('\n\n'), names = newNames(gid, allText, 2).slice(0, 8);
+  const head = `<div class="dgh"></div>${pieces.map(p => `<button class="dgc" data-scard="${p.s.id}" title="${esc(titleOf(p.s))}">${p.lab}</button>`).join('')}`;
+  const body = rows.map(r => `<div class="dgl">${r.ref ? `<button data-ref="${esc(r.ref)}" data-refopen>${r.kind} ${esc(r.label)}</button>` : `<span>${r.kind} ${esc(r.label)}</span>`}</div>${r.hit.map((h, i) => `<div class="dgd">${h ? '<i></i>' : ''}</div>`).join('')}`).join('');
+  return `<p class="muted" style="margin:0 0 10px">Wat er vanzelf terugkomt in wat je schreef: personages (👤), onderwerpen en plaatsen (📚) en motieven (✦) — woorden die in meerdere stukken opduiken. Kolommen zijn je scènes; W = werkbank.</p>
+    <div class="sgridwrap"><div class="dgrid" style="grid-template-columns:170px repeat(${pieces.length},34px)">${head}${body}</div></div>
+    ${names.length ? `<h4 class="tsec">Namen die opduiken</h4><div class="chips">${names.map(n => `<span class="nmch"><b>${esc(n)}</b><button class="chip" data-dname="${esc(n)}" title="Personage maken">👤</button><button class="chip" data-dplace="${esc(n)}" title="Plaats of onderwerp maken">📍</button></span>`).join('')}</div>` : ''}
+    ${journalOf(gid).length ? `<h4 class="tsec">Je schrijfjournaal</h4>${journalOf(gid).slice(-12).reverse().map(j => `<div class="trow"><span class="tt">${esc(j.text)}</span><span class="tm">${fmtDate(j.at)}${j.piece && sheets[j.piece] ? ' · ' + esc(titleOf(sheets[j.piece])) : ''}</span></div>`).join('')}` : ''}`;
+}
+document.addEventListener('click', e => {
+  const d = e.target.closest('[data-dname]'); if (d){ quickChar(view.slice(2), d.dataset.dname); toast('Personage “' + d.dataset.dname + '” gemaakt'); renderProject(); return; }
+  const dp = e.target.closest('[data-dplace]'); if (dp){ topicNew(view.slice(2), dp.dataset.dplace); toast('Onderwerp “' + dp.dataset.dplace + '” gemaakt (Materiaal)'); renderProject(); return; }
+  const r = e.target.closest('[data-refopen]'); if (r && e.target.closest('#project')){ e.stopPropagation(); const [type, ...id] = r.dataset.ref.split('|'); if (type === 'char'){ charId = id.join('|'); setView('c:' + view.slice(2)); } else { projTab = 'material'; projTopic = id.join('|'); renderProject(); } }
+}, true);
 /* ----- Bestaande teksten met ## Kaartje omzetten ----- */
 const CARD_LABELS = [[/^status$/, 'status'], [/^(wanneer|datum)$/, 'when'], [/^(waar|plaats)$/, 'where'], [/^wat gebeurt( er)?$/, 'what'], [/^wat voelt/, 'feel'], [/^(stempel)?metafoor|^stempelmetafoor$/, 'stamp'], [/^zintuig/, 'senses'], [/^feiten/, 'facts'], [/^open vragen?$/, 'questions'], [/^zie ook$/, 'seealso']];
 const normStatus = v => { v = String(v || '').toLowerCase(); return /klaar|af\b|definitief/.test(v) ? 'klaar' : /concept|eerste versie|draft/.test(v) ? 'concept' : /schets|opzet|aanzet|begonnen/.test(v) ? 'schets' : 'idee'; };

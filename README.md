@@ -24,7 +24,14 @@ De zijbalk toont je **projecten** (de Bibliotheek is in te klappen). Mappen best
 
 **Naslag** (onderzoekspaneel naast je tekst): personages, plaatsen, leefwerelden en andere onderwerpen altijd bij de hand; bovenaan wat in je huidige tekst voorkomt. Klik op een naam in je scène om het daar te openen, zonder je tekst te verlaten.
 
-De lijn heeft drie weergaven:
+**Werkwijze, in één ronde:**
+- **Waar was ik?** — bij het openen zie je het stuk waar je het laatst aan schreef (ook als dat op je telefoon was), de laatste alinea en wat je vorige keer ontdekte. Eén klik: verder schrijven.
+- **💡 Prikkel** — als je vastzit: iets uit je eigen materiaal (feit, scène-idee, personage, kaartje, journaal) met een vraag erbij. *Als notitie* zet hem als ++notitie++ in je tekst.
+- **🌾 Oogsten** — na een flink stuk schrijven (40+ woorden) of via de knop: namen die opduiken (👤 personage of 📍 plaats/onderwerp), werkbank of lijn, open vragen, en één regel voor je **schrijfjournaal**.
+- **Open vragen naar Claude** — typ `??` of `[check: vraag]` en schrijf door. Kopieer in Uitzoeken de opdracht voor Claude; Claude gebruikt `list_open_questions` en `answer_question`. Antwoorden verschijnen in Uitzoeken en in Naslag; je eigen tekst wordt niet veranderd.
+- **Wat ontdekte ik?** — weergave in Verhaal: welke personages, onderwerpen en motieven (woorden die terugkomen) in welke scène zitten, namen die opduiken en je schrijfjournaal.
+
+De lijn heeft deze weergaven:
 - **Verhaallijnen** (zoals Plottr): kolommen = volgorde in het verhaal, rijen = verhaallijnen (bv. *Kader: de oude man*), onderaan de historische gebeurtenis per scène. Kaartjes slepen = volgorde of lijn veranderen.
 - **Historische tijd** (zoals Aeon Timeline): scènes tussen de echte gebeurtenissen, op volgorde van de geschiedenis.
 - **Status**: bord met idee / schets / concept / klaar (slepen = status veranderen).
