@@ -536,6 +536,31 @@ body.capture .dialog{box-shadow:none;border:1px solid var(--line)}
 .pstat span{font-size:12px;color:var(--muted);font-weight:700}
 .pwelcome{display:flex;gap:16px;align-items:center;margin:0 28px 14px;background:var(--accent-soft);border-radius:16px;padding:14px 18px}
 .pwelcome .cat{width:72px;height:72px;flex:none}.pwelcome h3{margin:0 0 4px}.pwelcome p{margin:0;font-size:14px;line-height:1.5}
+.sbench{margin-top:22px;border-top:1px dashed var(--line);padding-top:12px}
+.sbench.dropon{background:var(--accent-soft);border-radius:14px}
+.sbh{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:10px}.sbh b{font-size:15px}.sbh span{font-size:12.5px;color:var(--muted)}
+.sbcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.sbcards .scard{flex:none;transform:rotate(-.4deg)}.sbcards .scard:nth-child(2n){transform:rotate(.5deg)}
+.scard.bench{background:var(--card);border-style:dashed}
+.sbnew{border:1.5px dashed var(--line);border-radius:14px;color:var(--muted);font-weight:800;font-size:13px;min-height:70px}
+.sbnew:hover{border-color:var(--sage);color:var(--accent)}
+.sadd{opacity:0 !important}.scell:hover .sadd,.scell.dropon .sadd{opacity:.8 !important}
+.scmini{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:2px 0 4px}
+.scdot2{width:9px;height:9px;border-radius:50%;background:var(--d)}
+.schip{font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--accent-soft);color:var(--text)}
+.schip.t{background:#F6EBC4}
+.scadd{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
+.scadd button{font-size:12px;color:var(--muted);padding:3px 8px;border-radius:99px;border:1px dashed var(--line)}
+.scadd button:hover{color:var(--accent);border-color:var(--sage)}
+.scfoot{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;padding:4px 0 6px}
+.scfoot button[data-scstatus]{font-size:11.5px;font-weight:800;padding:2px 9px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.scfoot button[data-scstatus].on{background:var(--t);border-color:var(--d);color:var(--text)}
+.scfoot select{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:2px 6px;font:inherit;font-size:12px}
+.sbench + .ptbar{display:none}
+.refh{display:flex;gap:10px;align-items:center;margin:8px 0 4px}.refh h3{margin:0;font-size:18px}.refh span{font-size:12.5px;color:var(--muted)}
+.reflist{display:flex;flex-direction:column;gap:2px;margin:4px 0 6px}
+.reflist button{display:flex;align-items:center;gap:8px;text-align:left;padding:6px 8px;border-radius:10px}
+.reflist button:hover{background:var(--pane2)}.reflist b{font-size:14px}.reflist span{font-size:12px;color:var(--muted);margin-left:auto;text-align:right}
 .seclib{display:flex;width:100%;justify-content:space-between;align-items:center;text-align:left;cursor:pointer;background:none;border:0}
 .seclib span{font-size:11px;color:var(--faint)}
 .pbody.wide{max-width:none}
@@ -925,7 +950,7 @@ let settings = Object.assign({theme:'light', font:'sans', size:19, width:680, ty
 if (!LS.get('v2', false)){ settings.theme = 'light'; LS.set('v2', true); }
 let sheets = LS.get('sheets', {});     // id -> sheet
 let groups = LS.get('groups', []);     // [{id,name,color}]
-let projTab = LS.get('projTab', 'story'), projTopic = null, rpTopicPick = LS.get('rpTopicPick', {});
+let projTab = LS.get('projTab', 'story'), projTopic = null, rpTopicPick = LS.get('rpTopicPick', {}), rpRef = null;
 let view = LS.get('view', 'inbox');    // inbox | all | recent | fav | trash | g:<id>
 let currentId = LS.get('current', null);
 let query = '';
@@ -933,7 +958,8 @@ let cloud = 'pending';
 const timers = {}, inflight = {}, again = {}, lastLocalEdit = {};
 
 const titleOf = s => {
-  if (s && s.kind === 'scene'){ const n = 1 + Object.values(sheets).filter(x => x.kind === 'scene' && !x.trashed && x.group === s.group && ((x.ord || 0) < (s.ord || 0) || ((x.ord || 0) === (s.ord || 0) && (x.created || 0) < (s.created || 0)))).length; return String(n).padStart(2, '0') + ' · ' + ((s.meta && s.meta.title) || 'Naamloze scène'); }
+  if (s && s.kind === 'scene' && s.meta && s.meta.bench){ const f = String(s.body || '').trim().split(/\s+/).slice(0, 6).join(' '); return s.meta.title || (f ? f + '…' : 'Los stuk'); }
+  if (s && s.kind === 'scene'){ const n = 1 + Object.values(sheets).filter(x => x.kind === 'scene' && !x.trashed && !(x.meta && x.meta.bench) && x.group === s.group && ((x.ord || 0) < (s.ord || 0) || ((x.ord || 0) === (s.ord || 0) && (x.created || 0) < (s.created || 0)))).length; return String(n).padStart(2, '0') + ' · ' + ((s.meta && s.meta.title) || 'Naamloze scène'); }
   const line = (s.body || '').split('\n').find(l => l.trim()) || '';
   return line.replace(/^#{1,6}\s+/, '').replace(/[*_=`~>]|\+\+/g, '').trim().slice(0, 90) || 'Naamloos';
 };
@@ -1413,7 +1439,8 @@ function visibleSheets(){
     });
   }
   if (!q && parseFview(view)) return arr.sort(natural);
-  if (!q && view.startsWith('g:')) return arr.sort((a, b) => (b.kind === 'scene') - (a.kind === 'scene') || (a.kind === 'scene' ? (a.ord || 0) - (b.ord || 0) : (b.updated || 0) - (a.updated || 0)));
+  const rank = s => s.kind === 'scene' ? (s.meta && s.meta.bench ? 1 : 0) : 2;
+  if (!q && view.startsWith('g:')) return arr.sort((a, b) => rank(a) - rank(b) || (rank(a) === 0 ? (a.ord || 0) - (b.ord || 0) : (b.updated || 0) - (a.updated || 0)));
   return arr.sort((a, b) => (b.updated||0) - (a.updated||0));
 }
 function renderList(){
@@ -3324,7 +3351,7 @@ function rpItem(it){
 function renderResearch(){
   const el = $('#research'); if (!el || !rpOpen) return;
   const keepQ = document.activeElement && document.activeElement.id === 'rpQ';
-  const head = `<div class="rphead"><div class="seg"><button data-rptab="discover" class="${rpTab === 'discover' && !rpSrc && !rpLookup ? 'on' : ''}">Ontdek</button><button data-rptab="related" class="${rpTab === 'related' && !rpSrc && !rpLookup ? 'on' : ''}">Onderwerp</button><button data-rptab="search" class="${rpTab === 'search' && !rpSrc && !rpLookup ? 'on' : ''}">Zoeken</button><button data-rptab="todo" class="${rpTab === 'todo' && !rpSrc && !rpLookup ? 'on' : ''}">Uitzoeken${todoCount() ? ' · ' + todoCount() : ''}</button></div><div class="grow"></div><button class="ib" data-rpa="quick" title="Snel bewaren">${icon('plus','')}</button><button class="ib" data-rpa="close" title="Sluiten (Ctrl+Alt+R)">✕</button></div>`;
+  const head = `<div class="rphead"><div class="seg"><button data-rptab="discover" class="${rpTab === 'discover' && !rpSrc && !rpLookup ? 'on' : ''}">Ontdek</button><button data-rptab="related" class="${rpTab === 'related' && !rpSrc && !rpLookup ? 'on' : ''}">Naslag</button><button data-rptab="search" class="${rpTab === 'search' && !rpSrc && !rpLookup ? 'on' : ''}">Zoeken</button><button data-rptab="todo" class="${rpTab === 'todo' && !rpSrc && !rpLookup ? 'on' : ''}">Uitzoeken${todoCount() ? ' · ' + todoCount() : ''}</button></div><div class="grow"></div><button class="ib" data-rpa="quick" title="Snel bewaren">${icon('plus','')}</button><button class="ib" data-rpa="close" title="Sluiten (Ctrl+Alt+R)">✕</button></div>`;
   let body = '';
   if (!sbUser) body = `<div class="empty">${cat('sleepy')}Log in om je bronnen en fragmenten hier te zien.</div>`;
   else if (rpSrc && sources[rpSrc]){
@@ -3347,9 +3374,9 @@ function renderResearch(){
   } else if (rpTab === 'related'){
     const {items} = related();
     const proj = sheets[currentId] && grpName(sheets[currentId].group);
-    const tp = topicPanelHtml();
-    body = tp + (tp ? '<div class="rpk dsec">Ook in je verzameling</div>' : '') + linksHtml() + `<p class="muted" style="margin:2px 0 12px">Bij de alinea waar je nu schrijft${proj ? ` · project <b>${esc(proj)}</b>` : ''}.</p>` +
-      (items.length ? items.map(rpItem).join('') : `<div class="empty" style="padding:20px 6px">${cat('curious')}Nog niets in je verzameling dat bij deze alinea past.<br>Probeer <a href="#" data-rptab="search" style="color:var(--accent);font-weight:800">Zoeken</a> — ook in Wikipedia of op internet.</div>`);
+    const nr = refHtml();
+    body = nr + (nr ? '<details class="tsrc" style="margin-top:18px"><summary>Ook in je verzameling (bij deze alinea)</summary>' : '') + linksHtml() + `<p class="muted" style="margin:2px 0 12px">Bij de alinea waar je nu schrijft${proj ? ` · project <b>${esc(proj)}</b>` : ''}.</p>` +
+      (items.length ? items.map(rpItem).join('') : `<div class="empty" style="padding:20px 6px">${cat('curious')}Nog niets in je verzameling dat bij deze alinea past.<br>Probeer <a href="#" data-rptab="search" style="color:var(--accent);font-weight:800">Zoeken</a> — ook in Wikipedia of op internet.</div>`) + (nr ? '</details>' : '');
   } else {
     body = `<div class="srow" style="margin-bottom:8px"><input type="text" id="rpQ" placeholder="${rpMode === 'mine' ? 'Zoek in je bronnen en fragmenten…' : rpMode === 'wiki' ? 'Zoek in Wikipedia…' : 'Zoek op internet…'}" value="${esc(rpQ)}" autocomplete="off"></div>
       <div class="seg" style="margin-bottom:12px;display:inline-flex"><button data-rpmode="mine" class="${rpMode === 'mine' ? 'on' : ''}">Verzameling</button><button data-rpmode="wiki" class="${rpMode === 'wiki' ? 'on' : ''}">Wikipedia</button><button data-rpmode="web" class="${rpMode === 'web' ? 'on' : ''}">Web</button></div>
@@ -3434,7 +3461,7 @@ let rpRelT;
 function rpRefresh(){ if (!rpOpen || rpSrc || rpTab !== 'related') return; clearTimeout(rpRelT); rpRelT = setTimeout(renderResearch, 700); }
 ta.addEventListener('input', rpRefresh); ta.addEventListener('click', rpRefresh); ta.addEventListener('keyup', e => { if (e.key.startsWith('Arrow') || e.key === 'Enter') rpRefresh(); });
 $('#btnResearch').title = 'Ontdek — onderzoek je alinea (Ctrl+Alt+O)';
-$('#btnResearch').onclick = () => { if (rpOpen) return toggleResearch(false); const sh = sheets[currentId]; if (sh && sh.group && sh.group !== 'inbox' && topicsOf(sh.group).list.length){ rpTab = 'related'; rpSrc = null; rpLookup = null; toggleResearch(true); } else startDiscover(); };
+$('#btnResearch').onclick = () => { if (rpOpen) return toggleResearch(false); const sh = sheets[currentId]; if (sh && sh.group && sh.group !== 'inbox' && groups.some(g => g.id === sh.group)){ rpTab = 'related'; rpRef = null; rpSrc = null; rpLookup = null; toggleResearch(true); } else startDiscover(); };
 $('#research').addEventListener('click', async e => {
   const t = e.target;
   const tab = t.closest('[data-rptab]'); if (tab){ e.preventDefault(); rpTab = tab.dataset.rptab; rpSrc = null; rpLookup = null; renderResearch(); if (rpTab === 'search') setTimeout(() => $('#rpQ') && $('#rpQ').focus(), 0); return; }
@@ -4386,8 +4413,6 @@ function topicsOf(gid){
   const get = (name) => { const k = topicKey(name); if (!m.has(k)) m.set(k, {key: k, name: name, sheet: null, facts: [], scenes: [], srcs: new Map()}); return m.get(k); };
   for (const s of topicSheetsOf(gid)) { const t = get(titleOf(s)); t.sheet = s; t.name = titleOf(s); }
   for (const s of D.srcs){ const th = themeOf(s); if (th) get(th).srcs.set(s.id, s); }
-  /* een losse tekst met precies de naam van een onderwerp wordt vanzelf de achtergrond daarvan */
-  for (const s of D.texts) if (!s.folder && s.kind !== 'scene' && !isCharSheet(s) && m.has(topicKey(titleOf(s))) && !m.get(topicKey(titleOf(s))).sheet) m.get(topicKey(titleOf(s))).sheet = s;
   for (const n of D.snips){
     let th = themeOf(n);
     const src = sources[n.source_id];
@@ -4398,6 +4423,8 @@ function topicsOf(gid){
     if (src) t.srcs.set(src.id, src);
   }
   for (const s of D.srcs) if (!themeOf(s) && ![...m.values()].some(t => t.srcs.has(s.id))) get('Overig').srcs.set(s.id, s);
+  /* een losse tekst met precies de naam van een onderwerp wordt vanzelf de achtergrond daarvan */
+  for (const s of D.texts) if (!s.folder && s.kind !== 'scene' && !isCharSheet(s) && m.has(topicKey(titleOf(s))) && !m.get(topicKey(titleOf(s))).sheet) m.get(topicKey(titleOf(s))).sheet = s;
   const list = [...m.values()].filter(t => t.sheet || t.facts.length || t.scenes.length || t.srcs.size)
     .sort((a, b) => (a.key === 'overig') - (b.key === 'overig') || (b.facts.length + b.scenes.length + b.srcs.size + (b.sheet ? 3 : 0)) - (a.facts.length + a.scenes.length + a.srcs.size + (a.sheet ? 3 : 0)) || a.name.localeCompare(b.name, 'nl'));
   return {list, ideas: ideas.sort((a, b) => b.created - a.created), D};
@@ -4551,14 +4578,19 @@ const SCENE_CORE = [['what', 'Wat gebeurt er'], ['feel', 'Wat voelt de verteller
 const SCENE_MORE = [['stamp', 'Stempelmetafoor'], ['senses', 'Zintuigen'], ['facts', 'Feiten uit het onderzoek'], ['questions', 'Open vragen'], ['seealso', 'Zie ook']];
 const isScene = s => !!s && s.kind === 'scene' && !s.trashed;
 const statusOf = s => (s.meta && SCENE_STATUS.some(([k]) => k === s.meta.status)) ? s.meta.status : 'idee';
-let storyMode = LS.get('storyMode', 'lijn'), cardOpen = LS.get('cardOpen', true), cardMore = LS.get('cardMore', false), sceneCols = true;
+const hasStatus = s => !!(s.meta && SCENE_STATUS.some(([k]) => k === s.meta.status));
+const isBench = s => isScene(s) && !!(s.meta && s.meta.bench);
+let storyMode = LS.get('storyMode', 'lijn'), cardOpen = LS.get('cardOpen2', false), sceneCols = true, shownFields = new Set();
 function scenesOf(gid){
-  return Object.entries(sheets).filter(([, s]) => isScene(s) && s.group === gid).map(([id, s]) => ({id, ...s}))
+  return Object.entries(sheets).filter(([, s]) => isScene(s) && !isBench(s) && s.group === gid).map(([id, s]) => ({id, ...s}))
     .sort((a, b) => (a.ord || 0) - (b.ord || 0) || (a.created || 0) - (b.created || 0));
+}
+function benchOf(gid){
+  return Object.entries(sheets).filter(([, s]) => isBench(s) && s.group === gid).map(([id, s]) => ({id, ...s})).sort((a, b) => (b.updated || 0) - (a.updated || 0));
 }
 function lanesOf(gid){ const g = groups.find(x => x.id === gid); return g && Array.isArray(g.lanes) && g.lanes.length ? g.lanes : [{id: 'main', name: 'Verhaal'}]; }
 const laneOf = (s, gid) => { const ls = lanesOf(gid), l = s.meta && s.meta.lane; return ls.some(x => x.id === l) ? l : ls[0].id; };
-const sceneNo = s => 1 + Object.values(sheets).filter(x => isScene(x) && x.group === s.group && ((x.ord || 0) < (s.ord || 0) || ((x.ord || 0) === (s.ord || 0) && (x.created || 0) < (s.created || 0)))).length;
+const sceneNo = s => 1 + Object.values(sheets).filter(x => isScene(x) && !isBench(x) && x.group === s.group && ((x.ord || 0) < (s.ord || 0) || ((x.ord || 0) === (s.ord || 0) && (x.created || 0) < (s.created || 0)))).length;
 const pad2 = n => String(n).padStart(2, '0');
 function setMeta(id, patch, quiet){
   const s = sheets[id]; if (!s) return;
@@ -4581,14 +4613,28 @@ function needSql(){
     <div class="btns"><button class="btn" data-close>Begrepen</button></div>`);
   return true;
 }
-function newScene(gid, lane, at){
+function newScene(gid, lane, at, bench){
   if (needSql()) return null;
   const list = scenesOf(gid).map(s => s.id), id = uid();
-  sheets[id] = {body: '', group: gid, folder: '', fav: false, trashed: false, goal: 0, kind: 'scene', ord: list.length + 1,
-    meta: {title: '', status: 'idee', lane: lane || lanesOf(gid)[0].id}, created: Date.now(), updated: Date.now()};
+  sheets[id] = {body: '', group: gid, folder: '', fav: false, trashed: false, goal: 0, kind: 'scene', ord: bench ? 0 : list.length + 1,
+    meta: bench ? {title: '', bench: true} : {title: '', lane: lane || lanesOf(gid)[0].id}, created: Date.now(), updated: Date.now()};
   saveSheet(id, true);
-  if (at != null && at < list.length){ list.splice(at, 0, id); renumber(list); }
+  if (!bench && at != null && at < list.length){ list.splice(at, 0, id); renumber(list); }
   return id;
+}
+/* een los stuk de lijn in zetten, of een scène terug naar de werkbank */
+function toLine(id, lane, at){
+  const s = sheets[id]; if (!s) return; const gid = s.group;
+  const order = scenesOf(gid).map(x => x.id).filter(x => x !== id);
+  s.meta = {...(s.meta || {}), bench: false, lane: lane || (s.meta && s.meta.lane) || lanesOf(gid)[0].id};
+  if (!s.meta.title){ const first = String(s.body || '').trim().split(/\n/)[0].replace(/^#+\s*/, ''); s.meta.title = first.split(/\s+/).slice(0, 6).join(' ') + (first.split(/\s+/).length > 6 ? '…' : ''); }
+  s.updated = Date.now(); saveSheet(id, true);
+  order.splice(at == null ? order.length : Math.max(0, Math.min(at, order.length)), 0, id); renumber(order);
+}
+function toBench(id){
+  const s = sheets[id]; if (!s) return; const gid = s.group;
+  s.meta = {...(s.meta || {}), bench: true}; s.ord = 0; s.updated = Date.now(); saveSheet(id, true);
+  renumber(scenesOf(gid).map(x => x.id));
 }
 function openScene(id){
   if (projOpen()) showProject(false);
@@ -4615,34 +4661,41 @@ function sceneLinks(s){
 }
 function scenesMentioning(gid, test){ return scenesOf(gid).filter(s => test(s)); }
 /* ----- Kaartje boven de scène ----- */
+const FIELD_DEFS = [['when', 'Datum', 'bv. zomer 42 v.Chr.'], ['where', 'Plaats', 'bv. Sardis'], ['what', 'Wat gebeurt er', ''], ['feel', 'Wat voelt de verteller', ''], ['stamp', 'Stempelmetafoor', ''], ['senses', 'Zintuigen', 'wat ruik, hoor, voel je?'], ['facts', 'Feiten uit het onderzoek', ''], ['questions', 'Open vragen', ''], ['seealso', 'Zie ook', '']];
 function renderSceneBar(){
   const bar = $('#sceneBar'); if (!bar) return;
   const s = sheets[currentId];
   if (!isScene(s)){ bar.hidden = true; bar.innerHTML = ''; ta.placeholder = 'Begin met schrijven…'; return; }
-  bar.hidden = false; ta.placeholder = 'Schrijf hier je scène…';
-  const gid = s.group, list = scenesOf(gid), i = list.findIndex(x => x.id === currentId), m = s.meta || {}, st = statusOf(s);
-  const lanes = lanesOf(gid), D = projectData(gid);
-  const field = ([k, label]) => `<label class="scf"><span>${label}</span><textarea data-scf="${k}" rows="1">${esc(m[k] || '')}</textarea></label>`;
-  const L = sceneLinks(s), ev = m.event && snippets[m.event];
+  bar.hidden = false;
+  const gid = s.group, bench = isBench(s), list = scenesOf(gid), i = list.findIndex(x => x.id === currentId), m = s.meta || {};
+  ta.placeholder = bench ? 'Schrijf maar raak — het hoeft nog nergens te passen…' : 'Schrijf hier je scène…';
+  const lanes = lanesOf(gid), D = projectData(gid), L = sceneLinks(s), ev = m.event && snippets[m.event];
+  const filled = FIELD_DEFS.filter(([k]) => (m[k] || '').trim() || shownFields.has(k));
+  const summary = [m.where, m.when, filled.length > 2 ? filled.length + ' notities' : ''].filter(Boolean).join(' · ');
+  const fieldHtml = ([k, label, ph]) => k === 'when' || k === 'where'
+    ? `<label class="scf"><span>${label}</span><input data-scf="${k}" value="${esc(m[k] || '')}" placeholder="${esc(ph)}"></label>`
+    : `<label class="scf"><span>${label}</span><textarea data-scf="${k}" rows="1" placeholder="${esc(ph)}">${esc(m[k] || '')}</textarea></label>`;
+  const add = FIELD_DEFS.filter(([k]) => !filled.some(x => x[0] === k));
   bar.innerHTML = `<div class="scnav">
-      <button class="pmore" data-scact="story">‹ Verhaal</button><span class="grow"></span>
-      <button class="ib" data-scact="prev" ${i <= 0 ? 'disabled' : ''} title="Vorige scène">‹</button><span class="scno">Scène ${i + 1} van ${list.length}</span><button class="ib" data-scact="next" ${i >= list.length - 1 ? 'disabled' : ''} title="Volgende scène">›</button><span style="width:10px"></span><button class="pmore" data-scact="up" ${i <= 0 ? 'disabled' : ''} title="Deze scène eerder in het verhaal zetten">⇡ eerder</button><button class="pmore" data-scact="down" ${i >= list.length - 1 ? 'disabled' : ''} title="Deze scène later in het verhaal zetten">⇣ later</button>
+      <button class="pmore" data-scact="story">‹ ${bench ? 'Werkbank' : 'Verhaal'}</button><span class="grow"></span>
+      ${bench ? `<span class="scno">los stuk</span><button class="pmore" data-scact="toline" title="Dit stuk als scène aan het eind van de verhaallijn zetten">→ In de lijn zetten</button>`
+        : `<button class="ib" data-scact="prev" ${i <= 0 ? 'disabled' : ''} title="Vorige scène">‹</button><span class="scno">${i + 1} / ${list.length}</span><button class="ib" data-scact="next" ${i >= list.length - 1 ? 'disabled' : ''} title="Volgende scène">›</button>
+           <button class="pmore" data-scact="up" ${i <= 0 ? 'disabled' : ''} title="Eerder in het verhaal">⇡</button><button class="pmore" data-scact="down" ${i >= list.length - 1 ? 'disabled' : ''} title="Later in het verhaal">⇣</button>`}
     </div>
-    <input id="scTitle" class="sctitle" data-scf="title" placeholder="Titel van de scène" value="${esc(m.title || '')}">
-    <div class="scstat">${SCENE_STATUS.map(([k, l]) => `<button data-scstatus="${k}" class="${st === k ? 'on' : ''}" style="--t:${STATUS_TINT[k]};--d:${STATUS_DOT[k]}">${l}</button>`).join('')}
-      <button class="pmore" data-scact="card" style="margin-left:auto">${cardOpen ? 'Kaartje verbergen ▴' : 'Kaartje tonen ▾'}</button></div>
+    <input id="scTitle" class="sctitle" data-scf="title" placeholder="${bench ? 'Titel (mag leeg blijven)' : 'Titel van de scène'}" value="${esc(m.title || '')}">
+    <div class="scmini"><button class="pmore" data-scact="card">${cardOpen ? 'Kaartje ▴' : 'Kaartje ▾'}</button>${!cardOpen && summary ? `<span>${esc(summary)}</span>` : ''}${hasStatus(s) ? `<span class="scdot2" style="--d:${STATUS_DOT[m.status]}" title="Status: ${esc(m.status)}"></span>` : ''}
+      ${L.chars.length || L.topics.length ? `<span class="grow"></span>${L.chars.map(c => `<button class="schip" data-sclchar="${c.id}" title="Bekijk in Naslag">${esc(charName(c))}</button>`).join('')}${L.topics.map(t => `<button class="schip t" data-scltopic="${esc(t.key)}" title="Bekijk in Naslag">${esc(t.name)}</button>`).join('')}` : ''}</div>
     ${cardOpen ? `<div class="sccard">
-      <div class="scrow">
-        <label class="scf"><span>Datum</span><input data-scf="when" value="${esc(m.when || '')}" placeholder="bv. zomer 42 v.Chr."></label>
-        <label class="scf"><span>Plaats</span><input data-scf="where" value="${esc(m.where || '')}" placeholder="bv. Sardis"></label>
-        ${lanes.length > 1 ? `<label class="scf"><span>Verhaallijn</span><select data-scf="lane">${lanes.map(l => `<option value="${esc(l.id)}" ${laneOf(s, gid) === l.id ? 'selected' : ''}>${esc(l.name)}</option>`).join('')}</select></label>` : ''}
+      ${filled.map(fieldHtml).join('')}
+      ${ev ? `<div class="sclink">📅 ${esc((parseDate(ev.date) || {}).label || ev.date)} · ${esc(ev.text.slice(0, 90))} <button class="pmore" data-scact="unevent">ontkoppelen</button></div>` : ''}
+      <div class="scadd">${add.map(([k, l]) => `<button data-scaddf="${k}">＋ ${l.toLowerCase()}</button>`).join('')}${!ev ? '<button data-scaddf="__event">＋ gebeurtenis</button>' : ''}</div>
+      ${shownFields.has('__event') && !ev ? `<label class="scf"><span>Gebeurtenis op de historische tijdlijn</span><select data-scf="event"><option value="">— kies —</option>${D.dated.map(x => `<option value="${x.n.id}">${esc(x.d.label + ' · ' + x.n.text.replace(/\s+/g, ' ').slice(0, 70))}</option>`).join('')}</select></label>` : ''}
+      <div class="scfoot">
+        <span class="muted">Status:</span>${SCENE_STATUS.map(([k, l]) => `<button data-scstatus="${k}" class="${m.status === k ? 'on' : ''}" style="--t:${STATUS_TINT[k]};--d:${STATUS_DOT[k]}">${l}</button>`).join('')}
+        ${!bench && lanes.length > 1 ? `<span class="muted" style="margin-left:8px">Lijn:</span><select data-scf="lane">${lanes.map(l => `<option value="${esc(l.id)}" ${laneOf(s, gid) === l.id ? 'selected' : ''}>${esc(l.name)}</option>`).join('')}</select>` : ''}
+        <span class="grow"></span>${!bench ? '<button class="pmore" data-scact="tobench" title="Uit de lijn halen, als los stuk bewaren">Naar de werkbank</button>' : ''}
       </div>
-      ${SCENE_CORE.map(field).join('')}
-      <button class="pmore" data-scact="more">${cardMore ? 'Minder ▴' : 'Meer: stempelmetafoor, zintuigen, feiten, open vragen ▾'}</button>
-      ${cardMore ? SCENE_MORE.map(field).join('') + `<label class="scf"><span>Gebeurtenis op de historische tijdlijn</span><select data-scf="event"><option value="">— geen —</option>${D.dated.map(x => `<option value="${x.n.id}" ${m.event === x.n.id ? 'selected' : ''}>${esc(x.d.label + ' · ' + x.n.text.replace(/\s+/g, ' ').slice(0, 70))}</option>`).join('')}</select></label>` : ''}
-      ${ev ? `<div class="sclink">📅 ${esc((parseDate(ev.date) || {}).label || ev.date)} · ${esc(ev.text.slice(0, 90))}</div>` : ''}
-    </div>` : ''}
-    ${L.chars.length || L.topics.length ? `<div class="sclinks">${L.chars.map(c => `<button data-sclchar="${c.id}">👤 ${esc(charName(c))}</button>`).join('')}${L.topics.map(t => `<button data-scltopic="${esc(t.key)}">📚 ${esc(t.name)}</button>`).join('')}</div>` : ''}`;
+    </div>` : ''}`;
   bar.querySelectorAll('textarea[data-scf]').forEach(fit);
 }
 const fit = t => { t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; };
@@ -4653,36 +4706,40 @@ document.addEventListener('input', e => {
   const k = f.dataset.scf, v = f.value;
   const s = sheets[currentId]; if (!s) return;
   s.meta = {...(s.meta || {}), [k]: v}; s.updated = Date.now();
-  clearTimeout(scT); scT = setTimeout(() => { saveSheet(currentId); if (k === 'title') renderList(); }, 500);
+  clearTimeout(scT); scT = setTimeout(() => { saveSheet(currentId, true); if (k === 'title') renderList(); }, 500);
 });
 document.addEventListener('change', e => {
   const f = e.target.closest('#sceneBar select[data-scf]'); if (!f || !currentId) return;
-  setMeta(currentId, {[f.dataset.scf]: f.value}, true); renderSceneBar();
+  setMeta(currentId, {[f.dataset.scf]: f.value}, true); if (f.dataset.scf === 'event') shownFields.delete('__event'); renderSceneBar();
 });
 document.addEventListener('click', e => {
   const t = e.target; if (!t.closest('#sceneBar')) return;
   const s = sheets[currentId]; if (!s) return;
-  const st = t.closest('[data-scstatus]'); if (st){ setMeta(currentId, {status: st.dataset.scstatus}, true); renderSceneBar(); renderList(); return; }
-  const c = t.closest('[data-sclchar]'); if (c){ charId = c.dataset.sclchar; setView('c:' + s.group); return; }
-  const tp = t.closest('[data-scltopic]'); if (tp){ projTab = 'material'; projTopic = tp.dataset.scltopic; LS.set('projTab', projTab); setView('g:' + s.group); showProject(true); setMobile('editor'); return; }
+  const st = t.closest('[data-scstatus]'); if (st){ setMeta(currentId, {status: s.meta && s.meta.status === st.dataset.scstatus ? '' : st.dataset.scstatus}, true); renderSceneBar(); renderList(); return; }
+  const af = t.closest('[data-scaddf]'); if (af){ shownFields.add(af.dataset.scaddf); renderSceneBar(); const el = document.querySelector(`#sceneBar [data-scf="${af.dataset.scaddf === '__event' ? 'event' : af.dataset.scaddf}"]`); if (el) el.focus(); return; }
+  const c = t.closest('[data-sclchar]'); if (c){ openRef('char', c.dataset.sclchar); return; }
+  const tp = t.closest('[data-scltopic]'); if (tp){ openRef('topic', tp.dataset.scltopic); return; }
   const a = t.closest('[data-scact]'); if (!a) return;
   const list = scenesOf(s.group), i = list.findIndex(x => x.id === currentId);
-  if (a.dataset.scact === 'story'){ projTab = 'story'; LS.set('projTab', 'story'); setView('g:' + s.group); showProject(true); setMobile('editor'); }
-  if (a.dataset.scact === 'prev' && i > 0) openScene(list[i - 1].id);
-  if (a.dataset.scact === 'next' && i < list.length - 1) openScene(list[i + 1].id);
+  if (a.dataset.scact === 'story'){ shownFields = new Set(); projTab = 'story'; LS.set('projTab', 'story'); setView('g:' + s.group); showProject(true); setMobile('editor'); }
+  if (a.dataset.scact === 'prev' && i > 0){ shownFields = new Set(); openScene(list[i - 1].id); }
+  if (a.dataset.scact === 'next' && i < list.length - 1){ shownFields = new Set(); openScene(list[i + 1].id); }
   if ((a.dataset.scact === 'up' && i > 0) || (a.dataset.scact === 'down' && i < list.length - 1)){ const ids = list.map(x => x.id), j = a.dataset.scact === 'up' ? i - 1 : i + 1; [ids[i], ids[j]] = [ids[j], ids[i]]; renumber(ids); renderSceneBar(); renderList(); toast('Nu scène ' + (j + 1)); return; }
-  if (a.dataset.scact === 'card'){ cardOpen = !cardOpen; LS.set('cardOpen', cardOpen); renderSceneBar(); }
-  if (a.dataset.scact === 'more'){ cardMore = !cardMore; LS.set('cardMore', cardMore); renderSceneBar(); }
+  if (a.dataset.scact === 'card'){ cardOpen = !cardOpen; LS.set('cardOpen2', cardOpen); renderSceneBar(); }
+  if (a.dataset.scact === 'toline'){ toLine(currentId); renderSceneBar(); renderList(); toast('Staat nu als scène ' + scenesOf(s.group).length + ' in de lijn'); }
+  if (a.dataset.scact === 'tobench'){ toBench(currentId); renderSceneBar(); renderList(); toast('Op de werkbank gezet — de lijn is opnieuw genummerd'); }
+  if (a.dataset.scact === 'unevent'){ setMeta(currentId, {event: ''}, true); shownFields.delete('__event'); renderSceneBar(); }
 });
 let linkT; ta.addEventListener('input', () => { if (!isScene(sheets[currentId])) return; clearTimeout(linkT); linkT = setTimeout(() => { if (!document.activeElement || !document.activeElement.closest('#sceneBar')) renderSceneBar(); }, 1500); });
 /* ----- Verhaal-weergave ----- */
 function sceneCard(s, n, gid){
-  const m = s.meta || {}, st = statusOf(s), w = countWords(s.body || '');
-  return `<div class="scard" draggable="true" data-scard="${s.id}" style="--t:${STATUS_TINT[st]};--d:${STATUS_DOT[st]}">
-    <div class="sch"><span class="scn">${pad2(n)}</span><span class="scdot" title="${esc(st)}"></span><span class="scst">${esc(SCENE_STATUS.find(x => x[0] === st)[1])}</span><span class="grow"></span><span class="scw">${w ? w + ' w' : ''}</span></div>
-    <b>${esc(m.title || 'Naamloze scène')}</b>
-    ${m.when || m.where ? `<div class="scm">${esc([m.when, m.where].filter(Boolean).join(' · '))}</div>` : ''}
-    ${m.what ? `<div class="scx">${esc(m.what)}</div>` : ''}
+  const m = s.meta || {}, w = countWords(s.body || ''), st = hasStatus(s) ? m.status : '';
+  const first = String(s.body || '').trim().replace(/\s+/g, ' ').slice(0, 110);
+  return `<div class="scard ${isBench(s) ? 'bench' : ''}" draggable="true" data-scard="${s.id}" style="--t:${st ? STATUS_TINT[st] : 'transparent'};--d:${st ? STATUS_DOT[st] : 'var(--line)'}">
+    <div class="sch">${n ? `<span class="scn">${pad2(n)}</span>` : ''}${st ? `<span class="scdot" title="${esc(st)}"></span>` : ''}<span class="grow"></span><span class="scw">${w ? w + ' w' : ''}</span></div>
+    <b>${esc(m.title || (isBench(s) ? (first.split(' ').slice(0, 6).join(' ') || 'Los stuk') : 'Naamloze scène'))}</b>
+    ${m.when || m.where ? `<div class="scm">${esc([m.where, m.when].filter(Boolean).join(' · '))}</div>` : ''}
+    ${m.what ? `<div class="scx">${esc(m.what)}</div>` : first && (isBench(s) || !m.what) ? `<div class="scx">${esc(first)}</div>` : ''}
   </div>`;
 }
 function storyHtml(gid, g){
@@ -4690,15 +4747,18 @@ function storyHtml(gid, g){
   const total = list.reduce((a, s) => a + countWords(s.body || ''), 0);
   const counts = Object.fromEntries(SCENE_STATUS.map(([k]) => [k, list.filter(s => statusOf(s) === k).length]));
   const legacy = D.texts.filter(t => !isScene(t) && /^##\s*kaartje/im.test(t.body || ''));
-  let h = `<div class="sbar"><button class="btn" data-sact="new">＋ Scène</button>
+  const bench = benchOf(gid);
+  let h = `<div class="sbar"><button class="btn" data-sact="free" title="Begin een los stuk op de werkbank — het hoeft nog nergens te passen">✎ Gewoon schrijven</button><button class="btn ghost" data-sact="new">＋ Scène</button>
     <div class="seg">${[['lijn', 'Verhaallijnen'], ['tijd', 'Historische tijd'], ['bord', 'Status']].map(([k, l]) => `<button data-smode="${k}" class="${storyMode === k ? 'on' : ''}">${l}</button>`).join('')}</div>
     <span class="grow"></span>${list.length ? `<button class="btn ghost" data-sact="merge">⧉ Hele verhaal</button>` : ''}</div>`;
   if (!sceneCols) h += `<div class="tip" style="margin-bottom:12px">Om scènes te bewaren moet je eerst één keer <b>schema.sql</b> draaien in Supabase. <a href="#" data-sact="sql" style="color:var(--accent);font-weight:800">Zo doe je dat →</a></div>`;
   if (legacy.length) h += `<div class="tip" style="margin-bottom:12px">${legacy.length} ${legacy.length === 1 ? 'tekst heeft' : 'teksten hebben'} een <b>## Kaartje</b>. <button class="btn" data-sact="migrate" style="margin-left:8px">Omzetten naar scènes…</button></div>`;
-  if (list.length) h += `<div class="sprog"><span>${list.length} scènes · ${total.toLocaleString('nl-NL')} woorden</span>${SCENE_STATUS.map(([k, l]) => counts[k] ? `<span class="spill" style="--t:${STATUS_TINT[k]};--d:${STATUS_DOT[k]}"><i></i>${counts[k]} ${l.toLowerCase()}</span>` : '').join('')}</div>`;
-  if (!list.length) return h + `<div class="pwelcome">${cat('happy')}<div><h3>Bouw je verhaal scène voor scène</h3><p>Klik op <b>＋ Scène</b>. Elke scène heeft een kaartje (wat gebeurt er, wat voelt de verteller…) en je schrijft de scène direct eronder. Met <b>Hele verhaal</b> voeg je alles samen.</p></div></div>`;
+  if (list.length && storyMode === 'bord') h += `<div class="sprog"><span>${list.length} scènes · ${total.toLocaleString('nl-NL')} woorden</span>${SCENE_STATUS.map(([k, l]) => counts[k] ? `<span class="spill" style="--t:${STATUS_TINT[k]};--d:${STATUS_DOT[k]}"><i></i>${counts[k]} ${l.toLowerCase()}</span>` : '').join('')}</div>`;
+  const benchHtml = `<div class="sbench" data-bench><div class="sbh"><b>Werkbank</b><span>zijsporen, losse stukken, probeersels — zonder nummer of plek. Sleep een stuk de lijn in als het ergens past, of een scène hierheen.</span></div>
+    <div class="sbcards">${bench.map(s => sceneCard(s, 0, gid)).join('')}<button class="sbnew" data-sact="free">✎ Nieuw los stuk</button></div></div>`;
+  if (!list.length) return h + `<div class="pwelcome">${cat('happy')}<div><h3>Begin waar je wilt</h3><p>Klik op <b>✎ Gewoon schrijven</b> en schrijf. Wat een scène wordt, zet je later in de lijn; zijsporen blijven op de werkbank. Plannen mag, hoeft niet.</p></div></div>` + benchHtml;
   if (storyMode === 'bord'){
-    return h + `<div class="sboard">${SCENE_STATUS.map(([k, l]) => `<div class="scol" data-scol="${k}"><div class="scolh"><i style="background:${STATUS_DOT[k]}"></i>${l} <small>${counts[k]}</small></div>${list.map((s, i) => statusOf(s) === k ? sceneCard(s, i + 1, gid) : '').join('')}</div>`).join('')}</div>`;
+    return h + `<div class="sboard">${SCENE_STATUS.map(([k, l]) => `<div class="scol" data-scol="${k}"><div class="scolh"><i style="background:${STATUS_DOT[k]}"></i>${l} <small>${counts[k]}</small></div>${list.map((s, i) => statusOf(s) === k ? sceneCard(s, i + 1, gid) : '').join('')}</div>`).join('')}</div>` + benchHtml;
   }
   if (storyMode === 'tijd'){
     const items = [];
@@ -4714,12 +4774,12 @@ function storyHtml(gid, g){
     }
     t += '</div>';
     if (undated.length) t += `<h4 class="tsec">Scènes zonder datum</h4><div class="srowcards">${undated.map(([s, n]) => sceneCard(s, n, gid)).join('')}</div>`;
-    return h + `<p class="muted" style="margin:0 0 10px">Scènes (gekleurd) tussen de echte gebeurtenissen, op volgorde van de geschiedenis. Geef een scène een datum of koppel een gebeurtenis in het kaartje.</p>` + t;
+    return h + `<p class="muted" style="margin:0 0 10px">Scènes tussen de echte gebeurtenissen, op volgorde van de geschiedenis. Geef een scène een datum of koppel een gebeurtenis in het kaartje.</p>` + t + benchHtml;
   }
   if (isMobile()){
     return h + `<div class="svert">${list.map((s, i) => { const m = s.meta || {}, ev = m.event && snippets[m.event], d = ev && parseDate(ev.date);
       return `<div class="svi">${lanes.length > 1 ? `<div class="svl">${esc((lanes.find(l => l.id === laneOf(s, gid)) || {}).name || '')}</div>` : ''}${sceneCard(s, i + 1, gid)}${ev ? `<button class="sev" data-tsnip="${ev.id}" style="margin-top:4px"><b>${esc(d ? d.label : ev.date)}</b>${esc(ev.text.slice(0, 80))}</button>` : ''}</div>`; }).join('')}</div>`
-      + `<div class="ptbar" style="margin-top:10px"><button class="pmore" data-sact="lane">＋ Verhaallijn</button><span class="muted" style="font-size:12.5px">Volgorde veranderen: open de scène en tik ⇡ eerder of ⇣ later. De verhaallijn kies je in het kaartje.</span></div>`;
+      + `<div class="ptbar" style="margin-top:10px"><button class="pmore" data-sact="lane">＋ Verhaallijn</button><span class="muted" style="font-size:12.5px">Volgorde veranderen: open de scène en tik ⇡ of ⇣.</span></div>` + benchHtml;
   }
   // verhaallijnen: kolommen = verhaalvolgorde, rijen = lijnen
   const n = list.length;
@@ -4733,7 +4793,7 @@ function storyHtml(gid, g){
   list.forEach(s => { const m = s.meta || {}, ev = m.event && snippets[m.event], d = ev ? parseDate(ev.date) : parseDate(m.when || '');
     grid += `<div class="scell hist">${ev ? `<button class="sev" data-tsnip="${ev.id}"><b>${esc(d ? d.label : ev.date)}</b>${esc(ev.text.slice(0, 80))}</button>` : d ? `<span class="sev"><b>${esc(d.label)}</b></span>` : ''}</div>`; });
   grid += `<div class="scell hist"></div></div></div>`;
-  return h + grid + `<div class="ptbar" style="margin-top:10px"><button class="pmore" data-sact="lane">＋ Verhaallijn</button><span class="muted" style="font-size:12.5px">Sleep een kaartje om de volgorde of de lijn te veranderen. Of open een scène en gebruik ⇡ eerder / ⇣ later.</span></div>`;
+  return h + grid + `<div class="ptbar" style="margin-top:10px"><button class="pmore" data-sact="lane">＋ Verhaallijn</button><span class="muted" style="font-size:12.5px">Sleep kaartjes om te schuiven; leeg laten mag.</span></div>` + benchHtml;
 }
 function laneDialog(gid, laneId){
   const g = groups.find(x => x.id === gid); if (!g) return;
@@ -4779,6 +4839,52 @@ function mergeDialog(gid){
     saveSheet(id, true); closeModal(); renderList(); toast(ex ? 'Bijgewerkt: “' + title + '”' : 'Bewaard als “' + title + '” (onder Materiaal → Teksten)');
   };
 }
+
+/* ----- Naslag: personages, plaatsen, leefwerelden bij de hand ----- */
+function openRef(type, id){
+  rpRef = {type, id}; rpTab = 'related'; rpSrc = null; rpLookup = null;
+  if (!rpOpen) toggleResearch(true); else renderResearch();
+  const sc = $('#rpScroll'); if (sc) sc.scrollTop = 0;
+}
+function refHtml(){
+  const sh = sheets[currentId], gid = sh && sh.group && groups.some(g => g.id === sh.group) ? sh.group : '';
+  if (!gid) return '';
+  const T = topicsOf(gid), chars = charsOf(gid);
+  if (rpRef && rpRef.type === 'char'){
+    const x = sheets[rpRef.id]; if (!x){ rpRef = null; return refHtml(); }
+    const p = parseChar(x.body), sc = scenesOf(gid).filter(s => sceneLinks(s).chars.some(cc => cc.id === rpRef.id));
+    return `<button class="rpback" data-refback>‹ Naslag</button><div class="refh">${avatar(charName(x), 44)}<div><h3>${esc(charName(x))}</h3><span>${esc([p.rol, p.leeftijd].filter(Boolean).join(' · '))}</span></div></div>
+      ${sc.length ? `<div class="sclinks" style="margin:6px 0 10px">${sc.map(s => `<button data-scopen2="${s.id}">${pad2(sceneNo(s))} ${esc((s.meta && s.meta.title) || '')}</button>`).join('')}</div>` : ''}
+      ${CHAR_FIELDS.filter(([k]) => (p.fields[k] || '').trim()).map(([k, l]) => `<div class="rpk dsec">${esc(l)}</div><div class="rtbody">${mdToHtml(p.fields[k])}</div>`).join('')}
+      ${p.extra.filter(e => e.text).map(e => `<div class="rpk dsec">${esc(e.title)}</div><div class="rtbody">${mdToHtml(e.text)}</div>`).join('')}
+      <button class="pmore" data-refopenchar="${rpRef.id}" style="margin-top:10px">Character sheet bewerken →</button>`;
+  }
+  if (rpRef && rpRef.type === 'topic'){
+    const t = T.list.find(x => x.key === rpRef.id); if (!t){ rpRef = null; return refHtml(); }
+    const body = topicBody(t);
+    return `<button class="rpback" data-refback>‹ Naslag</button><div class="rtop"><h3>${esc(t.name)}</h3>
+      ${body ? `<div class="rtbody">${mdToHtml(body)}</div>` : ''}
+      ${t.scenes.length ? `<div class="rpk dsec">Scène-ideeën</div>${t.scenes.map(n => `<div class="rpi"><div class="rpt">${esc(n.text)}</div><div class="rpa"><button data-rpins="${n.id}">Invoegen</button></div></div>`).join('')}` : ''}
+      ${t.facts.length ? `<div class="rpk dsec">Feiten</div>${t.facts.map(n => rpItem({type: 'snip', x: n})).join('')}` : ''}
+      ${t.srcs.size ? `<details class="tsrc"><summary>Bronnen · ${t.srcs.size}</summary>${[...t.srcs.values()].map(s => `<button class="trow" data-rpread="${s.id}"><span class="tt">${esc(s.title || s.url)}</span><span class="tm">${esc(s.site || host(s.url))}</span></button>`).join('')}</details>` : ''}
+      <button class="pmore" data-rtopen="${esc(t.key)}">Onderwerp openen →</button></div>`;
+  }
+  const L = sh ? sceneLinks(sh) : {chars: [], topics: []}, auto = bestTopic(T.list);
+  const here = [...L.chars.map(x => ['char', x.id, charName(x)]), ...L.topics.map(t => ['topic', t.key, t.name])];
+  if (auto && !here.some(h => h[1] === auto.key)) here.push(['topic', auto.key, auto.name]);
+  const topics = T.list.filter(t => t.key !== 'overig');
+  return `${here.length ? `<div class="rpk dsec" style="margin-top:0">Hier in je tekst</div><div class="sclinks" style="margin:4px 0 6px">${here.map(([ty, id, n]) => `<button data-ref="${ty}|${esc(id)}">${ty === 'char' ? '👤' : '📚'} ${esc(n)}</button>`).join('')}</div>` : ''}
+    <div class="rpk dsec">Personages</div>
+    ${chars.length ? `<div class="reflist">${chars.map(x => `<button data-ref="char|${x.id}">${avatar(charName(x), 26)}<b>${esc(charName(x))}</b><span>${esc(parseChar(x.body).rol || '')}</span></button>`).join('')}</div>` : '<p class="muted" style="margin:4px 0">Nog geen personages.</p>'}
+    <div class="rpk dsec">Plaatsen, leefwerelden en andere onderwerpen</div>
+    ${topics.length ? `<div class="reflist">${topics.map(t => `<button data-ref="topic|${esc(t.key)}"><b>${esc(t.name)}</b><span>${topicMeta(t)}</span></button>`).join('')}</div>` : `<p class="muted" style="margin:4px 0">Nog geen onderwerpen. Vraag Claude bv. <i>“Maak onderwerpen voor de plaatsen Sardis en Philippi en voor het leven van een slaaf.”</i></p>`}`;
+}
+document.addEventListener('click', e => {
+  const r = e.target.closest('[data-ref]'); if (r){ const [type, ...id] = r.dataset.ref.split('|'); openRef(type, id.join('|')); return; }
+  if (e.target.closest('[data-refback]')){ rpRef = null; renderResearch(); return; }
+  const oc = e.target.closest('[data-refopenchar]'); if (oc){ const x = sheets[oc.dataset.refopenchar]; if (x){ charId = oc.dataset.refopenchar; setView('c:' + x.group); } return; }
+  const so = e.target.closest('[data-scopen2]'); if (so){ openScene(so.dataset.scopen2); return; }
+});
 /* ----- Bestaande teksten met ## Kaartje omzetten ----- */
 const CARD_LABELS = [[/^status$/, 'status'], [/^(wanneer|datum)$/, 'when'], [/^(waar|plaats)$/, 'where'], [/^wat gebeurt( er)?$/, 'what'], [/^wat voelt/, 'feel'], [/^(stempel)?metafoor|^stempelmetafoor$/, 'stamp'], [/^zintuig/, 'senses'], [/^feiten/, 'facts'], [/^open vragen?$/, 'questions'], [/^zie ook$/, 'seealso']];
 const normStatus = v => { v = String(v || '').toLowerCase(); return /klaar|af\b|definitief/.test(v) ? 'klaar' : /concept|eerste versie|draft/.test(v) ? 'concept' : /schets|opzet|aanzet|begonnen/.test(v) ? 'schets' : 'idee'; };
@@ -4861,6 +4967,7 @@ $('#project').addEventListener('click', e => {
   const sa = t.closest('[data-sact]');
   if (sa){ const k = sa.dataset.sact; e.preventDefault();
     if (k === 'new'){ const id = newScene(gid); if (id) openScene(id); }
+    if (k === 'free'){ const id = newScene(gid, null, null, true); if (id){ cardOpen = false; openScene(id); } }
     if (k === 'merge') mergeDialog(gid);
     if (k === 'lane') laneDialog(gid);
     if (k === 'migrate') migrateDialog(gid);
@@ -4916,10 +5023,12 @@ $('#btnProj').onclick = () => { const fv = parseFview(view); if (fv) setView('g:
 /* drag texts between folders on the project page */
 $('#project').addEventListener('dragstart', e => { const c = e.target.closest('[data-scard]'); if (c){ e.dataTransfer.setData('text/x-scene', c.dataset.scard); e.dataTransfer.effectAllowed = 'move'; c.classList.add('dragging'); } });
 $('#project').addEventListener('dragend', e => { const c = e.target.closest('[data-scard]'); if (c) c.classList.remove('dragging'); document.querySelectorAll('.dropon').forEach(x => x.classList.remove('dropon')); });
-$('#project').addEventListener('dragover', e => { const d = e.target.closest('[data-cell],[data-scol]'); if (d && e.dataTransfer.types.includes('text/x-scene')){ e.preventDefault(); document.querySelectorAll('.dropon').forEach(x => x !== d && x.classList.remove('dropon')); d.classList.add('dropon'); } });
+$('#project').addEventListener('dragover', e => { const d = e.target.closest('[data-cell],[data-scol],[data-bench]'); if (d && e.dataTransfer.types.includes('text/x-scene')){ e.preventDefault(); document.querySelectorAll('.dropon').forEach(x => x !== d && x.classList.remove('dropon')); d.classList.add('dropon'); } });
 $('#project').addEventListener('drop', e => {
-  const d = e.target.closest('[data-cell],[data-scol]'), id = e.dataTransfer.getData('text/x-scene'); if (!d || !id || !sheets[id]) return;
+  const d = e.target.closest('[data-cell],[data-scol],[data-bench]'), id = e.dataTransfer.getData('text/x-scene'); if (!d || !id || !sheets[id]) return;
   e.preventDefault(); d.classList.remove('dropon'); const gid = view.slice(2);
+  if (d.hasAttribute('data-bench')){ if (!isBench(sheets[id])){ toBench(id); renderProject(); renderList(); toast('Op de werkbank gezet'); } return; }
+  if (isBench(sheets[id]) && d.dataset.cell){ const [lane, col] = d.dataset.cell.split('|'); toLine(id, lane, +col); renderProject(); renderList(); toast('In de lijn gezet'); return; }
   if (d.dataset.scol){ setMeta(id, {status: d.dataset.scol}); return; }
   const [lane, colS] = d.dataset.cell.split('|'); let col = +colS;
   const order = scenesOf(gid).map(s => s.id), from = order.indexOf(id);

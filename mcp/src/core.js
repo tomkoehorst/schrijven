@@ -1,6 +1,6 @@
 // Schrijfkamer — kern van de Claude-koppeling (gedeeld door de pc-extensie en de online koppeling)
 import { z } from 'zod';
-export const VERSION = '1.8.0';
+export const VERSION = '1.9.0';
 /* Schone tekst: haal Markdown-opmaaktekens weg (**vet**, *cursief*, `code`, tabellen, ---),
    maar laat kopjes (#), lijstjes (-), citaten (>), [[links]] en ?? staan. */
 function cleanInline(s){
@@ -513,7 +513,8 @@ server.tool('project_overview',
         rest('GET', `snippets?select=text,date,tags&grp=eq.${gid}&order=created.desc&limit=500`),
         rest('GET', `sources?select=title,url,site&grp=eq.${gid}&order=created.desc&limit=200`)
       ]);
-      const scn = texts.filter(t => t.kind === 'scene').sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0));
+      const scn = texts.filter(t => t.kind === 'scene' && !(t.meta && t.meta.bench)).sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0));
+      const bench = texts.filter(t => t.kind === 'scene' && t.meta && t.meta.bench);
       const plain = texts.filter(t => t.kind !== 'scene');
       const todos = texts.flatMap(t => [...String(t.body).matchAll(/([^.!?\n]{0,140})(\?\?|\[check[^\]]*\])/g)].map(m => `${m[1].trim()} ${m[2]} (in “${titleOf(t.body)}”)`));
       const dated = sn.map(x => ({ x, d: parseDate(x.date) })).filter(y => y.d).sort((a, b) => a.d.key.localeCompare(b.d.key));
@@ -523,7 +524,8 @@ server.tool('project_overview',
       for (const t of texts.filter(t => t.folder === 'Onderwerpen')) { const k = titleOf(t.body).toLowerCase(); topics[k] = topics[k] || 0; }
       return ok([
         `Project “${project}”: ${scn.length} scènes, ${plain.length} teksten, ${sn.length} fragmenten (${dated.length} op de tijdlijn), ${src.length} bronnen.`,
-        scn.length ? 'Scènes (lees ze met list_scenes / get_scene):\n' + scn.map((t, i) => `${String(i + 1).padStart(2, '0')}. ${(t.meta && t.meta.title) || 'Naamloze scène'} [${(t.meta && t.meta.status) || 'idee'}] (${words(t.body)} woorden)`).join('\n') : '',
+        scn.length ? 'Scènes (lees ze met list_scenes / get_scene):\n' + scn.map((t, i) => `${String(i + 1).padStart(2, '0')}. ${(t.meta && t.meta.title) || 'Naamloze scène'} ${t.meta && t.meta.status ? ' [' + t.meta.status + ']' : ''} (${words(t.body)} woorden)`).join('\n') : '',
+        bench.length ? 'Werkbank (losse stukken):\n' + bench.map(t => `- ${sceneTitle(t)} (${words(t.body)} woorden)`).join('\n') : '',
         plain.length ? 'Teksten:\n' + plain.map(t => `- ${titleOf(t.body) || '(naamloos)'} (${words(t.body)} woorden)`).join('\n') : '',
         dated.length ? 'Tijdlijn:\n' + dated.map(y => `- ${y.d.label}: ${y.x.text.replace(/\s+/g, ' ').slice(0, 120)}`).join('\n') : '',
         src.length ? 'Bronnen:\n' + src.slice(0, 60).map(s => `- ${s.title} ${s.url || ''}`).join('\n') : '',
@@ -547,20 +549,24 @@ const cardShape = {
   event: z.string().optional().describe('Koppel een gebeurtenis van de historische tijdlijn: een stukje van de tekst of de datum ervan. Leeg ("") ontkoppelt.')
 };
 const SQL_HINT = 'Scènes zijn nog niet beschikbaar: draai eerst supabase/schema.sql in de Supabase SQL Editor (drie nieuwe kolommen in sheets).';
-const sceneTitle = r => (r.meta && r.meta.title) || 'Naamloze scène';
+const sceneTitle = r => (r.meta && r.meta.title) || (r.meta && r.meta.bench ? (String(r.body || '').trim().split(/\s+/).slice(0, 6).join(' ') || 'Los stuk') : 'Naamloze scène');
 const words = t => (String(t || '').match(/[\p{L}\p{N}’'-]+/gu) || []).length;
 async function scenesIn(gid) {
   let rows;
   try { rows = await rest('GET', `sheets?select=id,body,grp,meta,ord,kind,created,updated&grp=eq.${enc(gid)}&kind=eq.scene&trashed=eq.false`); }
   catch (e) { if (/kind|meta|ord/.test(e.message)) throw new Error(SQL_HINT); throw e; }
-  return rows.map(r => ({ ...r, meta: r.meta || {} })).sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0) || (Number(a.created) || 0) - (Number(b.created) || 0)).map((r, i) => ({ ...r, nr: i + 1 }));
+  const all = rows.map(r => ({ ...r, meta: r.meta || {} }));
+  const line = all.filter(r => !r.meta.bench).sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0) || (Number(a.created) || 0) - (Number(b.created) || 0)).map((r, i) => ({ ...r, nr: i + 1 }));
+  line.bench = all.filter(r => r.meta.bench).sort((a, b) => (Number(b.updated) || 0) - (Number(a.updated) || 0)).map(r => ({ ...r, nr: 'werkbank' }));
+  return line;
 }
 function findScene(list, ref) {
   const s = String(ref || '').trim(); if (!s) return null;
+  const l0 = s.toLowerCase(), b = (list.bench || []).find(x => sceneTitle(x).toLowerCase() === l0 || (!/^\d+$/.test(s) && sceneTitle(x).toLowerCase().includes(l0)));
   if (/^\d+$/.test(s)) return list.find(x => x.nr === +s) || null;
   const l = s.toLowerCase().replace(/^(scène|scene)\s*/, '');
   if (/^\d+$/.test(l)) return list.find(x => x.nr === +l) || null;
-  return list.find(x => sceneTitle(x).toLowerCase() === l) || list.find(x => sceneTitle(x).toLowerCase().includes(l)) || null;
+  return list.find(x => sceneTitle(x).toLowerCase() === l) || list.find(x => sceneTitle(x).toLowerCase().includes(l)) || b || null;
 }
 const notFoundScene = (ref, list) => new Error(`Scène “${ref}” niet gevonden. Scènes: ${list.map(x => x.nr + ' ' + sceneTitle(x)).join(', ') || '(nog geen)'}`);
 async function renumberScenes(ids) {
@@ -594,20 +600,21 @@ async function fmtScene(r, gid) {
   let ev = '';
   if (m.event) { const e = await rest('GET', `snippets?select=text,date&id=eq.${enc(m.event)}`).catch(() => []); if (e[0]) ev = `\nGebeurtenis: ${e[0].date} · ${e[0].text}`; }
   const card = CARD.filter(([k]) => !['title', 'status'].includes(k) && m[k]).map(([k, l]) => `${l}: ${m[k]}`).join('\n');
-  return `Scène ${r.nr}: ${sceneTitle(r)} [${m.status || 'idee'}]${lane}\n${card}${ev}\n\n--- Tekst (${words(r.body)} woorden) ---\n${String(r.body || '').trim() || '(nog leeg)'}`;
+  return `${m.bench ? 'Los stuk op de werkbank' : 'Scène ' + r.nr}: ${sceneTitle(r)}${m.status ? ' [' + m.status + ']' : ''}${m.bench ? '' : lane}\n${card}${ev}\n\n--- Tekst (${words(r.body)} woorden) ---\n${String(r.body || '').trim() || '(nog leeg)'}`;
 }
 
 server.tool('list_scenes',
-  'Geef de scènes van een verhaal (project) op volgorde: nummer, titel, status, datum, verhaallijn en aantal woorden. Gebruik dit vóór je scènes leest of bewerkt.',
+  'Geef de scènes van een verhaal (project) op volgorde (nummer, titel, status, datum, verhaallijn, woorden) en de losse stukken op de Werkbank. Gebruik dit vóór je scènes leest of bewerkt. De schrijver werkt ontdekkend: stel geen structuur of status op die hij niet vraagt.',
   { project: z.string() },
   async ({ project }) => {
     try {
       await token(); const gid = await projectId(project);
       const list = await scenesIn(gid), { lanes } = await lanesFor(gid);
-      if (!list.length) return ok(`Project “${project}” heeft nog geen scènes. Maak er een met create_scene.`);
+      const benchTxt = list.bench.length ? `\n\nWerkbank (losse stukken en zijsporen, zonder plek in het verhaal):\n` + list.bench.map(r => `- ${sceneTitle(r)} · ${words(r.body)} woorden`).join('\n') : '';
+      if (!list.length) return ok(`Project “${project}” heeft nog geen scènes in de verhaallijn.${benchTxt}`);
       const tot = list.reduce((a, r) => a + words(r.body), 0);
       return ok(`${list.length} scènes, ${tot} woorden in totaal:\n` + list.map(r => { const m = r.meta;
-        return `${String(r.nr).padStart(2, '0')}. ${sceneTitle(r)} [${m.status || 'idee'}]${m.when ? ' · ' + m.when : ''}${lanes.length > 1 ? ' · ' + (lanes.find(l => l.id === m.lane) || lanes[0]).name : ''} · ${words(r.body)} woorden${m.what ? '\n    ' + String(m.what).replace(/\s+/g, ' ').slice(0, 140) : ''}`; }).join('\n'));
+        return `${String(r.nr).padStart(2, '0')}. ${sceneTitle(r)}${m.status ? ' [' + m.status + ']' : ''}${m.when ? ' · ' + m.when : ''}${lanes.length > 1 ? ' · ' + (lanes.find(l => l.id === m.lane) || lanes[0]).name : ''} · ${words(r.body)} woorden${m.what ? '\n    ' + String(m.what).replace(/\s+/g, ' ').slice(0, 140) : ''}`; }).join('\n') + benchTxt);
     } catch (e) { return fail(e); }
   });
 
@@ -624,15 +631,16 @@ server.tool('get_scene',
 
 server.tool('create_scene',
   'Maak een nieuwe scène in een verhaal: een kaartje (titel, status, datum, plaats, wat gebeurt er, wat voelt de verteller, enz.) en eventueel al tekst. Schrijf schone, gewone tekst zonder opmaaktekens.',
-  { project: z.string(), ...cardShape, title: z.string(), position: z.number().int().min(1).optional().describe('Plek in het verhaal (1 = eerste). Leeg = aan het eind.'), text: z.string().optional().describe('De scènetekst (proza).') },
+  { project: z.string(), ...cardShape, title: z.string(), position: z.number().int().min(1).optional().describe('Plek in het verhaal (1 = eerste). Leeg = aan het eind.'), text: z.string().optional().describe('De scènetekst (proza).'), on_bench: z.boolean().optional().describe('true = als los stuk op de Werkbank, zonder plek in het verhaal (voor zijsporen en probeersels).') },
   async (a) => {
     try {
       await token(); const gid = await projectId(a.project);
       const list = await scenesIn(gid), { lanes } = await lanesFor(gid);
-      const meta = { status: 'idee', lane: lanes[0].id, ...(await cardPatch(gid, a)) };
+      const meta = a.on_bench ? { bench: true, ...(await cardPatch(gid, a)) } : { lane: lanes[0].id, ...(await cardPatch(gid, a)) };
       const now = Date.now(), id = uid();
-      await rest('POST', 'sheets', { id, user_id: session.user_id, body: a.text ? cleanText(a.text).trim() + '\n' : '', grp: gid, folder: '', fav: false, trashed: false, goal: 0, kind: 'scene', meta, ord: list.length + 1, created: now, updated: now }, 'return=minimal')
+      await rest('POST', 'sheets', { id, user_id: session.user_id, body: a.text ? cleanText(a.text).trim() + '\n' : '', grp: gid, folder: '', fav: false, trashed: false, goal: 0, kind: 'scene', meta, ord: a.on_bench ? 0 : list.length + 1, created: now, updated: now }, 'return=minimal')
         .catch(e => { if (/kind|meta|ord/.test(e.message)) throw new Error(SQL_HINT); throw e; });
+      if (a.on_bench) return ok(`Los stuk “${meta.title}” op de Werkbank van ${a.project} gezet.`);
       const ids = list.map(r => r.id), pos = a.position ? Math.min(a.position, ids.length + 1) : ids.length + 1;
       if (pos <= ids.length) { ids.splice(pos - 1, 0, id); await renumberScenes(ids); }
       return ok(`Scène ${pos} “${meta.title}” aangemaakt in ${a.project}.`);
@@ -642,6 +650,7 @@ server.tool('create_scene',
 server.tool('update_scene',
   'Werk een scène bij: kaartvelden (alleen de velden die je meegeeft veranderen), status, verhaallijn, gekoppelde gebeurtenis, en/of de tekst. Tekst: met text vervang je het hele proza, met append_text voeg je onderaan toe, met find + replace_with verbeter je een stukje. Schrijf schone, gewone tekst.',
   { project: z.string(), scene: z.string().describe('Nummer of titel van de scène.'), ...cardShape,
+    to_bench: z.boolean().optional().describe('true = uit de verhaallijn halen en als los stuk op de Werkbank zetten.'), to_line: z.number().int().min(1).optional().describe('Zet een los stuk van de Werkbank op deze plek in de verhaallijn.'),
     text: z.string().optional().describe('Vervangt de hele scènetekst.'), append_text: z.string().optional(), find: z.string().optional().describe('Exacte tekst die vervangen moet worden.'), replace_with: z.string().optional() },
   async (a) => {
     try {
@@ -658,9 +667,13 @@ server.tool('update_scene',
       }
       if (a.append_text) { body = body.replace(/\s*$/, '') + (body.trim() ? '\n\n' : '') + cleanText(a.append_text).trim() + '\n'; done.push('tekst aangevuld'); }
       if (body !== String(r.body || '')) patch.body = body;
+      let reorder = null;
+      if (a.to_bench && !r.meta.bench) { patch.meta = { ...(patch.meta || r.meta), bench: true }; patch.ord = 0; reorder = list.map(x => x.id).filter(id => id !== r.id); done.push('naar de Werkbank'); }
+      if (a.to_line && r.meta.bench) { const { lanes } = await lanesFor(gid); patch.meta = { ...(patch.meta || r.meta), bench: false, lane: (patch.meta || r.meta).lane || lanes[0].id }; reorder = list.map(x => x.id); reorder.splice(Math.min(a.to_line, reorder.length + 1) - 1, 0, r.id); done.push('in de verhaallijn gezet op plek ' + Math.min(a.to_line, reorder.length)); }
       if (done.length === 0) return ok('Niets veranderd: geef kaartvelden of tekst mee.');
       await rest('PATCH', `sheets?id=eq.${enc(r.id)}`, patch, 'return=minimal');
-      return ok(`Scène ${r.nr} “${sceneTitle({ meta: patch.meta || r.meta })}” bijgewerkt: ${done.join(', ')}.`);
+      if (reorder) await renumberScenes(reorder);
+      return ok(`${r.meta.bench ? 'Los stuk' : 'Scène ' + r.nr} “${sceneTitle({ meta: patch.meta || r.meta, body: patch.body || r.body })}” bijgewerkt: ${done.join(', ')}.`);
     } catch (e) { return fail(e); }
   });
 
@@ -864,7 +877,7 @@ server.tool('add_timeline_events',
     } catch (e) { return fail(e); }
   });
 
-const INSTRUCTIONS = 'Koppeling met de Schrijfkamer van de gebruiker: bewaar fragmenten, tijdlijnmomenten, bronnen, teksten en personages, en doorzoek de verzameling. Antwoord in het Nederlands. Een verhaal bestaat uit SCÈNES op volgorde (list_scenes, get_scene, create_scene, update_scene, reorder_scenes): elke scène heeft een kaartje (planning) en een scènetekst (proza). Teksten kun je lezen en verbeteren met read_text en update_text; verwijderen (delete_text) alleen na uitdrukkelijke bevestiging van de gebruiker. Materiaal is ingedeeld in ONDERWERPEN (de eerste tag van een fragment of bron); gebruik write_topic voor achtergrondkennis met feiten en scène-ideeën, en hergebruik bestaande onderwerpnamen. Schrijf in de Schrijfkamer schone, gewone tekst: geen **vet**, *cursief*, tabellen of andere Markdown-tekens, alleen ## kopjes en - lijstjes. ' + RULE_TEXT + ' Verzamel liever weinig goede bronnen dan veel; controleer met search_collection of iets er al is.';
+const INSTRUCTIONS = 'Koppeling met de Schrijfkamer van de gebruiker: bewaar fragmenten, tijdlijnmomenten, bronnen, teksten en personages, en doorzoek de verzameling. Antwoord in het Nederlands. De schrijver werkt ONTDEKKEND: volg zijn tekst, stel geen vaste structuur, statussen of kaartvelden op tenzij hij erom vraagt, en zet zijsporen liever als los stuk op de Werkbank (create_scene met on_bench) dan ze weg te strepen. Een verhaal bestaat uit SCÈNES op volgorde (list_scenes, get_scene, create_scene, update_scene, reorder_scenes): elke scène heeft een kaartje (planning) en een scènetekst (proza). Teksten kun je lezen en verbeteren met read_text en update_text; verwijderen (delete_text) alleen na uitdrukkelijke bevestiging van de gebruiker. Materiaal is ingedeeld in ONDERWERPEN (de eerste tag van een fragment of bron); gebruik write_topic voor achtergrondkennis met feiten en scène-ideeën, en hergebruik bestaande onderwerpnamen. Schrijf in de Schrijfkamer schone, gewone tekst: geen **vet**, *cursief*, tabellen of andere Markdown-tekens, alleen ## kopjes en - lijstjes. ' + RULE_TEXT + ' Verzamel liever weinig goede bronnen dan veel; controleer met search_collection of iets er al is.';
 const PROMPT_ONDERZOEK = "Je bent mijn onderzoeksassistent voor mijn schrijfproject “${arguments.project}”. Ik concentreer me op het creatieve schrijven; jij doet het feitenwerk en zet alles in mijn Schrijfkamer.\n\nOnderwerp: ${arguments.onderwerp}\n\nWerkwijze:\n0. Stel mij eerst een paar korte vragen en wacht op mijn antwoord: waarvoor heb ik dit nodig, hoe diep (kort, gemiddeld of diep), welke focus of periode, en wat moet er komen (tijdlijn, fragmenten, personages, dossier). Leg het daarna vast met research_plan en houd je aan het maximum.\n1. Roep eerst project_overview aan (bestaat het project niet, maak het dan met create_project) zodat je niets dubbel doet.\n2. Zoek op het web naar betrouwbare bronnen (encyclopedieën, musea, wetenschappelijke en historische bronnen). Bewaar de belangrijkste met save_source.\n3. Zet elke gebeurtenis met een datum op de tijdlijn (add_timeline_events), steeds met de bron-URL.\n4. Deel de kennis in 4 à 8 brede onderwerpen in (hergebruik bestaande onderwerpen uit project_overview) en vul elk onderwerp met write_topic: een korte achtergrondtekst in schone tekst, feiten met een kopje en bron, en concrete scène-ideeën (zintuiglijke details, gebruiken, voorwerpen, plaatsen).\n5. Zet ?? achter alles wat onzeker of tegenstrijdig is en noem open vragen in de achtergrondtekst. Maak voor belangrijke (historische) personen een character sheet met create_character.\n6. Werk in het Nederlands. Verzin niets: geen bron, dan markeren met ??.\n7. Sluit af met een korte samenvatting in de chat van wat je hebt toegevoegd en welke vragen nog open staan, en roep finish_research aan.";
 server.prompt('onderzoek_project',
   'Laat Claude onderzoek doen en het researchkader van een project in de Schrijfkamer vullen.',

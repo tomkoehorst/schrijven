@@ -20,7 +20,11 @@ Een rustige schrijfapp in de browser, met een indeling zoals in Ulysses: bibliot
 
 De zijbalk toont je **projecten** (de Bibliotheek is in te klappen). Mappen bestaan niet meer: alles hangt aan elkaar via scènes, onderwerpen en namen.
 
-**Verhaal** – je scènes, in drie weergaven:
+**Verhaal** – gemaakt voor ontdekkend schrijven: **✎ Gewoon schrijven** opent een leeg vel op de **Werkbank** (zijsporen, losse stukken, probeersels — zonder nummer, status of plek). Wat een scène wordt sleep je de lijn in; een scène kan ook terug naar de Werkbank. Het kaartje is standaard ingeklapt en toont alleen wat je zelf invult (＋ datum, ＋ plaats, ＋ zintuigen…); status is optioneel.
+
+**Naslag** (onderzoekspaneel naast je tekst): personages, plaatsen, leefwerelden en andere onderwerpen altijd bij de hand; bovenaan wat in je huidige tekst voorkomt. Klik op een naam in je scène om het daar te openen, zonder je tekst te verlaten.
+
+De lijn heeft drie weergaven:
 - **Verhaallijnen** (zoals Plottr): kolommen = volgorde in het verhaal, rijen = verhaallijnen (bv. *Kader: de oude man*), onderaan de historische gebeurtenis per scène. Kaartjes slepen = volgorde of lijn veranderen.
 - **Historische tijd** (zoals Aeon Timeline): scènes tussen de echte gebeurtenissen, op volgorde van de geschiedenis.
 - **Status**: bord met idee / schets / concept / klaar (slepen = status veranderen).
