@@ -16,13 +16,13 @@ Een rustige schrijfapp in de browser, met een indeling zoals in Ulysses: bibliot
 - Te installeren op je beginscherm (eigen icoon)
 - Focusscherm: alleen je blad, verder niets
 
-## Projecten: Verhaal, Materiaal, Ideeën
+## Een project is een boom
 
-De zijbalk toont je **projecten** (de Bibliotheek is in te klappen). Mappen bestaan niet meer: alles hangt aan elkaar via scènes, onderwerpen en namen.
+Open je een project, dan zie je **de boom**: een horizontale stam (zoals Plottr) met je scènes op volgorde. Elke scène is een plantje dat meegroeit met wat je schrijft — zaadje (nog leeg), kiem, groeit, staat stevig, en bloei als de status *klaar* is. Klik op een plantje om te schrijven; sleep plantjes om te schuiven. Extra verhaallijnen (bv. *Kader: de oude man*) zijn dunnere takken erboven (⋯ → Verhaallijn).
 
-**Verhaal** – gemaakt voor ontdekkend schrijven: **✎ Gewoon schrijven** opent een leeg vel op de **Werkbank** (zijsporen, losse stukken, probeersels — zonder nummer, status of plek). Wat een scène wordt sleep je de lijn in; een scène kan ook terug naar de Werkbank. Het kaartje is standaard ingeklapt en toont alleen wat je zelf invult (＋ datum, ＋ plaats, ＋ zintuigen…); status is optioneel.
+Onder de stam ligt **de aarde**: losse stukken (Werkbank) en ideeën als zaadjes. Sleep er een omhoog en hij wordt een scène; klik op een idee om ermee te beginnen. **✎ Gewoon schrijven** plant een nieuw zaadje en opent een leeg vel.
 
-**Naslag** (onderzoekspaneel naast je tekst): personages, plaatsen, leefwerelden en andere onderwerpen altijd bij de hand; bovenaan wat in je huidige tekst voorkomt. Klik op een naam in je scène om het daar te openen, zonder je tekst te verlaten.
+Bovenaan alleen: **Naslag** (personages, plaatsen, onderwerpen, losse teksten — schuift rechts in), **Hele verhaal** en **⋯** (groeistadia, historische tijd, wat ontdekte ik?, datums tonen, verhaallijn, losse teksten, project bewerken). De lijst met teksten is in een project verborgen.
 
 **Werkwijze, in één ronde:**
 - **Waar was ik?** — bij het openen zie je het stuk waar je het laatst aan schreef (ook als dat op je telefoon was), de laatste alinea en wat je vorige keer ontdekte. Eén klik: verder schrijven.

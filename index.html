@@ -582,6 +582,47 @@ body.capture .dialog{box-shadow:none;border:1px solid var(--line)}
 .dgl button{text-align:left;font-weight:700}.dgl button:hover{color:var(--accent)}
 .dgd{height:26px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--pane2)}
 .dgd i{width:12px;height:12px;border-radius:50%;background:var(--sage)}
+@media (min-width:821px){ .app.treemode,.app.treemode.show-lib{grid-template-columns:230px 0 1fr}.app.treemode .list{opacity:0;pointer-events:none}.app.treemode .lib{opacity:1;pointer-events:auto} }
+.tphead{align-items:center;gap:10px}.tphead h1{margin:0}
+.tgrowth{display:inline-flex;margin:-6px -4px -6px -6px}
+.tcount{font-size:12.5px;color:var(--muted);font-weight:700}
+.tbtn{width:auto!important;padding:0 10px!important;gap:6px;display:inline-flex!important;align-items:center;font-size:13px;font-weight:800;color:var(--muted)}
+.tbtn svg{width:18px;height:18px}
+.tnote{background:var(--accent-soft);border-radius:14px;padding:10px 14px;margin:0 0 14px;font-size:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tseed{text-align:center;padding:60px 20px}.tseed h2{margin:10px 0 4px}.tseed p{color:var(--muted);margin:0 0 18px}.tseedimg{display:inline-block}
+.tscroll{overflow-x:auto;overflow-y:hidden;margin:0 -28px;padding:6px 0 10px;scrollbar-width:thin}
+.tcanvas{position:relative}
+.tstem{position:absolute;left:0;top:0}
+.tlane{position:absolute;left:44px;z-index:1;font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;text-transform:uppercase}
+.tlane:hover{color:var(--accent)}
+.tcell{position:absolute;height:176px;display:flex;justify-content:center;align-items:flex-start;border-radius:18px}
+.tcell.dropon{background:var(--accent-soft)}
+.tnode{display:flex;flex-direction:column;align-items:center;text-align:center;width:150px;cursor:pointer;padding:0 4px;border-radius:16px}
+.tnode .tplant{height:104px;display:flex;align-items:flex-end;justify-content:center;transition:transform .2s}
+.tnode:hover .tplant{transform:translateY(-3px) scale(1.06)}
+.tnode b{font-size:13.5px;line-height:1.25;margin-top:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tnode small{font-size:11px;color:var(--faint);font-weight:700;margin-top:2px}
+.tnode em{font-style:normal;font-size:11px;color:#B07A3C;font-weight:800;margin-top:2px}
+.tplus{margin-top:76px;width:30px;height:30px;border-radius:50%;border:1.5px dashed var(--line);color:var(--faint);opacity:0;transition:opacity .15s}
+.tcell:hover .tplus,.tcell.end .tplus,.tcell.dropon .tplus{opacity:1}.tplus:hover{border-color:var(--sage);color:var(--accent)}
+.soil{margin-top:14px;background:linear-gradient(#F4EEE2,#F8F4EC);border-radius:22px;padding:14px 16px 16px}
+.soil.dropon{outline:2px dashed #C9A877}
+.soilh{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:10px}.soilh b{font-size:14px;color:#8B6B4A}.soilh span{font-size:12.5px;color:var(--muted)}
+.seeds{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.seed{display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid #E8DCC6;border-radius:99px;padding:5px 12px 5px 8px;font-size:13px;max-width:320px;cursor:pointer;text-align:left}
+.seed span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.seed small{color:var(--faint);font-weight:700;font-size:11px}
+.seed:hover{border-color:var(--sage)}
+.seed.idea{background:#FFFDF6;font-style:italic;color:var(--muted)}
+.seed.new{border-style:dashed;color:var(--accent);font-weight:800;padding-left:12px}
+.seedin{border:0;background:transparent;font:inherit;font-size:13px;padding:6px 8px;outline:none;min-width:180px;color:var(--text)}
+.drawer{position:fixed;right:0;top:0;bottom:0;width:min(380px,92vw);background:var(--bg);border-left:1px solid var(--line);box-shadow:-10px 0 30px rgba(0,0,0,.06);z-index:40;display:flex;flex-direction:column}
+.drawer [data-rpins]{display:none}
+.drawh{display:flex;align-items:center;padding:16px 18px 8px;font-size:15px}.drawb{overflow:auto;padding:0 18px 40px;flex:1}
+.mmenu{display:flex;flex-direction:column;gap:2px;margin:4px 0 6px}.mmenu button{text-align:left;padding:10px 12px;border-radius:10px;font-size:14.5px}.mmenu button:hover{background:var(--pane2)}
+.minitree{display:inline-flex;align-items:flex-end;gap:0;margin-right:6px;max-width:46vw;overflow-x:auto}
+.minitree button{padding:0 1px;opacity:.55;display:flex;align-items:flex-end}.minitree button.on{opacity:1}.minitree button:hover{opacity:1}
+@media (max-width:820px){ .tphead{flex-wrap:nowrap}.tphead h1{font-size:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.tbtn{padding:0 6px!important}.scnav [data-scact=up],.scnav [data-scact=down],.scnav .scno{display:none}.minitree{max-width:60vw}
+ .tbtn span{display:none}.tscroll{margin:0 -14px}.tcount{display:none} }
 .seclib{display:flex;width:100%;justify-content:space-between;align-items:center;text-align:left;cursor:pointer;background:none;border:0}
 .seclib span{font-size:11px;color:var(--faint)}
 .pbody.wide{max-width:none}
@@ -930,6 +971,7 @@ const I = {
   star:'<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9Z"/>',
   trash:'<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>',
   plus:'<path d="M12 5v14M5 12h14"/>',
+  book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
   sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   moon:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/>',
   copy:'<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>',
@@ -1402,6 +1444,7 @@ function renderLib(){
   }
   h += '<div style="height:10px"></div>' + item('trash', icon('trash'), 'Prullenbak');
   $('#libNav').innerHTML = h;
+  $('#app').classList.toggle('treemode', view.startsWith('g:'));
   if (typeof projOpen === 'function' && projOpen()) renderProject();
   if ($('#app').classList.contains('charmode') && !(document.activeElement && document.activeElement.closest && document.activeElement.closest('#chars'))) renderChars();
 }
@@ -2071,7 +2114,7 @@ function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add
 const isMobile = () => innerWidth <= 820;
 function setMobile(v){ $('#app').dataset.view = v; if (v !== 'editor') { ta.blur(); closePanel(); } }
 $('#backLib').onclick = () => setMobile('lib');
-$('#backList').onclick = () => { setMobile('list'); renderList(); };
+$('#backList').onclick = () => { if ($('#app').classList.contains('treemode')){ showProject(true); setMobile('editor'); return; } setMobile('list'); renderList(); };
 addEventListener('resize', () => { applySettings(); });
 
 /* ---------------- Global keys ---------------- */
@@ -2713,7 +2756,7 @@ async function cleanupSources(){
 let srcOpts = Object.assign({group: 'theme', sort: 'new', filter: 'all'}, LS.get('srcOpts', {}));
 let boardOpts = Object.assign({view: 'theme', sort: 'new'}, LS.get('boardOpts', {}));
 let collapsed = new Set(LS.get('collapsed', []));
-const THEME_SKIP = new Set(['ai', 'wikidata', 'uitgezocht', 'feit', 'idee', 'scène-idee', 'scene-idee', 'scène', 'scene', 'antwoord']);
+const THEME_SKIP = new Set(['ai', 'wikidata', 'uitgezocht', 'feit', 'idee', 'scène-idee', 'scene-idee', 'scène', 'scene', 'antwoord', 'geplant']);
 const themeOf = x => { const t = (x.tags || []).find(t => !THEME_SKIP.has(String(t).toLowerCase())); return t ? t.charAt(0).toUpperCase() + t.slice(1).replace(/-/g, ' ') : ''; };
 function fragCounts(){ const m = {}; for (const n of Object.values(snippets)) if (n.source_id) m[n.source_id] = (m[n.source_id] || 0) + 1; return m; }
 function groupHtml(key, label, count, inner, prefix){
@@ -3910,7 +3953,7 @@ function projGid(){ const sh = sheets[currentId]; return view.startsWith('g:') ?
 function openProjTab(tab){
   const gid = projGid();
   if (!gid){ toast('Maak eerst een project'); return; }
-  projTab = tab; projTopic = null; LS.set('projTab', tab); setView('g:' + gid); showProject(true); setMobile('editor');
+  projSub = null; projTopic = null; drawerOpen = tab === 'material'; setView('g:' + gid); showProject(true); setMobile('editor');
 }
 const keyMap = () => Object.assign({}, ...ACTIONS.map(a => ({[a.id]: a.def})), settings.keys || {});
 /* Keystrokes sent by tools like Logi Options+ often carry no physical key code (e.code is empty).
@@ -4533,75 +4576,147 @@ function topicPanelHtml(){
 document.addEventListener('change', e => { const s = e.target.closest('[data-rptopic]'); if (!s) return; const sh = sheets[currentId]; if (!sh) return; rpTopicPick[sh.group] = s.value; LS.set('rpTopicPick', rpTopicPick); renderResearch(); });
 document.addEventListener('click', e => {
   const m = e.target.closest('[data-rtmore]'); if (m){ const b = m.previousElementSibling; if (b) b.classList.remove('clip'); m.remove(); return; }
-  const o = e.target.closest('[data-rtopen]'); if (o){ const sh = sheets[currentId]; if (!sh) return; projTab = 'topics'; projTopic = o.dataset.rtopen; LS.set('projTab', projTab); setView('g:' + sh.group); showProject(true); setMobile('editor'); }
+  const o = e.target.closest('[data-rtopen]'); if (o){ const sh = sheets[currentId]; if (!sh) return; projSub = 'topic'; projTopic = o.dataset.rtopen; LS.set('projTab', projTab); setView('g:' + sh.group); showProject(true); setMobile('editor'); }
 });
+/* ================= De boom: je verhaal groeit vanuit een zaadje ================= */
+let projSub = null, drawerOpen = false, treeHist = LS.get('treeHist', false);
+const COLW = 172, LANEH = 190, PLANTH = 104;
+/* groeistadium per scène: zaadje → kiem → blad → struik → bloei */
+function stageOf(s){ const w = countWords(s.body || ''); if (s.meta && s.meta.status === 'klaar') return 4; return w === 0 ? 0 : w < 150 ? 1 : w < 600 ? 2 : 3; }
+const STAGE_NAME = ['zaadje', 'kiemt', 'groeit', 'staat stevig', 'bloeit'];
+function plantSvg(stage, size){
+  const s = size || 44, g = '#7FB894', d = '#5E9C80', soil = '#C9A877';
+  const P = [
+    `<ellipse cx="22" cy="34" rx="6" ry="4.2" fill="${soil}"/><path d="M19 33q3-3 6 0" stroke="#A8865A" stroke-width="1" fill="none"/>`,
+    `<ellipse cx="22" cy="38" rx="7" ry="2.2" fill="${soil}" opacity=".6"/><path d="M22 38V26" stroke="${d}" stroke-width="2" stroke-linecap="round"/><path d="M22 28q-7-1-8-7q7 0 8 7Z" fill="${g}"/><path d="M22 27q6-2 8-8q-7 1-8 8Z" fill="${g}"/>`,
+    `<ellipse cx="22" cy="39" rx="8" ry="2.2" fill="${soil}" opacity=".6"/><path d="M22 39V14" stroke="${d}" stroke-width="2.2" stroke-linecap="round"/><path d="M22 31q-9-1-11-8q9 0 11 8Z" fill="${g}"/><path d="M22 25q8-2 11-9q-9 1-11 9Z" fill="${g}"/><path d="M22 19q-7-2-8-8q7 1 8 8Z" fill="#9CCBB4"/><path d="M22 15q4-3 4-8q-5 2-4 8Z" fill="#9CCBB4"/>`,
+    `<ellipse cx="22" cy="40" rx="9" ry="2.3" fill="${soil}" opacity=".6"/><path d="M22 40V24" stroke="#8B6B4A" stroke-width="3" stroke-linecap="round"/><circle cx="22" cy="17" r="12" fill="${g}"/><circle cx="14" cy="21" r="7" fill="#9CCBB4"/><circle cx="30" cy="21" r="7" fill="#9CCBB4"/><circle cx="22" cy="11" r="7" fill="#9CCBB4"/>`,
+    `<ellipse cx="22" cy="40" rx="9" ry="2.3" fill="${soil}" opacity=".6"/><path d="M22 40V24" stroke="#8B6B4A" stroke-width="3" stroke-linecap="round"/><circle cx="22" cy="17" r="12" fill="${g}"/><circle cx="14" cy="21" r="7" fill="#9CCBB4"/><circle cx="30" cy="21" r="7" fill="#9CCBB4"/><circle cx="22" cy="11" r="7" fill="#9CCBB4"/><circle cx="16" cy="14" r="2.6" fill="#F2B8C6"/><circle cx="27" cy="12" r="2.6" fill="#F6D27A"/><circle cx="25" cy="22" r="2.6" fill="#F2B8C6"/><circle cx="15" cy="23" r="2.2" fill="#F6D27A"/>`
+  ];
+  return `<svg width="${s}" height="${s}" viewBox="0 0 44 44" aria-hidden="true">${P[stage]}</svg>`;
+}
+function stemPath(w, y){
+  let d = `M 20 ${y}`; for (let x = 20; x < w - 10; x += COLW / 2){ const nx = Math.min(w - 10, x + COLW / 2), cy = y + ((x / (COLW / 2)) % 2 ? 5 : -5); d += ` Q ${x + COLW / 4} ${cy} ${nx} ${y}`; }
+  return d;
+}
+function treeHtml(gid, g){
+  const list = scenesOf(gid), lanes = lanesOf(gid), bench = benchOf(gid), D = projectData(gid);
+  const ideas = topicsOf(gid).ideas.filter(n => !(n.tags || []).some(t => String(t).toLowerCase() === 'geplant'));
+  const legacy = D.texts.filter(t => !isScene(t) && /^##\s*kaartje/im.test(t.body || ''));
+  let h = '';
+  if (!sceneCols) h += `<div class="tnote">Om je verhaal te laten groeien is nog één stap in Supabase nodig. <button class="pmore" data-sact="sql">Zo doe je dat →</button></div>`;
+  else if (legacy.length) h += `<div class="tnote">🌱 ${legacy.length} van je teksten zijn eigenlijk scènes. <button class="btn" data-sact="migrate">Plant ze op de lijn…</button></div>`;
+  if (!list.length && !bench.length && !ideas.length && !legacy.length){
+    return h + `<div class="tseed"><div class="tseedimg">${plantSvg(0, 120)}</div><h2>Elk verhaal begint als zaadje</h2><p>Schrijf gewoon. Wat groeit, zet je later op de lijn.</p><button class="btn" data-sact="free">✎ Begin met schrijven</button></div>`;
+  }
+  const n = list.length, cols = n + 1, W = 40 + cols * COLW + 40, H = 30 + lanes.length * LANEH - 10 + (treeHist ? 20 : 0);
+  let svg = `<svg class="tstem" width="${W}" height="${H}" aria-hidden="true">`;
+  lanes.forEach((l, li) => { const y = 30 + li * LANEH + PLANTH - 6; svg += `<path d="${stemPath(W - 20, y)}" stroke="${li ? '#CFE3D7' : '#B8D8C8'}" stroke-width="${li ? 3 : 5}" fill="none" stroke-linecap="round"/>`; });
+  svg += '</svg>';
+  let cells = '';
+  lanes.forEach((l, li) => {
+    const y = 30 + li * LANEH;
+    if (lanes.length > 1) cells += `<button class="tlane" data-slane="${esc(l.id)}" style="top:${y - 26}px" title="Naam wijzigen">${esc(l.name)}</button>`;
+    for (let i = 0; i <= n; i++){
+      const s = list[i], here = s && laneOf(s, gid) === l.id, x = 40 + i * COLW;
+      let inner = '';
+      if (here){
+        const st = stageOf(s), w = countWords(s.body || ''), m = s.meta || {};
+        const ev = treeHist ? (m.event && snippets[m.event] && parseDate(snippets[m.event].date)) || parseDate(m.when || '') : null;
+        inner = `<div class="tnode" draggable="true" data-scard="${s.id}" title="${esc((m.what || '').slice(0, 200) || STAGE_NAME[st])}">
+          <div class="tplant">${plantSvg(st, 46 + st * 15)}</div>
+          <b>${esc(m.title || 'Naamloos')}</b><small>${w ? w + ' woorden' : STAGE_NAME[0]}</small>${ev ? `<em>${esc(ev.label)}</em>` : ''}</div>`;
+      } else inner = `<button class="tplus" data-sadd="${esc(l.id)}|${i}" title="${i === n ? 'Nieuwe scène aan het eind' : 'Scène hier planten'}">＋</button>`;
+      cells += `<div class="tcell${i === n ? ' end' : ''}" data-cell="${esc(l.id)}|${i}" style="left:${x}px;top:${y}px;width:${COLW}px">${inner}</div>`;
+    }
+  });
+  h += `<div class="tscroll"><div class="tcanvas" style="width:${W}px;height:${H}px">${svg}${cells}</div></div>`;
+  // de aarde: losse stukken en ideeën
+  h += `<div class="soil" data-bench>
+    <div class="soilh"><b>In de aarde</b><span>losse stukken en ideeën — sleep er een omhoog om hem te planten</span></div>
+    <div class="seeds">
+      ${bench.map(s => { const w = countWords(s.body || ''); return `<div class="seed piece" draggable="true" data-scard="${s.id}">${plantSvg(Math.min(stageOf(s), 2), 22)}<span>${esc(titleOf(s))}</span>${w ? `<small>${w} w</small>` : ''}</div>`; }).join('')}
+      ${ideas.map(n => `<button class="seed idea" data-idea="${n.id}">${plantSvg(0, 18)}<span>${esc(n.text.length > 70 ? n.text.slice(0, 70) + '…' : n.text)}</span></button>`).join('')}
+      <input class="seedin" data-tadd="idea" placeholder="＋ een idee… (Enter)">
+      <button class="seed new" data-sact="free">✎ Gewoon schrijven</button>
+    </div></div>`;
+  return h;
+}
+function treeGrowth(total){ return total < 300 ? 0 : total < 1500 ? 1 : total < 5000 ? 2 : total < 15000 ? 3 : 4; }
+function ideaDialog(id){
+  const n = snippets[id]; if (!n) return;
+  openModal(`<h3>Een zaadje</h3><p style="font-size:16px;line-height:1.6">${esc(n.text)}</p>
+    <div class="btns"><button class="btn ghost" id="idEdit" style="margin-right:auto">Bewerken</button><button class="btn ghost" data-close>Laat liggen</button><button class="btn" id="idGo">✎ Begin hiermee te schrijven</button></div>`);
+  $('#idEdit').onclick = () => { closeModal(); snippetDialog({id}); };
+  $('#idGo').onclick = async () => {
+    closeModal(); const gid = n.grp || view.slice(2);
+    const sid = newScene(gid, null, null, true); if (!sid) return;
+    sheets[sid].body = n.text.trim() + '\n\n'; sheets[sid].updated = Date.now(); saveSheet(sid, true);
+    n.tags = [...(n.tags || []), 'geplant']; saveSnippet(n, false);
+    openScene(sid); setTimeout(() => { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 50);
+  };
+}
+function moreMenu(gid){
+  openModal(`<h3>Meer</h3><div class="mmenu">
+    <button data-mm="bord">🌼 Overzicht per groeistadium</button>
+    <button data-mm="tijd">📅 In de geschiedenis (historische tijd)</button>
+    <button data-mm="ontdekt">✦ Wat ontdekte ik?</button>
+    <button data-mm="hist">${treeHist ? '◻︎ Datums onder de scènes verbergen' : '☑︎ Datums onder de scènes tonen'}</button>
+    <button data-mm="lane">＋ Verhaallijn (bv. kader: de oude man)</button>
+    <button data-mm="texts">📄 Losse teksten en dossiers</button>
+    <button data-mm="edit">✎ Project bewerken</button></div>`);
+  $('.mmenu').onclick = e => { const b = e.target.closest('[data-mm]'); if (!b) return; const k = b.dataset.mm; closeModal();
+    if (['bord', 'tijd', 'ontdekt', 'texts'].includes(k)){ projSub = k; renderProject(); $('#project').scrollTop = 0; }
+    if (k === 'hist'){ treeHist = !treeHist; LS.set('treeHist', treeHist); renderProject(); }
+    if (k === 'lane') laneDialog(gid);
+    if (k === 'edit') groupDialog(groups.find(x => x.id === gid)); };
+}
+function topicPageHtml(gid, g, T, t){
+  const empty = x => `<p class="muted" style="margin:6px 0">${x}</p>`, txt = topicBody(t);
+  const subs = groupBy(t.facts, subOf), useSubs = subs.filter(([k, it]) => k && it.length > 1).length >= 2;
+  const factsHtml = !t.facts.length ? empty('Nog geen feiten.') : useSubs ? mergeSmall(subs).map(([k, it]) => `<div class="tsub">${esc(k || 'Overig')}</div>${it.map(tSnipRow).join('')}`).join('') : t.facts.map(tSnipRow).join('');
+  const inScenes = scenesOf(gid).filter(s => sceneLinks(s).topics.some(x => x.key === t.key));
+  return `<div class="tpage">
+    <div class="thead"><h2>${esc(t.name)}</h2><span class="grow"></span>${t.sheet ? `<button class="btn ghost" data-popen="${t.sheet.id}">Tekst bewerken</button>` : `<button class="btn ghost" data-tbg="${esc(t.name)}">＋ Achtergrond schrijven</button>`}</div>
+    ${inScenes.length ? `<div class="sclinks" style="margin:0 0 10px">${inScenes.map(s => `<button data-scopen="${s.id}">🌱 ${esc((s.meta && s.meta.title) || '')}</button>`).join('')}</div>` : ''}
+    ${txt ? `<div class="tbody body">${mdToHtml(txt)}</div>` : ''}
+    ${t.scenes.length ? `<h4 class="tsec">Scène-ideeën · ${t.scenes.length}</h4>${t.scenes.map(tSnipRow).join('')}` : ''}
+    <h4 class="tsec">Feiten & details${t.facts.length ? ' · ' + t.facts.length : ''}</h4>${factsHtml}
+    <input class="tadd" data-tadd="fact" placeholder="＋ Feit toevoegen (Enter)">
+    ${t.srcs.size ? `<details class="tsrc"><summary>Bronnen · ${t.srcs.size}</summary>${[...t.srcs.values()].map(s => `<button class="trow" data-psrc="${s.id}"><span class="tt">${esc(s.title || s.url)}</span><span class="tm">${esc(s.site || host(s.url))}</span></button>`).join('')}</details>` : ''}
+  </div>`;
+}
 function renderProject(){
   const el = $('#project'); if (!el || !view.startsWith('g:')) return;
   const gid = view.slice(2), g = groups.find(x => x.id === gid);
   if (!g){ el.innerHTML = ''; return; }
-  if (projTab === 'timeline') projTab = 'story';
-  if (['texts', 'topics', 'chars'].includes(projTab)) projTab = 'material';
-  const T = topicsOf(gid), D = T.D;
-  const empty = t => `<p class="muted" style="margin:6px 0">${t}</p>`;
-  const cl = charsOf(gid);
-  todoList = D.todos;
-  const topicSheetIds = new Set(T.list.filter(t => t.sheet).map(t => t.sheet.id));
-  const others = D.texts.filter(t => !isScene(t) && t.folder !== TOPIC_FOLDER && !isCharSheet(t) && !topicSheetIds.has(t.id));
-  const tabs = [['story', 'Verhaal', scenesOf(gid).length], ['material', 'Materiaal', T.list.length + cl.length + others.length], ['ideas', 'Ideeën', T.ideas.length]];
-  if (!tabs.some(t => t[0] === projTab)) projTab = 'story';
+  const T = topicsOf(gid), D = T.D; todoList = D.todos;
+  if (projTopic != null){ projSub = 'topic'; }
+  const total = scenesOf(gid).reduce((a, s) => a + countWords(s.body || ''), 0) + benchOf(gid).reduce((a, s) => a + countWords(s.body || ''), 0);
   let body = '';
-  if (projTab === 'story') body = storyHtml(gid, g);
-  else if (projTab === 'material'){
-    const t = projTopic != null && T.list.find(x => x.key === projTopic);
-    if (t){
-      const txt = topicBody(t);
-      const subs = groupBy(t.facts, subOf), useSubs = subs.filter(([k, it]) => k && it.length > 1).length >= 2;
-      const factsHtml = !t.facts.length ? empty('Nog geen feiten.') : useSubs ? mergeSmall(subs).map(([k, it]) => `<div class="tsub">${esc(k || 'Overig')}</div>${it.map(tSnipRow).join('')}`).join('') : t.facts.map(tSnipRow).join('');
-      const inScenes = scenesOf(gid).filter(s => sceneLinks(s).topics.some(x => x.key === t.key));
-      body = `<div class="tpage">
-        <button class="pmore" data-pact="topics" style="padding-left:0">‹ Materiaal</button>
-        <div class="thead"><h2>${esc(t.name)}</h2><span class="grow"></span>${t.sheet ? `<button class="btn ghost" data-popen="${t.sheet.id}">Tekst bewerken</button>` : `<button class="btn ghost" data-tbg="${esc(t.name)}">＋ Achtergrond schrijven</button>`}</div>
-        ${inScenes.length ? `<div class="sclinks" style="margin:0 0 10px">${inScenes.map(s => `<button data-scopen="${s.id}">🎬 ${pad2(sceneNo(s))} ${esc((s.meta && s.meta.title) || '')}</button>`).join('')}</div>` : ''}
-        ${txt ? `<div class="tbody body">${mdToHtml(txt)}</div>` : `<div class="tip" style="margin:6px 0 14px">Nog geen achtergrondtekst. Vraag Claude: <i>“Schrijf in ${esc(g.name)} een achtergrond bij het onderwerp ‘${esc(t.name)}’, met feiten en scène-ideeën.”</i></div>`}
-        <h4 class="tsec">Scène-ideeën${t.scenes.length ? ' · ' + t.scenes.length : ''}</h4>
-        ${t.scenes.map(tSnipRow).join('')}
-        <input class="tadd" data-tadd="scene" placeholder="＋ Scène-idee toevoegen (Enter)">
-        <h4 class="tsec">Feiten & details${t.facts.length ? ' · ' + t.facts.length : ''}</h4>
-        ${factsHtml}
-        <input class="tadd" data-tadd="fact" placeholder="＋ Feit toevoegen (Enter)">
-        ${t.srcs.size ? `<details class="tsrc"><summary>Bronnen · ${t.srcs.size}</summary>${[...t.srcs.values()].map(s => `<button class="trow" data-psrc="${s.id}"><span class="tt">${esc(s.title || s.url)}</span><span class="tm">${esc(KIND[s.kind] || 'Bron')} · ${esc(s.site || host(s.url))}</span></button>`).join('')}</details>` : ''}
-      </div>`;
-    } else {
-      projTopic = null;
-      const row = t => `<button class="prow" data-popen="${t.id}"><b>${esc(titleOf(t))}</b><span>${countWords(t.body || '').toLocaleString('nl-NL')} woorden · ${fmtDate(t.updated)}</span></button>`;
-      body = `<h4 class="tsec" style="margin-top:0;display:flex;align-items:center">Onderwerpen<span class="grow"></span><button class="pmore" data-pact="newtopic">＋ Onderwerp</button></h4>`
-        + (T.list.length ? `<div class="tgrid">${T.list.map(t => `<button class="tcard" data-ptopic="${esc(t.key)}"><b>${esc(t.name)}</b><span class="tx">${esc(topicBody(t).replace(/^#+\s.*$/gm, '').replace(/^\s*[-*>]\s+/gm, '').replace(/\s+/g, ' ').trim().slice(0, 140))}</span><span class="tm">${topicMeta(t)}</span></button>`).join('')}</div>`
-          : `<div class="tip">Nog geen onderwerpen. Vraag Claude bijvoorbeeld: <i>“Maak in ${esc(g.name)} een onderwerp ‘Leven van een slaaf’.”</i></div>`)
-        + `<h4 class="tsec" style="display:flex;align-items:center">Personages<span class="grow"></span><button class="pmore" data-pact="newchar">＋ Personage</button></h4>`
-        + (cl.length ? `<div class="pchars">${cl.map(x => { const n = scenesOf(gid).filter(s => sceneLinks(s).chars.some(c => c.id === x.id)).length; return `<button class="pchar" data-pchar="${x.id}">${avatar(charName(x), 40)}<b>${esc(charName(x))}</b><span>${esc(parseChar(x.body).rol || '')}${n ? ` · in ${n} scène${n === 1 ? '' : 's'}` : ''}</span></button>`; }).join('')}</div>` : empty('Nog geen personages.'))
-        + `<h4 class="tsec" style="display:flex;align-items:center">Teksten<span class="grow"></span><button class="pmore" data-pact="new">＋ Tekst</button></h4>`
-        + (others.length ? others.map(row).join('') : empty('Geen losse teksten. Dossiers en notities komen hier.'))
-        + (D.srcs.length ? `<details class="tsrc"><summary>Alle bronnen · ${D.srcs.length}</summary>${D.srcs.map(s => `<button class="trow" data-psrc="${s.id}"><span class="tt">${esc(s.title || s.url)}</span><span class="tm">${esc(themeOf(s) || '')}${themeOf(s) ? ' · ' : ''}${esc(s.site || host(s.url))}</span></button>`).join('')}</details>` : '')
-        + (D.todos.length ? `<p style="margin-top:16px"><button class="pmore" data-pact="todos" style="padding-left:0">${D.todos.length} × nog uitzoeken (??) →</button></p>` : '');
-    }
-  } else if (projTab === 'ideas'){
-    const opts = `<option value="">Naar onderwerp…</option>${T.list.filter(t => t.key !== 'overig').map(t => `<option value="${esc(t.name)}">${esc(t.name)}</option>`).join('')}<option value="__new">＋ Nieuw onderwerp…</option>`;
-    body = `<textarea class="tadd big" data-tadd="idea" rows="2" placeholder="Wat schiet je te binnen? Enter om te bewaren"></textarea>`
-      + (T.ideas.length ? T.ideas.map(n => `<div class="idea"><button class="trow" data-tsnip="${n.id}"><span class="tt">${esc(n.text)}</span><span class="tm">${fmtDate(n.created)}</span></button><select data-retopic="${n.id}" title="Verplaats naar een onderwerp">${opts}</select></div>`).join('')
-        : empty('Nog geen losse ideeën. Typ hierboven wat je te binnen schiet; later verplaats je het naar een onderwerp.'));
+  if (projSub === 'topic'){ const t = T.list.find(x => x.key === projTopic); body = t ? topicPageHtml(gid, g, T, t) : ''; if (!t){ projSub = null; projTopic = null; } }
+  if (projSub && projSub !== 'topic' && projSub !== 'texts'){ const keep = storyMode; storyMode = projSub; body = storyHtml(gid, g, true); storyMode = keep; }
+  if (projSub === 'texts'){
+    const topicIds = new Set(T.list.filter(t => t.sheet).map(t => t.sheet.id));
+    const others = D.texts.filter(t => !isScene(t) && t.folder !== TOPIC_FOLDER && !isCharSheet(t) && !topicIds.has(t.id));
+    body = `<h2 style="margin:0 0 6px">Losse teksten en dossiers</h2><p class="muted" style="margin:0 0 12px">Alles wat geen scène, personage of onderwerp is. Ze staan hier uit het zicht; je vindt ze ook via Naslag en zoeken.</p>`
+      + (others.length ? others.map(t => `<button class="prow" data-popen="${t.id}"><b>${esc(titleOf(t))}</b><span>${countWords(t.body || '').toLocaleString('nl-NL')} woorden · ${fmtDate(t.updated)}</span></button>`).join('') : '<p class="muted">Geen losse teksten.</p>')
+      + `<p style="margin-top:14px"><button class="pmore" data-pact="new" style="padding-left:0">＋ Nieuwe losse tekst</button></p>`;
   }
+  if (!projSub) body = treeHtml(gid, g);
   el.innerHTML = `
-  <div class="phead">
-    <button class="ib back" data-pact="lib" title="Bibliotheek"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
-    <span class="pdot" style="background:${esc(g.color)}"></span>
-    <h1>${esc(g.name)}</h1>
+  <div class="phead tphead">
+    <button class="ib back" data-pact="lib" title="Projecten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+    ${projSub ? `<button class="pmore" data-pact="tree">‹ Terug naar de boom</button>` : `<span class="tgrowth" title="${total.toLocaleString('nl-NL')} woorden">${plantSvg(Math.max(1, treeGrowth(total)), 54)}</span><h1>${esc(g.name)}</h1><span class="tcount">${total ? total.toLocaleString('nl-NL') + ' woorden' : ''}</span>`}
     <div class="grow"></div>
-    <button class="btn ghost" data-pact="edit" title="Naam en kleur van het project">Bewerken</button>
+    <button class="ib tbtn" data-pact="naslag" title="Naslag: personages, plaatsen, onderwerpen">${icon('book', '')}<span>Naslag</span></button>
+    ${scenesOf(gid).length ? `<button class="ib tbtn" data-sact="merge" title="Hele verhaal samenvoegen">⧉<span>Hele verhaal</span></button>` : ''}
+    <button class="ib tbtn" data-pact="more" title="Meer">⋯</button>
   </div>
   ${(() => { const r = g.research; if (!r || r.done || Date.now() - r.start > 12 * 3600e3) return ''; const ns = D.srcs.filter(x => x.created >= r.start).length, nf = D.snips.filter(x => x.created >= r.start).length;
-    return `<div class="presearch">🔎 <b>Claude onderzoekt:</b> ${esc(r.topic)} <span>· ${esc(r.depth)} · ${ns}/${r.max_sources} bronnen · ${nf}/${r.max_fragments} fragmenten</span></div>`; })()}
-  <div class="ptabs">${tabs.map(([k, l, n]) => `<button data-ptab="${k}" class="${projTab === k ? 'on' : ''}">${l}${n ? ` <small>${n}</small>` : ''}</button>`).join('')}</div>
-  <div class="pbody ${projTab === 'story' ? 'wide' : ''}">${body}</div>`;
+    return `<div class="presearch">🔎 <b>Claude onderzoekt:</b> ${esc(r.topic)} <span>· ${ns}/${r.max_sources} bronnen · ${nf}/${r.max_fragments} fragmenten</span></div>`; })()}
+  <div class="pbody wide">${body}</div>
+  ${drawerOpen ? `<aside class="drawer"><div class="drawh"><b>Naslag</b><span class="grow"></span><button class="ib" data-pact="naslag" aria-label="Sluiten">✕</button></div><div class="drawb">${refHtml(gid)}</div></aside>` : ''}`;
 }
 /* ================= Verhaal: scènes op verhaallijnen ================= */
 const SCENE_STATUS = [['idee', 'Idee'], ['schets', 'Schets'], ['concept', 'Concept'], ['klaar', 'Klaar']];
@@ -4710,9 +4825,9 @@ function renderSceneBar(){
     : `<label class="scf"><span>${label}</span><textarea data-scf="${k}" rows="1" placeholder="${esc(ph)}">${esc(m[k] || '')}</textarea></label>`;
   const add = FIELD_DEFS.filter(([k]) => !filled.some(x => x[0] === k));
   bar.innerHTML = `<div class="scnav">
-      <button class="pmore" data-scact="story">‹ ${bench ? 'Werkbank' : 'Verhaal'}</button><span class="grow"></span>
+      <button class="pmore" data-scact="story">‹ De boom</button><span class="grow"></span>
       ${bench ? `<span class="scno">los stuk</span><button class="pmore" data-scact="toline" title="Dit stuk als scène aan het eind van de verhaallijn zetten">→ In de lijn zetten</button>`
-        : `<button class="ib" data-scact="prev" ${i <= 0 ? 'disabled' : ''} title="Vorige scène">‹</button><span class="scno">${i + 1} / ${list.length}</span><button class="ib" data-scact="next" ${i >= list.length - 1 ? 'disabled' : ''} title="Volgende scène">›</button>
+        : `<span class="minitree">${list.map((x, k) => `<button data-scopen2="${x.id}" class="${k === i ? 'on' : ''}" title="${esc(titleOf(x))}">${plantSvg(stageOf(x), k === i ? 30 : 22)}</button>`).join('')}</span><button class="ib" data-scact="prev" ${i <= 0 ? 'disabled' : ''} title="Vorige scène">‹</button><span class="scno">${i + 1} / ${list.length}</span><button class="ib" data-scact="next" ${i >= list.length - 1 ? 'disabled' : ''} title="Volgende scène">›</button>
            <button class="pmore" data-scact="up" ${i <= 0 ? 'disabled' : ''} title="Eerder in het verhaal">⇡</button><button class="pmore" data-scact="down" ${i >= list.length - 1 ? 'disabled' : ''} title="Later in het verhaal">⇣</button>`}
     </div>
     <input id="scTitle" class="sctitle" data-scf="title" placeholder="${bench ? 'Titel (mag leeg blijven)' : 'Titel van de scène'}" value="${esc(m.title || '')}">
@@ -4754,7 +4869,7 @@ document.addEventListener('click', e => {
   const tp = t.closest('[data-scltopic]'); if (tp){ openRef('topic', tp.dataset.scltopic); return; }
   const a = t.closest('[data-scact]'); if (!a) return;
   const list = scenesOf(s.group), i = list.findIndex(x => x.id === currentId);
-  if (a.dataset.scact === 'story'){ shownFields = new Set(); projTab = 'story'; LS.set('projTab', 'story'); setView('g:' + s.group); showProject(true); setMobile('editor'); }
+  if (a.dataset.scact === 'story'){ shownFields = new Set(); projSub = null; projTopic = null; projTab = 'story'; LS.set('projTab', 'story'); setView('g:' + s.group); showProject(true); setMobile('editor'); }
   if (a.dataset.scact === 'prev' && i > 0){ shownFields = new Set(); openScene(list[i - 1].id); }
   if (a.dataset.scact === 'next' && i < list.length - 1){ shownFields = new Set(); openScene(list[i + 1].id); }
   if ((a.dataset.scact === 'up' && i > 0) || (a.dataset.scact === 'down' && i < list.length - 1)){ const ids = list.map(x => x.id), j = a.dataset.scact === 'up' ? i - 1 : i + 1; [ids[i], ids[j]] = [ids[j], ids[i]]; renumber(ids); renderSceneBar(); renderList(); toast('Nu scène ' + (j + 1)); return; }
@@ -4777,7 +4892,7 @@ function sceneCard(s, n, gid){
     ${m.what ? `<div class="scx">${esc(m.what)}</div>` : first && (isBench(s) || !m.what) ? `<div class="scx">${esc(first)}</div>` : ''}
   </div>`;
 }
-function storyHtml(gid, g){
+function storyHtml(gid, g, bare){
   const list = scenesOf(gid), lanes = lanesOf(gid), D = projectData(gid);
   const total = list.reduce((a, s) => a + countWords(s.body || ''), 0);
   const counts = Object.fromEntries(SCENE_STATUS.map(([k]) => [k, list.filter(s => statusOf(s) === k).length]));
@@ -4788,6 +4903,7 @@ function storyHtml(gid, g){
     <span class="grow"></span>${list.length ? `<button class="btn ghost" data-sact="merge">⧉ Hele verhaal</button>` : ''}</div>`;
   if (!sceneCols) h += `<div class="tip" style="margin-bottom:12px">Om scènes te bewaren moet je eerst één keer <b>schema.sql</b> draaien in Supabase. <a href="#" data-sact="sql" style="color:var(--accent);font-weight:800">Zo doe je dat →</a></div>`;
   if (legacy.length) h += `<div class="tip" style="margin-bottom:12px">${legacy.length} ${legacy.length === 1 ? 'tekst heeft' : 'teksten hebben'} een <b>## Kaartje</b>. <button class="btn" data-sact="migrate" style="margin-left:8px">Omzetten naar scènes…</button></div>`;
+  if (bare) h = '';
   if (list.length && storyMode === 'bord') h += `<div class="sprog"><span>${list.length} scènes · ${total.toLocaleString('nl-NL')} woorden</span>${SCENE_STATUS.map(([k, l]) => counts[k] ? `<span class="spill" style="--t:${STATUS_TINT[k]};--d:${STATUS_DOT[k]}"><i></i>${counts[k]} ${l.toLowerCase()}</span>` : '').join('')}</div>`;
   const benchHtml = `<div class="sbench" data-bench><div class="sbh"><b>Werkbank</b><span>zijsporen, losse stukken, probeersels — zonder nummer of plek. Sleep een stuk de lijn in als het ergens past, of een scène hierheen.</span></div>
     <div class="sbcards">${bench.map(s => sceneCard(s, 0, gid)).join('')}<button class="sbnew" data-sact="free">✎ Nieuw los stuk</button></div></div>`;
@@ -4878,12 +4994,13 @@ function mergeDialog(gid){
 
 /* ----- Naslag: personages, plaatsen, leefwerelden bij de hand ----- */
 function openRef(type, id){
+  if (projOpen()){ rpRef = {type, id}; drawerOpen = true; renderProject(); const d = document.querySelector('.drawb'); if (d) d.scrollTop = 0; return; }
   rpRef = {type, id}; rpTab = 'related'; rpSrc = null; rpLookup = null;
   if (!rpOpen) toggleResearch(true); else renderResearch();
   const sc = $('#rpScroll'); if (sc) sc.scrollTop = 0;
 }
-function refHtml(){
-  const sh = sheets[currentId], gid = sh && sh.group && groups.some(g => g.id === sh.group) ? sh.group : '';
+function refHtml(gidArg){
+  const sh = gidArg ? null : sheets[currentId], gid = gidArg || (sh && sh.group && groups.some(g => g.id === sh.group) ? sh.group : '');
   if (!gid) return '';
   const T = topicsOf(gid), chars = charsOf(gid);
   if (rpRef && rpRef.type === 'char'){
@@ -4914,12 +5031,13 @@ function refHtml(){
     <div class="rpk dsec">Personages</div>
     ${chars.length ? `<div class="reflist">${chars.map(x => `<button data-ref="char|${x.id}">${avatar(charName(x), 26)}<b>${esc(charName(x))}</b><span>${esc(parseChar(x.body).rol || '')}</span></button>`).join('')}</div>` : '<p class="muted" style="margin:4px 0">Nog geen personages.</p>'}
     <div class="rpk dsec">Plaatsen, leefwerelden en andere onderwerpen</div>
-    ${topics.length ? `<div class="reflist">${topics.map(t => `<button data-ref="topic|${esc(t.key)}"><b>${esc(t.name)}</b><span>${topicMeta(t)}</span></button>`).join('')}</div>` : `<p class="muted" style="margin:4px 0">Nog geen onderwerpen. Vraag Claude bv. <i>“Maak onderwerpen voor de plaatsen Sardis en Philippi en voor het leven van een slaaf.”</i></p>`}`;
+    ${topics.length ? `<div class="reflist">${topics.map(t => `<button data-ref="topic|${esc(t.key)}"><b>${esc(t.name)}</b><span>${topicMeta(t)}</span></button>`).join('')}</div>` : `<p class="muted" style="margin:4px 0">Nog geen onderwerpen. Vraag Claude bv. <i>“Maak onderwerpen voor de plaatsen Sardis en Philippi en voor het leven van een slaaf.”</i></p>`}
+    ${gidArg ? `<div class="rpk dsec">Verder</div><div class="reflist"><button data-pact="texts"><b>📄 Losse teksten en dossiers</b></button><button data-pact="newchar2"><b>＋ Personage</b></button><button data-pact="newtopic"><b>＋ Onderwerp</b></button></div>` : ''}`;
 }
 document.addEventListener('click', e => { const cc = e.target.closest('[data-copyclaude]'); if (cc) copyClaudePrompt(cc.dataset.copyclaude); });
 document.addEventListener('click', e => {
   const r = e.target.closest('[data-ref]'); if (r){ const [type, ...id] = r.dataset.ref.split('|'); openRef(type, id.join('|')); return; }
-  if (e.target.closest('[data-refback]')){ rpRef = null; renderResearch(); return; }
+  if (e.target.closest('[data-refback]')){ rpRef = null; if (projOpen()) renderProject(); else renderResearch(); return; }
   const oc = e.target.closest('[data-refopenchar]'); if (oc){ const x = sheets[oc.dataset.refopenchar]; if (x){ charId = oc.dataset.refopenchar; setView('c:' + x.group); } return; }
   const so = e.target.closest('[data-scopen2]'); if (so){ openScene(so.dataset.scopen2); return; }
 });
@@ -5173,6 +5291,16 @@ function cleanFolders(){
 }
 $('#project').addEventListener('click', e => {
   const t = e.target, gid = view.slice(2);
+  const pa = t.closest('[data-pact]');
+  if (pa && ['naslag', 'more', 'tree', 'texts'].includes(pa.dataset.pact)){
+    const k = pa.dataset.pact;
+    if (k === 'naslag'){ drawerOpen = !drawerOpen; rpRef = null; renderProject(); }
+    if (k === 'more') moreMenu(gid);
+    if (k === 'tree'){ projSub = null; projTopic = null; renderProject(); }
+    if (k === 'texts'){ projSub = 'texts'; drawerOpen = false; renderProject(); }
+    return; }
+  const idb = t.closest('[data-idea]'); if (idb){ ideaDialog(idb.dataset.idea); return; }
+  const rdp = t.closest('[data-rpread]'); if (rdp){ showSource(rdp.dataset.rpread); return; }
   const sm = t.closest('[data-smode]'); if (sm){ storyMode = sm.dataset.smode; LS.set('storyMode', storyMode); renderProject(); return; }
   const sa = t.closest('[data-sact]');
   if (sa){ const k = sa.dataset.sact; e.preventDefault();
@@ -5200,6 +5328,7 @@ $('#project').addEventListener('click', e => {
     if (act === 'lib') setMobile('lib');
     if (act === 'topics'){ projTopic = null; renderProject(); }
     if (act === 'newtopic') topicDialog(gid);
+    if (act === 'newchar2'){ drawerOpen = false; setView('c:' + gid); newCharacter(gid); }
     if (act === 'todos'){ showProject(false); openSheet(todoList[0] && todoList[0].sheet); todoScope = 'project'; LS.set('todoScope', 'project'); rpTab = 'todo'; toggleResearch(true); renderResearch(); setMobile('editor'); }
     return;
   }
