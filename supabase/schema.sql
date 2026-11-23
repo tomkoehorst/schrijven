@@ -108,3 +108,8 @@ alter table public.snippets add column if not exists grp text not null default '
 
 -- Mappen binnen een project (bv. Hoofdstukken, Personages, Onderzoek)
 alter table public.sheets add column if not exists folder text not null default '';
+
+-- Scènes: een tekst kan een scène zijn met een kaartje (meta) en een plek in het verhaal (ord)
+alter table public.sheets add column if not exists kind text not null default '';
+alter table public.sheets add column if not exists meta jsonb not null default '{}'::jsonb;
+alter table public.sheets add column if not exists ord double precision not null default 0;

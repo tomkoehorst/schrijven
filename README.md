@@ -16,18 +16,23 @@ Een rustige schrijfapp in de browser, met een indeling zoals in Ulysses: bibliot
 - Te installeren op je beginscherm (eigen icoon)
 - Focusscherm: alleen je blad, verder niets
 
-## Projecten en onderwerpen
+## Projecten: Verhaal, Materiaal, Ideeën
 
-De zijbalk toont alleen je bibliotheek en je **projecten**. Een project heeft vijf tabbladen:
-- **Teksten** – je hoofdstukken en mappen
-- **Onderwerpen** – kennis per onderwerp (bv. *Leven van een slaaf*, *Het ambacht*): bovenaan een achtergrondtekst, dan scène-ideeën, feiten (per kopje) en onderaan de bronnen (ingeklapt). De eerste tag van een fragment of bron bepaalt het onderwerp.
-- **Personages** – character sheets
-- **Tijdlijn** – alles met een datum, per jaar
-- **Ideeën** – snel intikken wat je te binnen schiet; later met één keuze naar een onderwerp verplaatsen
+De zijbalk toont je **projecten** (de Bibliotheek is in te klappen). Mappen bestaan niet meer: alles hangt aan elkaar via scènes, onderwerpen en namen.
 
-Naast je tekst toont het onderzoekspaneel (tab **Onderwerp**) automatisch het onderwerp dat bij je alinea past. Bronnen lees je in dat paneel.
+**Verhaal** – je scènes, in drie weergaven:
+- **Verhaallijnen** (zoals Plottr): kolommen = volgorde in het verhaal, rijen = verhaallijnen (bv. *Kader: de oude man*), onderaan de historische gebeurtenis per scène. Kaartjes slepen = volgorde of lijn veranderen.
+- **Historische tijd** (zoals Aeon Timeline): scènes tussen de echte gebeurtenissen, op volgorde van de geschiedenis.
+- **Status**: bord met idee / schets / concept / klaar (slepen = status veranderen).
+- **Hele verhaal**: voegt het proza van alle scènes samen (kopiëren, .md, .txt of als tekst bewaren). ++Notities++ en kaartjes gaan niet mee.
 
-Claude vult een onderwerp in één keer met `write_topic`: *“Maak in De muntenmaker een onderwerp ‘Leven van een slaaf’: dagelijks leven, werk, rechten en vrijlating.”*
+Een scène open je met één klik: bovenaan het **kaartje** (titel, status, datum, plaats, verhaallijn, wat gebeurt er, wat voelt de verteller; onder *Meer*: stempelmetafoor, zintuigen, feiten, open vragen, zie ook, gekoppelde gebeurtenis), daaronder schrijf je de scène. Alleen het proza telt voor woorden en dagdoel. Personages en onderwerpen die in de scène voorkomen verschijnen vanzelf als knopjes.
+
+**Materiaal** – onderwerpen (achtergrond, feiten, scène-ideeën, bronnen), personages, losse teksten en alle bronnen.
+
+**Ideeën** – snel intikken, later naar een onderwerp verplaatsen.
+
+Oude teksten met `## Kaartje` / `## Tekst` zet je om met **Verhaal → Omzetten naar scènes…** (met voorbeeld vooraf). Voor scènes is `schema.sql` nodig (kolommen `kind`, `meta`, `ord` in `sheets`). Onder **Instellingen → Back-up downloaden** bewaar je alles als één JSON-bestand.
 
 ## Bronnen
 
