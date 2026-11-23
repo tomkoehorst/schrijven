@@ -2,7 +2,7 @@
   "manifest_version": "0.2",
   "name": "schrijfkamer",
   "display_name": "Schrijfkamer",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Laat Claude fragmenten, tijdlijnmomenten en bronnen bewaren in je Schrijfkamer, en je verzameling doorzoeken.",
   "long_description": "Koppelt Claude aan je Schrijfkamer (tomkoehorst.github.io/schrijven). Zeg bijvoorbeeld: \"zet dit op mijn tijdlijn\", \"bewaar deze bronnen in project Roman\" of \"wat heb ik al verzameld over Brutus?\". Alles verschijnt direct in je app. De extensie praat rechtstreeks met je eigen Supabase-database en ziet alleen jouw gegevens.",
   "author": {
@@ -99,6 +99,42 @@
     {
       "name": "write_topic",
       "description": "Maak of vul een onderwerp: achtergrondtekst, feiten en scène-ideeën"
+    },
+    {
+      "name": "list_scenes",
+      "description": "Scènes van een verhaal op volgorde"
+    },
+    {
+      "name": "get_scene",
+      "description": "Eén scène lezen: kaartje en tekst"
+    },
+    {
+      "name": "create_scene",
+      "description": "Nieuwe scène maken"
+    },
+    {
+      "name": "update_scene",
+      "description": "Scène bijwerken: kaartje, status, tekst"
+    },
+    {
+      "name": "reorder_scenes",
+      "description": "Volgorde van scènes veranderen"
+    },
+    {
+      "name": "read_text",
+      "description": "Een tekst volledig lezen"
+    },
+    {
+      "name": "update_text",
+      "description": "Een tekst verbeteren of vervangen"
+    },
+    {
+      "name": "move_text",
+      "description": "Tekst naar ander project verplaatsen"
+    },
+    {
+      "name": "delete_text",
+      "description": "Tekst naar de prullenbak (na bevestiging)"
     }
   ],
   "user_config": {

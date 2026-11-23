@@ -32,6 +32,8 @@ Een scène open je met één klik: bovenaan het **kaartje** (titel, status, datu
 
 **Ideeën** – snel intikken, later naar een onderwerp verplaatsen.
 
+**Claude en je verhaal (koppeling 1.8.0):** `list_scenes`, `get_scene`, `create_scene`, `update_scene` (kaartvelden, status, verhaallijn, gebeurtenis, tekst vervangen/aanvullen/verbeteren), `reorder_scenes`, `read_text`, `update_text`, `move_text` en `delete_text` (alleen na bevestiging, naar de prullenbak).
+
 Oude teksten met `## Kaartje` / `## Tekst` zet je om met **Verhaal → Omzetten naar scènes…** (met voorbeeld vooraf). Voor scènes is `schema.sql` nodig (kolommen `kind`, `meta`, `ord` in `sheets`). Onder **Instellingen → Back-up downloaden** bewaar je alles als één JSON-bestand.
 
 ## Bronnen

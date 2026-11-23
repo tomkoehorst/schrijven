@@ -1,6 +1,6 @@
 // Schrijfkamer — kern van de Claude-koppeling (gedeeld door de pc-extensie en de online koppeling)
 import { z } from 'zod';
-export const VERSION = '1.7.0';
+export const VERSION = '1.8.0';
 /* Schone tekst: haal Markdown-opmaaktekens weg (**vet**, *cursief*, `code`, tabellen, ---),
    maar laat kopjes (#), lijstjes (-), citaten (>), [[links]] en ?? staan. */
 function cleanInline(s){
@@ -509,10 +509,12 @@ server.tool('project_overview',
       await token();
       const gid = await projectId(project);
       const [texts, sn, src] = await Promise.all([
-        rest('GET', `sheets?select=id,body,updated,folder&grp=eq.${gid}&trashed=eq.false&order=updated.desc`).catch(() => rest('GET', `sheets?select=id,body,updated&grp=eq.${gid}&trashed=eq.false&order=updated.desc`)),
+        rest('GET', `sheets?select=id,body,updated,folder,kind,meta,ord&grp=eq.${gid}&trashed=eq.false&order=updated.desc`).catch(() => rest('GET', `sheets?select=id,body,updated,folder&grp=eq.${gid}&trashed=eq.false&order=updated.desc`)).catch(() => rest('GET', `sheets?select=id,body,updated&grp=eq.${gid}&trashed=eq.false&order=updated.desc`)),
         rest('GET', `snippets?select=text,date,tags&grp=eq.${gid}&order=created.desc&limit=500`),
         rest('GET', `sources?select=title,url,site&grp=eq.${gid}&order=created.desc&limit=200`)
       ]);
+      const scn = texts.filter(t => t.kind === 'scene').sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0));
+      const plain = texts.filter(t => t.kind !== 'scene');
       const todos = texts.flatMap(t => [...String(t.body).matchAll(/([^.!?\n]{0,140})(\?\?|\[check[^\]]*\])/g)].map(m => `${m[1].trim()} ${m[2]} (in “${titleOf(t.body)}”)`));
       const dated = sn.map(x => ({ x, d: parseDate(x.date) })).filter(y => y.d).sort((a, b) => a.d.key.localeCompare(b.d.key));
       const tags = {}; for (const x of sn) for (const t of (x.tags || [])) tags[t] = (tags[t] || 0) + 1;
@@ -520,8 +522,9 @@ server.tool('project_overview',
       for (const x of sn) { const t = (x.tags || []).find(t => !SKIP.test(t)); if (t) topics[t.toLowerCase()] = (topics[t.toLowerCase()] || 0) + 1; }
       for (const t of texts.filter(t => t.folder === 'Onderwerpen')) { const k = titleOf(t.body).toLowerCase(); topics[k] = topics[k] || 0; }
       return ok([
-        `Project “${project}”: ${texts.length} teksten, ${sn.length} fragmenten (${dated.length} op de tijdlijn), ${src.length} bronnen.`,
-        texts.length ? 'Teksten:\n' + texts.map(t => `- ${t.folder ? '[' + t.folder + '] ' : ''}${titleOf(t.body) || '(naamloos)'} (${String(t.body).split(/\s+/).length} woorden)`).join('\n') : '',
+        `Project “${project}”: ${scn.length} scènes, ${plain.length} teksten, ${sn.length} fragmenten (${dated.length} op de tijdlijn), ${src.length} bronnen.`,
+        scn.length ? 'Scènes (lees ze met list_scenes / get_scene):\n' + scn.map((t, i) => `${String(i + 1).padStart(2, '0')}. ${(t.meta && t.meta.title) || 'Naamloze scène'} [${(t.meta && t.meta.status) || 'idee'}] (${words(t.body)} woorden)`).join('\n') : '',
+        plain.length ? 'Teksten:\n' + plain.map(t => `- ${titleOf(t.body) || '(naamloos)'} (${words(t.body)} woorden)`).join('\n') : '',
         dated.length ? 'Tijdlijn:\n' + dated.map(y => `- ${y.d.label}: ${y.x.text.replace(/\s+/g, ' ').slice(0, 120)}`).join('\n') : '',
         src.length ? 'Bronnen:\n' + src.slice(0, 60).map(s => `- ${s.title} ${s.url || ''}`).join('\n') : '',
         Object.keys(topics).length ? 'Onderwerpen (eerste tag; gebruik deze namen opnieuw): ' + Object.entries(topics).sort((a, b) => b[1] - a[1]).map(([t, n]) => `${t} (${n})`).join(', ') : '',
@@ -531,16 +534,231 @@ server.tool('project_overview',
     } catch (e) { return fail(e); }
   });
 
+/* ---------- Scènes en teksten lezen/bewerken ---------- */
+const SCENE_STATUSES = ['idee', 'schets', 'concept', 'klaar'];
+const CARD = [['title', 'Titel'], ['status', 'Status'], ['when', 'Datum'], ['where', 'Plaats'], ['what', 'Wat gebeurt er'], ['feel', 'Wat voelt de verteller'], ['stamp', 'Stempelmetafoor'], ['senses', 'Zintuigen'], ['facts', 'Feiten uit het onderzoek'], ['questions', 'Open vragen'], ['seealso', 'Zie ook']];
+const cardShape = {
+  title: z.string().optional(), status: z.enum(['idee', 'schets', 'concept', 'klaar']).optional(),
+  when: z.string().optional().describe('Datum in het verhaal, bv. “zomer 42 v.Chr.”'), where: z.string().optional().describe('Plaats'),
+  what: z.string().optional().describe('Wat gebeurt er'), feel: z.string().optional().describe('Wat voelt de verteller'),
+  stamp: z.string().optional().describe('Stempelmetafoor'), senses: z.string().optional().describe('Zintuigen'),
+  facts: z.string().optional().describe('Feiten uit het onderzoek'), questions: z.string().optional().describe('Open vragen'), seealso: z.string().optional().describe('Zie ook'),
+  lane: z.string().optional().describe('Naam van de verhaallijn, bv. “Kader: de oude man”. Bestaat hij niet, dan wordt hij gemaakt.'),
+  event: z.string().optional().describe('Koppel een gebeurtenis van de historische tijdlijn: een stukje van de tekst of de datum ervan. Leeg ("") ontkoppelt.')
+};
+const SQL_HINT = 'Scènes zijn nog niet beschikbaar: draai eerst supabase/schema.sql in de Supabase SQL Editor (drie nieuwe kolommen in sheets).';
+const sceneTitle = r => (r.meta && r.meta.title) || 'Naamloze scène';
+const words = t => (String(t || '').match(/[\p{L}\p{N}’'-]+/gu) || []).length;
+async function scenesIn(gid) {
+  let rows;
+  try { rows = await rest('GET', `sheets?select=id,body,grp,meta,ord,kind,created,updated&grp=eq.${enc(gid)}&kind=eq.scene&trashed=eq.false`); }
+  catch (e) { if (/kind|meta|ord/.test(e.message)) throw new Error(SQL_HINT); throw e; }
+  return rows.map(r => ({ ...r, meta: r.meta || {} })).sort((a, b) => (Number(a.ord) || 0) - (Number(b.ord) || 0) || (Number(a.created) || 0) - (Number(b.created) || 0)).map((r, i) => ({ ...r, nr: i + 1 }));
+}
+function findScene(list, ref) {
+  const s = String(ref || '').trim(); if (!s) return null;
+  if (/^\d+$/.test(s)) return list.find(x => x.nr === +s) || null;
+  const l = s.toLowerCase().replace(/^(scène|scene)\s*/, '');
+  if (/^\d+$/.test(l)) return list.find(x => x.nr === +l) || null;
+  return list.find(x => sceneTitle(x).toLowerCase() === l) || list.find(x => sceneTitle(x).toLowerCase().includes(l)) || null;
+}
+const notFoundScene = (ref, list) => new Error(`Scène “${ref}” niet gevonden. Scènes: ${list.map(x => x.nr + ' ' + sceneTitle(x)).join(', ') || '(nog geen)'}`);
+async function renumberScenes(ids) {
+  let i = 0; for (const id of ids) { i++; await rest('PATCH', `sheets?id=eq.${enc(id)}`, { ord: i, updated: Date.now() }, 'return=minimal'); }
+}
+async function lanesFor(gid) { const gs = await groups(); const g = gs.find(x => x.id === gid); return { gs, g, lanes: g && Array.isArray(g.lanes) && g.lanes.length ? g.lanes : [{ id: 'main', name: 'Verhaal' }] }; }
+async function laneId(gid, name) {
+  const { gs, g, lanes } = await lanesFor(gid);
+  const n = String(name).trim(), hit = lanes.find(l => l.name.toLowerCase() === n.toLowerCase()) || lanes.find(l => l.name.toLowerCase().includes(n.toLowerCase()));
+  if (hit) return hit.id;
+  const nl = { id: uid(), name: n }; if (g) { g.lanes = [...lanes, nl]; await saveGroups(gs); } return nl.id;
+}
+async function eventId(gid, ref) {
+  if (!String(ref).trim()) return '';
+  const rows = await rest('GET', `snippets?select=id,text,date&grp=eq.${enc(gid)}&limit=1000`);
+  const dated = rows.filter(r => parseDate(r.date)), l = String(ref).toLowerCase();
+  const hit = dated.find(r => r.text.toLowerCase().includes(l)) || dated.find(r => String(r.date).toLowerCase() === l) || dated.find(r => parseDate(r.date).label.toLowerCase() === l);
+  if (!hit) throw new Error(`Geen gebeurtenis op de tijdlijn gevonden voor “${ref}”. Zet hem eerst op de tijdlijn met add_to_timeline.`);
+  return hit.id;
+}
+async function cardPatch(gid, a) {
+  const m = {};
+  for (const [k] of CARD) if (a[k] !== undefined) m[k] = k === 'status' ? a[k] : cleanText(a[k]).trim();
+  if (a.lane !== undefined && a.lane !== '') m.lane = await laneId(gid, a.lane);
+  if (a.event !== undefined) m.event = await eventId(gid, a.event);
+  return m;
+}
+async function fmtScene(r, gid) {
+  const { lanes } = await lanesFor(gid); const m = r.meta || {};
+  const lane = lanes.length > 1 ? ` · verhaallijn: ${(lanes.find(l => l.id === m.lane) || lanes[0]).name}` : '';
+  let ev = '';
+  if (m.event) { const e = await rest('GET', `snippets?select=text,date&id=eq.${enc(m.event)}`).catch(() => []); if (e[0]) ev = `\nGebeurtenis: ${e[0].date} · ${e[0].text}`; }
+  const card = CARD.filter(([k]) => !['title', 'status'].includes(k) && m[k]).map(([k, l]) => `${l}: ${m[k]}`).join('\n');
+  return `Scène ${r.nr}: ${sceneTitle(r)} [${m.status || 'idee'}]${lane}\n${card}${ev}\n\n--- Tekst (${words(r.body)} woorden) ---\n${String(r.body || '').trim() || '(nog leeg)'}`;
+}
+
+server.tool('list_scenes',
+  'Geef de scènes van een verhaal (project) op volgorde: nummer, titel, status, datum, verhaallijn en aantal woorden. Gebruik dit vóór je scènes leest of bewerkt.',
+  { project: z.string() },
+  async ({ project }) => {
+    try {
+      await token(); const gid = await projectId(project);
+      const list = await scenesIn(gid), { lanes } = await lanesFor(gid);
+      if (!list.length) return ok(`Project “${project}” heeft nog geen scènes. Maak er een met create_scene.`);
+      const tot = list.reduce((a, r) => a + words(r.body), 0);
+      return ok(`${list.length} scènes, ${tot} woorden in totaal:\n` + list.map(r => { const m = r.meta;
+        return `${String(r.nr).padStart(2, '0')}. ${sceneTitle(r)} [${m.status || 'idee'}]${m.when ? ' · ' + m.when : ''}${lanes.length > 1 ? ' · ' + (lanes.find(l => l.id === m.lane) || lanes[0]).name : ''} · ${words(r.body)} woorden${m.what ? '\n    ' + String(m.what).replace(/\s+/g, ' ').slice(0, 140) : ''}`; }).join('\n'));
+    } catch (e) { return fail(e); }
+  });
+
+server.tool('get_scene',
+  'Lees één scène volledig: het kaartje (planning) en de scènetekst (proza).',
+  { project: z.string(), scene: z.string().describe('Nummer (bv. "3") of titel van de scène.') },
+  async ({ project, scene }) => {
+    try {
+      await token(); const gid = await projectId(project);
+      const list = await scenesIn(gid), r = findScene(list, scene); if (!r) throw notFoundScene(scene, list);
+      return ok(await fmtScene(r, gid));
+    } catch (e) { return fail(e); }
+  });
+
+server.tool('create_scene',
+  'Maak een nieuwe scène in een verhaal: een kaartje (titel, status, datum, plaats, wat gebeurt er, wat voelt de verteller, enz.) en eventueel al tekst. Schrijf schone, gewone tekst zonder opmaaktekens.',
+  { project: z.string(), ...cardShape, title: z.string(), position: z.number().int().min(1).optional().describe('Plek in het verhaal (1 = eerste). Leeg = aan het eind.'), text: z.string().optional().describe('De scènetekst (proza).') },
+  async (a) => {
+    try {
+      await token(); const gid = await projectId(a.project);
+      const list = await scenesIn(gid), { lanes } = await lanesFor(gid);
+      const meta = { status: 'idee', lane: lanes[0].id, ...(await cardPatch(gid, a)) };
+      const now = Date.now(), id = uid();
+      await rest('POST', 'sheets', { id, user_id: session.user_id, body: a.text ? cleanText(a.text).trim() + '\n' : '', grp: gid, folder: '', fav: false, trashed: false, goal: 0, kind: 'scene', meta, ord: list.length + 1, created: now, updated: now }, 'return=minimal')
+        .catch(e => { if (/kind|meta|ord/.test(e.message)) throw new Error(SQL_HINT); throw e; });
+      const ids = list.map(r => r.id), pos = a.position ? Math.min(a.position, ids.length + 1) : ids.length + 1;
+      if (pos <= ids.length) { ids.splice(pos - 1, 0, id); await renumberScenes(ids); }
+      return ok(`Scène ${pos} “${meta.title}” aangemaakt in ${a.project}.`);
+    } catch (e) { return fail(e); }
+  });
+
+server.tool('update_scene',
+  'Werk een scène bij: kaartvelden (alleen de velden die je meegeeft veranderen), status, verhaallijn, gekoppelde gebeurtenis, en/of de tekst. Tekst: met text vervang je het hele proza, met append_text voeg je onderaan toe, met find + replace_with verbeter je een stukje. Schrijf schone, gewone tekst.',
+  { project: z.string(), scene: z.string().describe('Nummer of titel van de scène.'), ...cardShape,
+    text: z.string().optional().describe('Vervangt de hele scènetekst.'), append_text: z.string().optional(), find: z.string().optional().describe('Exacte tekst die vervangen moet worden.'), replace_with: z.string().optional() },
+  async (a) => {
+    try {
+      await token(); const gid = await projectId(a.project);
+      const list = await scenesIn(gid), r = findScene(list, a.scene); if (!r) throw notFoundScene(a.scene, list);
+      const patch = { updated: Date.now() }, done = [];
+      const m = await cardPatch(gid, a);
+      if (Object.keys(m).length) { patch.meta = { ...r.meta, ...m }; done.push('kaartje (' + Object.keys(m).join(', ') + ')'); }
+      let body = String(r.body || '');
+      if (a.text !== undefined) { body = cleanText(a.text).trim() + '\n'; done.push('tekst vervangen'); }
+      if (a.find !== undefined) {
+        if (!body.includes(a.find)) throw new Error(`De tekst “${a.find.slice(0, 60)}” staat niet in scène ${r.nr}. Lees de scène eerst met get_scene.`);
+        body = body.split(a.find).join(cleanText(a.replace_with || '')); done.push('stukje verbeterd');
+      }
+      if (a.append_text) { body = body.replace(/\s*$/, '') + (body.trim() ? '\n\n' : '') + cleanText(a.append_text).trim() + '\n'; done.push('tekst aangevuld'); }
+      if (body !== String(r.body || '')) patch.body = body;
+      if (done.length === 0) return ok('Niets veranderd: geef kaartvelden of tekst mee.');
+      await rest('PATCH', `sheets?id=eq.${enc(r.id)}`, patch, 'return=minimal');
+      return ok(`Scène ${r.nr} “${sceneTitle({ meta: patch.meta || r.meta })}” bijgewerkt: ${done.join(', ')}.`);
+    } catch (e) { return fail(e); }
+  });
+
+server.tool('reorder_scenes',
+  'Verander de volgorde van de scènes. Verplaats één scène met scene + to_position, of geef met order de complete nieuwe volgorde (nummers of titels van alle scènes).',
+  { project: z.string(), scene: z.string().optional(), to_position: z.number().int().min(1).optional(), order: z.array(z.string()).optional() },
+  async ({ project, scene, to_position, order }) => {
+    try {
+      await token(); const gid = await projectId(project);
+      const list = await scenesIn(gid); let ids;
+      if (order && order.length) {
+        const picked = order.map(o => { const r = findScene(list, o); if (!r) throw notFoundScene(o, list); return r.id; });
+        if (new Set(picked).size !== picked.length) throw new Error('Een scène staat twee keer in de volgorde.');
+        ids = [...picked, ...list.map(r => r.id).filter(id => !picked.includes(id))];
+      } else if (scene && to_position) {
+        const r = findScene(list, scene); if (!r) throw notFoundScene(scene, list);
+        ids = list.map(x => x.id).filter(id => id !== r.id); ids.splice(Math.min(to_position, ids.length + 1) - 1, 0, r.id);
+      } else throw new Error('Geef scene + to_position, of order.');
+      await renumberScenes(ids);
+      const byId = Object.fromEntries(list.map(r => [r.id, r]));
+      return ok('Nieuwe volgorde:\n' + ids.map((id, i) => `${String(i + 1).padStart(2, '0')}. ${sceneTitle(byId[id])}`).join('\n'));
+    } catch (e) { return fail(e); }
+  });
+
+/* gewone teksten (en scènes) op titel vinden */
+async function textRows(project) {
+  let path = `sheets?select=id,body,grp,kind,meta,ord,trashed,updated&trashed=eq.false&order=updated.desc&limit=1000`;
+  if (project) path += `&grp=eq.${enc(await projectId(project))}`;
+  try { return await rest('GET', path); } catch (e) { if (/kind|meta|ord/.test(e.message)) return rest('GET', path.replace(',kind,meta,ord', '')); throw e; }
+}
+const rowTitle = r => r.kind === 'scene' ? sceneTitle(r) : titleOf(r.body);
+async function findText(title, project) {
+  const rows = await textRows(project), t = String(title).toLowerCase().trim();
+  const hits = rows.filter(r => rowTitle(r).toLowerCase() === t);
+  const hit = hits[0] || rows.find(r => rowTitle(r).toLowerCase().includes(t));
+  if (!hit) throw new Error(`Geen tekst gevonden met de titel “${title}”. Bestaande teksten: ${rows.slice(0, 25).map(rowTitle).filter(Boolean).join(', ')}`);
+  return hit;
+}
+
+server.tool('read_text',
+  'Lees een tekst uit de Schrijfkamer volledig (op titel), bijvoorbeeld een dossier, personage of onderwerp. Voor scènes kun je ook get_scene gebruiken.',
+  { title: z.string(), project: z.string().optional() },
+  async ({ title, project }) => {
+    try {
+      await token(); const r = await findText(title, project);
+      if (r.kind === 'scene') { const list = await scenesIn(r.grp); return ok(await fmtScene(list.find(x => x.id === r.id) || { ...r, nr: '?' }, r.grp)); }
+      return ok(`(${words(r.body)} woorden)\n\n${r.body}`);
+    } catch (e) { return fail(e); }
+  });
+
+server.tool('update_text',
+  'Verbeter of vervang een bestaande tekst (op titel). Met find + replace_with verbeter je een stukje (veiligst); met body vervang je de hele tekst (inclusief de titelregel “# …”). Lees de tekst eerst met read_text. Schrijf schone, gewone tekst.',
+  { title: z.string(), project: z.string().optional(), body: z.string().optional(), find: z.string().optional(), replace_with: z.string().optional() },
+  async ({ title, project, body, find, replace_with }) => {
+    try {
+      await token(); const r = await findText(title, project);
+      let next = String(r.body || '');
+      if (body !== undefined) next = cleanText(body).trim() + '\n';
+      else if (find !== undefined) { if (!next.includes(find)) throw new Error(`De tekst “${find.slice(0, 60)}” staat niet in “${rowTitle(r)}”. Lees de tekst eerst met read_text.`); next = next.split(find).join(cleanText(replace_with || '')); }
+      else return ok('Niets veranderd: geef body, of find + replace_with.');
+      await rest('PATCH', `sheets?id=eq.${enc(r.id)}`, { body: next, updated: Date.now() }, 'return=minimal');
+      return ok(`“${rowTitle(r)}” bijgewerkt.`);
+    } catch (e) { return fail(e); }
+  });
+
+server.tool('move_text',
+  'Verplaats een tekst (of scène) naar een ander project, of naar de Inbox (to_project: "Inbox").',
+  { title: z.string(), project: z.string().optional(), to_project: z.string() },
+  async ({ title, project, to_project }) => {
+    try {
+      await token(); const r = await findText(title, project);
+      const gid = /^inbox$/i.test(to_project.trim()) ? 'inbox' : await projectId(to_project);
+      await rest('PATCH', `sheets?id=eq.${enc(r.id)}`, { grp: gid, folder: '', updated: Date.now() }, 'return=minimal');
+      return ok(`“${rowTitle(r)}” verplaatst naar ${gid === 'inbox' ? 'de Inbox' : to_project}.`);
+    } catch (e) { return fail(e); }
+  });
+
+server.tool('delete_text',
+  'Zet een tekst of scène in de PRULLENBAK (terug te halen in de app). Doe dit ALLEEN nadat de gebruiker in dit gesprek uitdrukkelijk heeft bevestigd dat juist deze tekst weg mag; vraag het anders eerst. Zonder confirmed: true gebeurt er niets.',
+  { title: z.string(), project: z.string().optional(), confirmed: z.boolean().optional().describe('Alleen true als de gebruiker het verwijderen van precies deze tekst heeft bevestigd.') },
+  async ({ title, project, confirmed }) => {
+    try {
+      await token(); const r = await findText(title, project);
+      if (confirmed !== true) return ok(`Nog niets verwijderd. Vraag de gebruiker eerst: “Mag ‘${rowTitle(r)}’ (${words(r.body)} woorden) naar de prullenbak?” en roep delete_text daarna opnieuw aan met confirmed: true.`);
+      await rest('PATCH', `sheets?id=eq.${enc(r.id)}`, { trashed: true, updated: Date.now() }, 'return=minimal');
+      return ok(`“${rowTitle(r)}” staat in de prullenbak. De gebruiker kan hem in de app terugzetten (Prullenbak → Terugzetten).`);
+    } catch (e) { return fail(e); }
+  });
+
 server.tool('create_text',
   'Maak een nieuwe tekst (document) in de Schrijfkamer, bijvoorbeeld een onderzoeksdossier, personenoverzicht of hoofdstukopzet. Schrijf schone, gewone tekst: alleen ## kopjes en - lijstjes; GEEN **vet**, *cursief*, tabellen of andere opmaaktekens (die worden toch weggehaald). Zet ?? achter feiten die nog gecontroleerd moeten worden; gebruik [[Titel]] om naar andere teksten of bronnen te linken.',
-  { title: z.string(), body: z.string().describe('De inhoud als schone tekst (zonder de titel); alleen ## kopjes en - lijstjes.'), project: z.string().optional(), folder: z.string().optional().describe('Map binnen het project, bv. "Hoofdstukken" of "Onderzoek". Gebruik voor personages liever create_character.') },
+  { title: z.string(), body: z.string().describe('De inhoud als schone tekst (zonder de titel); alleen ## kopjes en - lijstjes.'), project: z.string().optional(), folder: z.string().optional().describe('Verouderd: mappen bestaan niet meer en dit veld wordt genegeerd. Gebruik create_scene voor scènes, write_topic voor onderwerpen en create_character voor personages.') },
   async ({ title, body, project, folder }) => {
     try {
       await token();
       const gid = project ? await projectId(project) : 'inbox';
-      if (folder && gid !== 'inbox') await ensureFolder(gid, folder);
-      await insertSheet({ body: `# ${cleanInline(title)}\n\n${cleanText(body).trim()}\n`, grp: gid, folder: gid !== 'inbox' ? (folder || '') : '' });
-      return ok(`Tekst “${title}” aangemaakt${project ? ' in project ' + project : ''}${folder ? ', map ' + folder : ''}. De gebruiker ziet hem direct in de app.`);
+      await insertSheet({ body: `# ${cleanInline(title)}\n\n${cleanText(body).trim()}\n`, grp: gid, folder: '' });
+      return ok(`Tekst “${title}” aangemaakt${project ? ' in project ' + project : ''} (in de app onder Materiaal → Teksten).`);
     } catch (e) { return fail(e); }
   });
 
@@ -646,7 +864,7 @@ server.tool('add_timeline_events',
     } catch (e) { return fail(e); }
   });
 
-const INSTRUCTIONS = 'Koppeling met de Schrijfkamer van de gebruiker: bewaar fragmenten, tijdlijnmomenten, bronnen, teksten en personages, en doorzoek de verzameling. Antwoord in het Nederlands. Een project is ingedeeld in ONDERWERPEN (de eerste tag van een fragment of bron); gebruik write_topic voor achtergrondkennis met feiten en scène-ideeën, en hergebruik bestaande onderwerpnamen. Schrijf in de Schrijfkamer schone, gewone tekst: geen **vet**, *cursief*, tabellen of andere Markdown-tekens, alleen ## kopjes en - lijstjes. ' + RULE_TEXT + ' Verzamel liever weinig goede bronnen dan veel; controleer met search_collection of iets er al is.';
+const INSTRUCTIONS = 'Koppeling met de Schrijfkamer van de gebruiker: bewaar fragmenten, tijdlijnmomenten, bronnen, teksten en personages, en doorzoek de verzameling. Antwoord in het Nederlands. Een verhaal bestaat uit SCÈNES op volgorde (list_scenes, get_scene, create_scene, update_scene, reorder_scenes): elke scène heeft een kaartje (planning) en een scènetekst (proza). Teksten kun je lezen en verbeteren met read_text en update_text; verwijderen (delete_text) alleen na uitdrukkelijke bevestiging van de gebruiker. Materiaal is ingedeeld in ONDERWERPEN (de eerste tag van een fragment of bron); gebruik write_topic voor achtergrondkennis met feiten en scène-ideeën, en hergebruik bestaande onderwerpnamen. Schrijf in de Schrijfkamer schone, gewone tekst: geen **vet**, *cursief*, tabellen of andere Markdown-tekens, alleen ## kopjes en - lijstjes. ' + RULE_TEXT + ' Verzamel liever weinig goede bronnen dan veel; controleer met search_collection of iets er al is.';
 const PROMPT_ONDERZOEK = "Je bent mijn onderzoeksassistent voor mijn schrijfproject “${arguments.project}”. Ik concentreer me op het creatieve schrijven; jij doet het feitenwerk en zet alles in mijn Schrijfkamer.\n\nOnderwerp: ${arguments.onderwerp}\n\nWerkwijze:\n0. Stel mij eerst een paar korte vragen en wacht op mijn antwoord: waarvoor heb ik dit nodig, hoe diep (kort, gemiddeld of diep), welke focus of periode, en wat moet er komen (tijdlijn, fragmenten, personages, dossier). Leg het daarna vast met research_plan en houd je aan het maximum.\n1. Roep eerst project_overview aan (bestaat het project niet, maak het dan met create_project) zodat je niets dubbel doet.\n2. Zoek op het web naar betrouwbare bronnen (encyclopedieën, musea, wetenschappelijke en historische bronnen). Bewaar de belangrijkste met save_source.\n3. Zet elke gebeurtenis met een datum op de tijdlijn (add_timeline_events), steeds met de bron-URL.\n4. Deel de kennis in 4 à 8 brede onderwerpen in (hergebruik bestaande onderwerpen uit project_overview) en vul elk onderwerp met write_topic: een korte achtergrondtekst in schone tekst, feiten met een kopje en bron, en concrete scène-ideeën (zintuiglijke details, gebruiken, voorwerpen, plaatsen).\n5. Zet ?? achter alles wat onzeker of tegenstrijdig is en noem open vragen in de achtergrondtekst. Maak voor belangrijke (historische) personen een character sheet met create_character.\n6. Werk in het Nederlands. Verzin niets: geen bron, dan markeren met ??.\n7. Sluit af met een korte samenvatting in de chat van wat je hebt toegevoegd en welke vragen nog open staan, en roep finish_research aan.";
 server.prompt('onderzoek_project',
   'Laat Claude onderzoek doen en het researchkader van een project in de Schrijfkamer vullen.',

@@ -14,6 +14,7 @@ Schrijfapp van Tom (Nederlands), live op https://tomkoehorst.github.io/schrijven
 - `supabase/functions/bronnen` — artikelen ophalen + Brave-zoeken. `supabase/functions/mcp` — online Claude-koppeling (gebouwd uit `mcp/src/http.js` + `mcp/src/core.js`).
 - `mcp/` — gedeelde kern met alle Claude-gereedschappen (`src/core.js`), pc-versie (`src/index.js` → `schrijfkamer-claude.mcpb`).
 - `extension/` — browser-extensie "Bewaar in Schrijfkamer" (zip: `schrijfkamer-extensie.zip`).
+- Projectindeling in de app: **Verhaal** (scènes = rijen in `sheets` met `kind='scene'`, kaartje in `meta` jsonb, volgorde in `ord`; verhaallijnen in `profiles.groups[].lanes`), **Materiaal** (onderwerpen = eerste tag; personages; teksten; bronnen) en **Ideeën**. Geen mappen meer (alleen intern `Personages`/`Onderwerpen`).
 - `ROADMAP.md` — ideeën voor later.
 
 ## Werkwijze
