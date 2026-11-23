@@ -2,7 +2,7 @@
   "manifest_version": "0.2",
   "name": "schrijfkamer",
   "display_name": "Schrijfkamer",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "description": "Laat Claude fragmenten, tijdlijnmomenten en bronnen bewaren in je Schrijfkamer, en je verzameling doorzoeken.",
   "long_description": "Koppelt Claude aan je Schrijfkamer (tomkoehorst.github.io/schrijven). Zeg bijvoorbeeld: \"zet dit op mijn tijdlijn\", \"bewaar deze bronnen in project Roman\" of \"wat heb ik al verzameld over Brutus?\". Alles verschijnt direct in je app. De extensie praat rechtstreeks met je eigen Supabase-database en ziet alleen jouw gegevens.",
   "author": {
@@ -95,6 +95,10 @@
     {
       "name": "set_tags",
       "description": "Thema-tags geven aan bronnen en fragmenten"
+    },
+    {
+      "name": "write_topic",
+      "description": "Maak of vul een onderwerp: achtergrondtekst, feiten en scène-ideeën"
     }
   ],
   "user_config": {
@@ -136,7 +140,7 @@
         "project",
         "onderwerp"
       ],
-      "text": "Je bent mijn onderzoeksassistent voor mijn schrijfproject “${arguments.project}”. Ik concentreer me op het creatieve schrijven; jij doet het feitenwerk en zet alles in mijn Schrijfkamer.\n\nOnderwerp: ${arguments.onderwerp}\n\nWerkwijze:\n0. Stel mij eerst een paar korte vragen en wacht op mijn antwoord: waarvoor heb ik dit nodig, hoe diep (kort, gemiddeld of diep), welke focus of periode, en wat moet er komen (tijdlijn, fragmenten, personages, dossier). Leg het daarna vast met research_plan en houd je aan het maximum.\n1. Roep eerst project_overview aan (bestaat het project niet, maak het dan met create_project) zodat je niets dubbel doet.\n2. Zoek op het web naar betrouwbare bronnen (encyclopedieën, musea, wetenschappelijke en historische bronnen). Bewaar de belangrijkste met save_source.\n3. Zet elke gebeurtenis met een datum op de tijdlijn (add_timeline_events), steeds met de bron-URL.\n4. Bewaar losse feiten, citaten en details die bruikbaar zijn voor een verhaal (zintuiglijke details, gebruiken, voorwerpen, plaatsen) als fragmenten met save_fragment, met tags en bron.\n5. Maak met create_text (map “Onderzoek”) een tekst “Onderzoeksdossier: ${arguments.onderwerp}” in het project met: korte samenvatting, belangrijkste personen en plekken (met [[links]] waar zinnig), chronologie in het kort, en een lijst “Open vragen”. Zet ?? achter alles wat onzeker of tegenstrijdig is. Maak voor belangrijke (historische) personen een character sheet met create_character.\n6. Werk in het Nederlands. Verzin niets: geen bron, dan markeren met ??.\n7. Sluit af met een korte samenvatting in de chat van wat je hebt toegevoegd en welke vragen nog open staan, en roep finish_research aan."
+      "text": "Je bent mijn onderzoeksassistent voor mijn schrijfproject “${arguments.project}”. Ik concentreer me op het creatieve schrijven; jij doet het feitenwerk en zet alles in mijn Schrijfkamer.\n\nOnderwerp: ${arguments.onderwerp}\n\nWerkwijze:\n0. Stel mij eerst een paar korte vragen en wacht op mijn antwoord: waarvoor heb ik dit nodig, hoe diep (kort, gemiddeld of diep), welke focus of periode, en wat moet er komen (tijdlijn, fragmenten, personages, dossier). Leg het daarna vast met research_plan en houd je aan het maximum.\n1. Roep eerst project_overview aan (bestaat het project niet, maak het dan met create_project) zodat je niets dubbel doet.\n2. Zoek op het web naar betrouwbare bronnen (encyclopedieën, musea, wetenschappelijke en historische bronnen). Bewaar de belangrijkste met save_source.\n3. Zet elke gebeurtenis met een datum op de tijdlijn (add_timeline_events), steeds met de bron-URL.\n4. Deel de kennis in 4 à 8 brede onderwerpen in (hergebruik bestaande onderwerpen uit project_overview) en vul elk onderwerp met write_topic: een korte achtergrondtekst in schone tekst, feiten met een kopje en bron, en concrete scène-ideeën (zintuiglijke details, gebruiken, voorwerpen, plaatsen).\n5. Zet ?? achter alles wat onzeker of tegenstrijdig is en noem open vragen in de achtergrondtekst. Maak voor belangrijke (historische) personen een character sheet met create_character.\n6. Werk in het Nederlands. Verzin niets: geen bron, dan markeren met ??.\n7. Sluit af met een korte samenvatting in de chat van wat je hebt toegevoegd en welke vragen nog open staan, en roep finish_research aan."
     }
   ]
 }

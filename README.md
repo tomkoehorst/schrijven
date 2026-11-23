@@ -16,6 +16,19 @@ Een rustige schrijfapp in de browser, met een indeling zoals in Ulysses: bibliot
 - Te installeren op je beginscherm (eigen icoon)
 - Focusscherm: alleen je blad, verder niets
 
+## Projecten en onderwerpen
+
+De zijbalk toont alleen je bibliotheek en je **projecten**. Een project heeft vijf tabbladen:
+- **Teksten** – je hoofdstukken en mappen
+- **Onderwerpen** – kennis per onderwerp (bv. *Leven van een slaaf*, *Het ambacht*): bovenaan een achtergrondtekst, dan scène-ideeën, feiten (per kopje) en onderaan de bronnen (ingeklapt). De eerste tag van een fragment of bron bepaalt het onderwerp.
+- **Personages** – character sheets
+- **Tijdlijn** – alles met een datum, per jaar
+- **Ideeën** – snel intikken wat je te binnen schiet; later met één keuze naar een onderwerp verplaatsen
+
+Naast je tekst toont het onderzoekspaneel (tab **Onderwerp**) automatisch het onderwerp dat bij je alinea past. Bronnen lees je in dat paneel.
+
+Claude vult een onderwerp in één keer met `write_topic`: *“Maak in De muntenmaker een onderwerp ‘Leven van een slaaf’: dagelijks leven, werk, rechten en vrijlating.”*
+
 ## Bronnen
 
 - Artikelen bewaren via een link: titel, samenvatting en leesbare tekst worden opgehaald

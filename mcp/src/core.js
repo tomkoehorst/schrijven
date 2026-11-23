@@ -1,6 +1,6 @@
 // Schrijfkamer — kern van de Claude-koppeling (gedeeld door de pc-extensie en de online koppeling)
 import { z } from 'zod';
-export const VERSION = '1.6.1';
+export const VERSION = '1.7.0';
 /* Schone tekst: haal Markdown-opmaaktekens weg (**vet**, *cursief*, `code`, tabellen, ---),
    maar laat kopjes (#), lijstjes (-), citaten (>), [[links]] en ?? staan. */
 function cleanInline(s){
@@ -281,7 +281,7 @@ server.tool('list_collection',
   });
 
 server.tool('set_tags',
-  'Geef bronnen en fragmenten (nieuwe) tags om de verzameling te ordenen. De EERSTE tag is het hoofdthema waarop de app groepeert. Houd het overzichtelijk: kies samen met de gebruiker 4 à 6 BREDE thema’s voor het hele project (bv. Ambacht, Munt, Politiek, Personen, Plaatsen) en gebruik voor elk item één daarvan als eerste tag — geen bijna-dubbele thema’s (Ambacht/Ambachtsman/Stempelsnijder) en geen thema’s voor één item; details mogen als 2e/3e tag. De tag "ai" blijft altijd behouden. Voegt geen items toe en telt niet mee voor het onderzoeksplan.',
+  'Geef bronnen en fragmenten (nieuwe) tags om de verzameling te ordenen. De EERSTE tag is het ONDERWERP waaronder het item in de app staat (Onderwerpen-tab van het project). Houd het overzichtelijk: kies samen met de gebruiker 4 à 6 BREDE thema’s voor het hele project (bv. Ambacht, Munt, Politiek, Personen, Plaatsen) en gebruik voor elk item één daarvan als eerste tag — geen bijna-dubbele thema’s (Ambacht/Ambachtsman/Stempelsnijder) en geen thema’s voor één item; details mogen als 2e/3e tag. De tag "ai" blijft altijd behouden. Voegt geen items toe en telt niet mee voor het onderzoeksplan.',
   {
     items: z.array(z.object({
       id: z.string(), type: z.enum(['bron', 'fragment']),
@@ -354,7 +354,7 @@ server.tool('finish_research',
   });
 
 server.tool('save_fragment',
-  'Bewaar een fragment (citaat, feit, idee of samenvatting) op de braindump in de Schrijfkamer van de gebruiker. Geef bij voorkeur de bron-URL mee als de informatie van een webpagina komt. Krijgt automatisch de tag "ai". Gebruik dit wanneer de gebruiker vraagt iets te bewaren, op te slaan of te noteren.',
+  'Bewaar een fragment (citaat, feit, idee of samenvatting) in een project van de Schrijfkamer. De EERSTE tag is het onderwerp waaronder het verschijnt (bv. "Leven van een slaaf"; hergebruik bestaande onderwerpen); voeg de tag "scène-idee" toe voor ideeën voor scènes. Voor meerdere feiten over één onderwerp is write_topic handiger. Geef bij voorkeur de bron-URL mee als de informatie van een webpagina komt. Krijgt automatisch de tag "ai". Gebruik dit wanneer de gebruiker vraagt iets te bewaren, op te slaan of te noteren.',
   {
     text: z.string().describe('De tekst van het fragment, in de taal van de gebruiker.'),
     tags: z.array(z.string()).optional().describe('Trefwoorden zonder #, bv. ["rome","munt"].'),
@@ -516,11 +516,15 @@ server.tool('project_overview',
       const todos = texts.flatMap(t => [...String(t.body).matchAll(/([^.!?\n]{0,140})(\?\?|\[check[^\]]*\])/g)].map(m => `${m[1].trim()} ${m[2]} (in “${titleOf(t.body)}”)`));
       const dated = sn.map(x => ({ x, d: parseDate(x.date) })).filter(y => y.d).sort((a, b) => a.d.key.localeCompare(b.d.key));
       const tags = {}; for (const x of sn) for (const t of (x.tags || [])) tags[t] = (tags[t] || 0) + 1;
+      const SKIP = /^(ai|wikidata|uitgezocht|feit|idee|sc[eè]ne(-idee)?)$/i, topics = {};
+      for (const x of sn) { const t = (x.tags || []).find(t => !SKIP.test(t)); if (t) topics[t.toLowerCase()] = (topics[t.toLowerCase()] || 0) + 1; }
+      for (const t of texts.filter(t => t.folder === 'Onderwerpen')) { const k = titleOf(t.body).toLowerCase(); topics[k] = topics[k] || 0; }
       return ok([
         `Project “${project}”: ${texts.length} teksten, ${sn.length} fragmenten (${dated.length} op de tijdlijn), ${src.length} bronnen.`,
         texts.length ? 'Teksten:\n' + texts.map(t => `- ${t.folder ? '[' + t.folder + '] ' : ''}${titleOf(t.body) || '(naamloos)'} (${String(t.body).split(/\s+/).length} woorden)`).join('\n') : '',
         dated.length ? 'Tijdlijn:\n' + dated.map(y => `- ${y.d.label}: ${y.x.text.replace(/\s+/g, ' ').slice(0, 120)}`).join('\n') : '',
         src.length ? 'Bronnen:\n' + src.slice(0, 60).map(s => `- ${s.title} ${s.url || ''}`).join('\n') : '',
+        Object.keys(topics).length ? 'Onderwerpen (eerste tag; gebruik deze namen opnieuw): ' + Object.entries(topics).sort((a, b) => b[1] - a[1]).map(([t, n]) => `${t} (${n})`).join(', ') : '',
         Object.keys(tags).length ? 'Tags: ' + Object.entries(tags).sort((a, b) => b[1] - a[1]).map(([t, n]) => `#${t} (${n})`).join(' ') : '',
         todos.length ? 'Nog uitzoeken:\n' + todos.slice(0, 40).map(t => '- ' + t).join('\n') : ''
       ].filter(Boolean).join('\n\n'));
@@ -537,6 +541,42 @@ server.tool('create_text',
       if (folder && gid !== 'inbox') await ensureFolder(gid, folder);
       await insertSheet({ body: `# ${cleanInline(title)}\n\n${cleanText(body).trim()}\n`, grp: gid, folder: gid !== 'inbox' ? (folder || '') : '' });
       return ok(`Tekst “${title}” aangemaakt${project ? ' in project ' + project : ''}${folder ? ', map ' + folder : ''}. De gebruiker ziet hem direct in de app.`);
+    } catch (e) { return fail(e); }
+  });
+
+server.tool('write_topic',
+  'Maak of vul een ONDERWERP in een project (bv. “Leven van een slaaf”, “Het ambacht”, “Rome in 42 v.Chr.”). De app toont per onderwerp: een korte achtergrondtekst, scène-ideeën, feiten (gegroepeerd per kopje) en de bronnen. Gebruik dit voor algemene achtergrondkennis in plaats van losse fragmenten. Houd een project bij 4 à 8 brede onderwerpen en hergebruik bestaande namen (zie project_overview). Feiten en scène-ideeën tellen mee voor het onderzoeksplan.',
+  {
+    project: z.string(), topic: z.string().describe('Naam van het onderwerp, kort en breed.'),
+    background: z.string().optional().describe('Achtergrondtekst in schone, gewone tekst (een paar alinea’s, eventueel ## kopjes). Vervangt de bestaande achtergrond alleen met replace_background=true; anders wordt hij aangevuld.'),
+    replace_background: z.boolean().optional(),
+    facts: z.array(z.object({ text: z.string(), heading: z.string().optional().describe('Kopje binnen het onderwerp, bv. “Werk”, “Eten & onderdak”, “Rechten & straf”.'), date: z.string().optional(), source_url: z.string().optional(), source_title: z.string().optional() })).max(30).optional(),
+    scene_ideas: z.array(z.string()).max(15).optional().describe('Concrete ideeën voor scènes: zintuiglijke details, situaties, conflicten, dialoogwoorden.')
+  },
+  async ({ project, topic, background, replace_background, facts = [], scene_ideas = [] }) => {
+    try {
+      await token();
+      const gid = await projectId(project);
+      const name = cleanInline(topic).trim();
+      const out = [];
+      if (background && background.trim()) {
+        await ensureFolder(gid, 'Onderwerpen');
+        const rows = await rest('GET', `sheets?select=id,body&grp=eq.${gid}&folder=eq.Onderwerpen&trashed=eq.false`).catch(() => []);
+        const hit = rows.find(r => titleOf(r.body).toLowerCase() === name.toLowerCase());
+        const bg = cleanText(background).trim();
+        if (!hit) { await insertSheet({ body: `# ${name}\n\n${bg}\n`, grp: gid, folder: 'Onderwerpen' }); out.push('achtergrondtekst gemaakt'); }
+        else {
+          const body = replace_background ? `# ${titleOf(hit.body)}\n\n${bg}\n` : String(hit.body).replace(/\s*$/, '') + '\n\n' + bg + '\n';
+          await rest('PATCH', `sheets?id=eq.${enc(hit.id)}`, { body, updated: Date.now() }, 'return=minimal'); out.push(replace_background ? 'achtergrond vervangen' : 'achtergrond aangevuld');
+        }
+      }
+      let nf = 0, ns = 0, stop = '';
+      try {
+        for (const s of scene_ideas) { await saveSnippet({ text: s, tags: [name, 'scène-idee'], project }); ns++; }
+        for (const fa of facts) { await saveSnippet({ text: fa.text, date: fa.date, tags: [name, ...(fa.heading ? [cleanInline(fa.heading)] : [])], source_url: fa.source_url, source_title: fa.source_title, project }); nf++; }
+      } catch (e) { stop = String((e && e.message) || e); }
+      if (ns) out.push(ns + ' scène-idee(ën)'); if (nf) out.push(nf + ' feit(en)');
+      return ok(`Onderwerp “${name}” in ${project}: ${out.join(', ') || 'niets toegevoegd'}.${stop ? ' Gestopt: ' + stop : ''} De gebruiker ziet het in het project onder Onderwerpen en naast de tekst.`);
     } catch (e) { return fail(e); }
   });
 
@@ -606,8 +646,8 @@ server.tool('add_timeline_events',
     } catch (e) { return fail(e); }
   });
 
-const INSTRUCTIONS = 'Koppeling met de Schrijfkamer van de gebruiker: bewaar fragmenten, tijdlijnmomenten, bronnen, teksten en personages, en doorzoek de verzameling. Antwoord in het Nederlands. Schrijf in de Schrijfkamer schone, gewone tekst: geen **vet**, *cursief*, tabellen of andere Markdown-tekens, alleen ## kopjes en - lijstjes. ' + RULE_TEXT + ' Verzamel liever weinig goede bronnen dan veel; controleer met search_collection of iets er al is.';
-const PROMPT_ONDERZOEK = "Je bent mijn onderzoeksassistent voor mijn schrijfproject “${arguments.project}”. Ik concentreer me op het creatieve schrijven; jij doet het feitenwerk en zet alles in mijn Schrijfkamer.\n\nOnderwerp: ${arguments.onderwerp}\n\nWerkwijze:\n0. Stel mij eerst een paar korte vragen en wacht op mijn antwoord: waarvoor heb ik dit nodig, hoe diep (kort, gemiddeld of diep), welke focus of periode, en wat moet er komen (tijdlijn, fragmenten, personages, dossier). Leg het daarna vast met research_plan en houd je aan het maximum.\n1. Roep eerst project_overview aan (bestaat het project niet, maak het dan met create_project) zodat je niets dubbel doet.\n2. Zoek op het web naar betrouwbare bronnen (encyclopedieën, musea, wetenschappelijke en historische bronnen). Bewaar de belangrijkste met save_source.\n3. Zet elke gebeurtenis met een datum op de tijdlijn (add_timeline_events), steeds met de bron-URL.\n4. Bewaar losse feiten, citaten en details die bruikbaar zijn voor een verhaal (zintuiglijke details, gebruiken, voorwerpen, plaatsen) als fragmenten met save_fragment, met tags en bron.\n5. Maak met create_text (map “Onderzoek”) een tekst “Onderzoeksdossier: ${arguments.onderwerp}” in het project met: korte samenvatting, belangrijkste personen en plekken (met [[links]] waar zinnig), chronologie in het kort, en een lijst “Open vragen”. Zet ?? achter alles wat onzeker of tegenstrijdig is. Maak voor belangrijke (historische) personen een character sheet met create_character.\n6. Werk in het Nederlands. Verzin niets: geen bron, dan markeren met ??.\n7. Sluit af met een korte samenvatting in de chat van wat je hebt toegevoegd en welke vragen nog open staan, en roep finish_research aan.";
+const INSTRUCTIONS = 'Koppeling met de Schrijfkamer van de gebruiker: bewaar fragmenten, tijdlijnmomenten, bronnen, teksten en personages, en doorzoek de verzameling. Antwoord in het Nederlands. Een project is ingedeeld in ONDERWERPEN (de eerste tag van een fragment of bron); gebruik write_topic voor achtergrondkennis met feiten en scène-ideeën, en hergebruik bestaande onderwerpnamen. Schrijf in de Schrijfkamer schone, gewone tekst: geen **vet**, *cursief*, tabellen of andere Markdown-tekens, alleen ## kopjes en - lijstjes. ' + RULE_TEXT + ' Verzamel liever weinig goede bronnen dan veel; controleer met search_collection of iets er al is.';
+const PROMPT_ONDERZOEK = "Je bent mijn onderzoeksassistent voor mijn schrijfproject “${arguments.project}”. Ik concentreer me op het creatieve schrijven; jij doet het feitenwerk en zet alles in mijn Schrijfkamer.\n\nOnderwerp: ${arguments.onderwerp}\n\nWerkwijze:\n0. Stel mij eerst een paar korte vragen en wacht op mijn antwoord: waarvoor heb ik dit nodig, hoe diep (kort, gemiddeld of diep), welke focus of periode, en wat moet er komen (tijdlijn, fragmenten, personages, dossier). Leg het daarna vast met research_plan en houd je aan het maximum.\n1. Roep eerst project_overview aan (bestaat het project niet, maak het dan met create_project) zodat je niets dubbel doet.\n2. Zoek op het web naar betrouwbare bronnen (encyclopedieën, musea, wetenschappelijke en historische bronnen). Bewaar de belangrijkste met save_source.\n3. Zet elke gebeurtenis met een datum op de tijdlijn (add_timeline_events), steeds met de bron-URL.\n4. Deel de kennis in 4 à 8 brede onderwerpen in (hergebruik bestaande onderwerpen uit project_overview) en vul elk onderwerp met write_topic: een korte achtergrondtekst in schone tekst, feiten met een kopje en bron, en concrete scène-ideeën (zintuiglijke details, gebruiken, voorwerpen, plaatsen).\n5. Zet ?? achter alles wat onzeker of tegenstrijdig is en noem open vragen in de achtergrondtekst. Maak voor belangrijke (historische) personen een character sheet met create_character.\n6. Werk in het Nederlands. Verzin niets: geen bron, dan markeren met ??.\n7. Sluit af met een korte samenvatting in de chat van wat je hebt toegevoegd en welke vragen nog open staan, en roep finish_research aan.";
 server.prompt('onderzoek_project',
   'Laat Claude onderzoek doen en het researchkader van een project in de Schrijfkamer vullen.',
   { project: z.string().describe('Naam van het project, bv. De muntenmaker'), onderwerp: z.string().describe('Waar gaat het onderzoek over?') },
